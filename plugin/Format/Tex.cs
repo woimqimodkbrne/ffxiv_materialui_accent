@@ -237,7 +237,7 @@ namespace Aetherment.Format {
 			// Order the list so things are overlayed in the correct order
 			var files2 = files
 				.OrderBy(x =>
-					options.FindIndex(y => x.Key.Contains("_") && y is Mod.Option.Color && ((Mod.Option.Color)y).ID == x.Key.Split(".")[0].Split("_")[1]) +
+					options.FindIndex(y => x.Key.Contains("_") && y is Mod.Option.Color && ((Mod.Option.Color)y).ID == x.Key.Split(".")[0][(x.Key.IndexOf('_') + 1)..]) +
 					(x.Key.StartsWith("underlay_") ? 1000 : (x.Key.StartsWith("underlay") ? 2000 : 3000)));
 			
 			int size = 0;
@@ -245,9 +245,9 @@ namespace Aetherment.Format {
 			var mainBufferPtr = IntPtr.Zero;
 			foreach(var file in files2) {
 				var name = file.Key.Split(".")[0];
-				var id = name.Contains("_") ? name.Split("_")[1] : null;
+				var id = name.Contains("_") ? name[(name.IndexOf('_') + 1)..] : null;
 				var path = file.Value;
-				
+				PluginLog.Log(id);
 				var f = File.Open(path, FileMode.Open);
 				if(size == 0) {
 					f.Seek(8, SeekOrigin.Begin);

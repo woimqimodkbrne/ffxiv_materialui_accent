@@ -114,10 +114,14 @@ namespace Aetherment {
 			if(InstalledMods.Exists(x => x.ID == id))
 				return;
 			
-			var mod = Mod.GetModLocal(id);
-			if(mod != null)
-				lock(InstalledMods)
-					InstalledMods.Add(mod);
+			try {
+				var mod = Mod.GetModLocal(id);
+				if(mod != null)
+					lock(InstalledMods)
+						InstalledMods.Add(mod);
+			} catch(Exception e) {
+				PluginLog.Error(e, $"Failed adding local mod {id}");
+			}
 		}
 		
 		public static void DeleteInstalledMod(string id) {
