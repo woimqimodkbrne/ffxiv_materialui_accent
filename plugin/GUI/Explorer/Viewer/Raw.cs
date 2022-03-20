@@ -89,7 +89,7 @@ namespace Aetherment.GUI.Explorer {
 					tmp.Add(cur.ToString());
 					cur.Clear();
 				} else
-					cur.Append((char)data[i]);
+					cur.Append(Array.IndexOf(binaryChars, c) != -1 ? '�' : (char)data[i]);
 			}
 			
 			tmp.Add(cur.ToString());

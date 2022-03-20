@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Numerics;
 using System.Threading.Tasks;
 using System.Collections.Generic;
@@ -44,7 +45,7 @@ namespace Aetherment.GUI {
 		
 		public void DrawOptions(string modid) {
 			var mod = Aetherment.InstalledMods.Find(x => x.ID == modid);
-			if(mod == null)
+			if(mod == null || mod.Options.Where(x => x is not Mod.Option.Penumbra).Count() == 0)
 				return;
 			
 			ImGuiAeth.Offset(0, 10);

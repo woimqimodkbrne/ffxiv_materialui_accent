@@ -62,7 +62,7 @@
 			"$type": "single",
 			"name": "Target Info",
 			"options": {
-				"Default": [],
+				"Default": ["ui/uld/targetinfo_hr1.tex"],
 				"Minimal": ["ui/uld/targetinfo_hr1.tex/option/minimal"],
 				"Minimal (with object line)": ["ui/uld/targetinfo_hr1.tex/option/minimal/wline"],
 				

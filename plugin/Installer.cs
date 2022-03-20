@@ -257,27 +257,23 @@ namespace Aetherment {
 						};
 						penumMeta.Groups[o.Name].Options.Add(s);
 						
-						var done = new List<string>();
+						// var done = new List<string>();
 						foreach(var path in subOption.Value) {
-							// if(path == "ui/uld/icona_frame_hr1.tex/option/hide_macro_icon")
-							// 	continue;
-							
 							var gamePath = Regex.Match(path, @"^[^.]+\.[a-zA-Z]+").Groups[0].Value;
-							// s.OptionFiles["files\\" + paths[path]] = new string[1] {gamePath};
 							s.OptionFiles["files\\" + paths[path]] = subOption.Value
 								.Where(x => paths[x] == paths[path])
 								.Select(x => Regex.Match(x, @"^[^.]+\.[a-zA-Z]+").Groups[0].Value)
 								.ToArray();
-							done.Add(gamePath);
+							// done.Add(gamePath);
 						}
 						
-						if(typ == "single")
-							foreach(var path in penumOptionPaths[o.Name])
-								if(!done.Contains(path) && paths.ContainsKey(path))
-									// s.OptionFiles["files\\" + paths[path]] = new string[1] {path};
-									s.OptionFiles["files\\" + paths[path]] = penumOptionPaths[o.Name]
-										.Where(x => paths[x] == paths[path])
-										.ToArray();
+						// if(typ == "single")
+						// 	foreach(var path in penumOptionPaths[o.Name])
+						// 		if(!done.Contains(path) && paths.ContainsKey(path))
+						// 			// s.OptionFiles["files\\" + paths[path]] = new string[1] {path};
+						// 			s.OptionFiles["files\\" + paths[path]] = penumOptionPaths[o.Name]
+						// 				.Where(x => paths[x] == paths[path])
+						// 				.ToArray();
 					}
 				}
 			}

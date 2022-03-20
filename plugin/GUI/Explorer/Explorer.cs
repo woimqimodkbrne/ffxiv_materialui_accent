@@ -40,8 +40,8 @@ namespace Aetherment.GUI.Explorer {
 		}
 		
 		public static readonly (string, string, byte[], Func<ulong, string, Viewer>)[] ViewerCreators = new (string, string, byte[], Func<ulong, string, Viewer>)[] {
-			("Texture", "a?tex", new byte[4]{0, 0, 128, 0}, (hash, path) => new  Tex(hash, path)),
-			("Raw",     ".+",    new byte[0]{            }, (hash, path) => new  Raw(hash, path))
+			("Texture", "a?tex", new byte[4]{0, 0, 128, 0}, (hash, path) => new Tex(hash, path)),
+			("Raw",     ".+",    new byte[0]{            }, (hash, path) => new Raw(hash, path))
 		};
 		
 		private ModTree modTree;
@@ -127,16 +127,12 @@ namespace Aetherment.GUI.Explorer {
 				if(ImGui.Button("Import (TODO)", new Vector2(100, h))) {
 					var name = curPath.Split("/").Last();
 					OpenDialog("OpenFileDialog", "Import " + name, string.Join(",", viewer.exportValids), ".", Import);
-					// dialog.OpenFileDialog("Import " + name, string.Join(",", viewer.exportValids), Import);
-					// dialog.OpenFileDialog("Import " + name, string.Join(",", viewer.exportValids.Select(x => $"{x.Value}{{.{x.Key}}}")), Import);
 				}
 				
 				ImGui.SameLine();
 				if(ImGui.Button("Export", new Vector2(100, h))) {
 					var name = curPath.Split("/").Last().Split(".")[0];
 					OpenDialog("SaveFileDialog", "Export " + name, string.Join(",", viewer.exportValids), name, Export);
-					// dialog.SaveFileDialog("Export " + name, string.Join(",", viewer.exportValids), name, name.Split(".").Last(), Export);
-					// dialog.SaveFileDialog("Export " + name, string.Join(",", viewer.exportValids.Select(x => $"{x.Value}{{.{x.Key}}}")), name, name.Split(".").Last(), Export);
 				}
 				
 				ImGui.SameLine();

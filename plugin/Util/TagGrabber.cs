@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 using Dalamud.Logging;
@@ -65,7 +66,6 @@ namespace Aetherment.Util {
 			var tags = new List<string>();
 			
 			foreach(var option in mod.Options)
-				// if(!(option is Mod.Option.Single || option is Mod.Option.Multi)) {
 				if(option is not Mod.Option.Penumbra) {
 					tags.Add("customizable");
 					
@@ -105,6 +105,35 @@ namespace Aetherment.Util {
 		public static void AddTags(Mod mod) {
 			foreach(var tag in GrabTags(mod))
 				mod.Tags.Add(tag);
+		}
+		
+		public static string SortName(Mod mod) {
+			var tags = new Dictionary<string, int>();
+			
+			void checkPath(string path) {
+				foreach(KeyValuePair<string, string[]> tagPaths in pathTags)
+					foreach(var pattern in tagPaths.Value)
+						if(Regex.IsMatch(path, pattern)) {
+							var val = tags.FirstOrDefault(x => x.Key == tagPaths.Key).Value + 1;
+							
+							break;
+						}
+			}
+			
+			void walk(Dir dir, string path) {
+				foreach(Dir sub in dir.Dirs.Values)
+					if(sub.Name.Contains("."))
+						checkPath(path + sub.Name);
+					else
+						walk(sub, path + sub.Name + "/");
+				
+				foreach(Dir.File file in dir.Files.Values)
+					checkPath(path + file.Name);
+			}
+			
+			walk(mod.Files.Dirs["files"], "");
+			
+			return tags.Aggregate((x, y) => x.Value > y.Value ? x : y).Key;
 		}
 	}
 }
