@@ -126,10 +126,12 @@ namespace Aetherment.GUI {
 				ButtonImageLink(Aetherment.Textures["patreon64.png"], size, rounding, "Support on Patreon", url);
 			else if(Regex.IsMatch(url, @"https://(?:www\.)?ko-fi\.com/[a-zA-Z]+"))
 				ButtonImageLink(Aetherment.Textures["kofi64.png"], size, rounding, "Support on Kofi", url);
-			else if(Regex.IsMatch(url, @"https://(?:www\.)?github\.com/[a-zA-Z]+/[a-zA-Z-]+"))
+			else if(Regex.IsMatch(url, @"https://(?:www\.)?github\.com/[a-zA-Z0-9]+/[a-zA-Z0-9-]+"))
 				ButtonImageLink(Aetherment.Textures["github64.png"], size, rounding, "View on GitHub", url);
 			else if(Regex.IsMatch(url, @"https://(?:www\.)?discord\.gg/[a-zA-Z]+"))
 				ButtonImageLink(Aetherment.Textures["discord64.png"], size, rounding, "Join Discord server", url);
+			else
+				ButtonImageLink(Aetherment.Textures["discord64.png"], size, rounding, url, url); // TODO: globe icon
 		}
 		
 		public static void Image(TextureWrap tex, Vector2 bounds, bool center = true) {

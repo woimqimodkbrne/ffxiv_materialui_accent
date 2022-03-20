@@ -231,14 +231,14 @@ namespace Aetherment.Format {
 		}
 		
 		public static bool ResolveCustomizability(Dictionary<string, string> files, List<Mod.Option> options, string outPath) {
-			if(files.Count == 1 && files.Keys.First().Split(".")[0] == "underlay")
+			if(files.Count == 1 && !files.Keys.First().StartsWith("underlay_") && !files.Keys.First().StartsWith("overlay_"))
 				return false;
 			
 			// Order the list so things are overlayed in the correct order
 			var files2 = files
 				.OrderBy(x =>
 					options.FindIndex(y => x.Key.Contains("_") && y is Mod.Option.Color && ((Mod.Option.Color)y).ID == x.Key.Split(".")[0][(x.Key.IndexOf('_') + 1)..]) +
-					(x.Key.StartsWith("underlay_") ? 1000 : (x.Key.StartsWith("underlay") ? 2000 : 3000)));
+					(x.Key.StartsWith("underlay_") ? 1000 : (x.Key.StartsWith("overlay_") ? 3000 : 2000)));
 			
 			int size = 0;
 			var mainBuffer = new Buffer();
@@ -247,7 +247,7 @@ namespace Aetherment.Format {
 				var name = file.Key.Split(".")[0];
 				var id = name.Contains("_") ? name[(name.IndexOf('_') + 1)..] : null;
 				var path = file.Value;
-				PluginLog.Log(id);
+				
 				var f = File.Open(path, FileMode.Open);
 				if(size == 0) {
 					f.Seek(8, SeekOrigin.Begin);

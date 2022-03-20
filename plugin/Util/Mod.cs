@@ -154,7 +154,7 @@ namespace Aetherment.Util {
 		public bool Enabled {get; private set;} = false;
 		public bool AutoUpdate {get; private set;} = true;
 		public List<string> DisabledPaths {get; private set;} = new();
-		public string ConfigSha {get; private set;}
+		public string ConfigSha;
 		
 		public string ID {get; private set;} = "ID";
 		public uint ID2 {get; private set;}
@@ -428,7 +428,8 @@ namespace Aetherment.Util {
 			
 			mod.LoadPreview();
 			
-			modCache[id] = mod;
+			lock(modCache)
+				modCache[id] = mod;
 			idCounter++;
 		}
 		

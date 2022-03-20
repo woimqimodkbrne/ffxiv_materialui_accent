@@ -7,7 +7,7 @@ namespace Aetherment.GUI {
 			bool save = false;
 			
 			ImGui.Text("TODO: make fancy");
-			save = ImGui.Checkbox("Auto Update", ref Aetherment.Config.AutoUpdate) || save;
+			// save = ImGui.Checkbox("Auto Update", ref Aetherment.Config.AutoUpdate) || save;
 			save = ImGui.Checkbox("Link Options", ref Aetherment.Config.LinkOptions) || save;
 			save = ImGui.Checkbox("Advanced Options", ref Aetherment.Config.AdvancedMode) || save;
 			

@@ -26,7 +26,7 @@ namespace Aetherment {
 		
 		// public List<string> InstalledMods = new();
 		
-		public bool AutoUpdate = true;
+		// public bool AutoUpdate = true;
 		public bool LinkOptions = true;
 		
 		public bool AdvancedMode = false;
@@ -64,15 +64,24 @@ namespace Aetherment {
 			foreach(var file in new DirectoryInfo(Interface.AssemblyLocation.DirectoryName + "/assets/icons").EnumerateFiles())
 				Textures[file.Name] = Interface.UiBuilder.LoadImage(file.FullName);
 			
-			foreach(var mod in PenumbraApi.GetMods())
-				AddLocalMod(mod);
-			
 			GameData = new GameData(Path.GetDirectoryName(Process.GetCurrentProcess().MainModule.FileName) + "/sqpack", new LuminaOptions());
 			
 			var path = $"{Interface.ConfigDirectory.FullName}/config.json";
 			Config = File.Exists(path) ? JsonConvert.DeserializeObject<Config>(File.ReadAllText(path)) : new Config();
 			Config.Repos.Insert(0, new GitHub.RepoInfo("Sevii77", "ffxiv_materialui_accent", "v2"));
 			Ui = new UI();
+			
+			foreach(var modid in PenumbraApi.GetMods())
+				AddLocalMod(modid);
+			
+			Task.Run(async() => {
+				foreach(var m in InstalledMods)
+					if(m.AutoUpdate) {
+						var mod = await Mod.GetMod(m.Repo, m.ID);
+						if(mod != null)
+							Installer.DownloadMod(mod);
+					}
+			});
 			
 			Commands.AddHandler(command, new CommandInfo(OnCommand) {
 				HelpMessage = "Open Aetherment menu"
@@ -121,6 +130,13 @@ namespace Aetherment {
 						InstalledMods.Add(mod);
 			} catch(Exception e) {
 				PluginLog.Error(e, $"Failed adding local mod {id}");
+				// Task.Run(async() => {
+				// 	foreach(var repo in Config.Repos) {
+				// 		var mod = await Mod.GetMod(repo, id);
+				// 		if(mod != null)
+				// 			Installer.DownloadMod(mod);
+				// 	}
+				// });
 			}
 		}
 		

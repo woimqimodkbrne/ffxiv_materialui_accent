@@ -51,9 +51,12 @@ namespace Aetherment {
 					
 					// Get rid of outdated files
 					foreach(var file in new DirectoryInfo(filesPath).EnumerateFiles()) {
-						if(!shas.ContainsKey(file.Name)) {
+						if(file.Name[0] == '_')
+							continue;
+						
+						if(!shas.ContainsKey(file.Name))
 							file.Delete();
-						} else
+						else
 							shas.Remove(file.Name);
 					}
 					
@@ -115,29 +118,30 @@ namespace Aetherment {
 							InstallStatus.Progress++;
 					}
 					
-					InstallStatus.Progress = 0;
-					InstallStatus.Total =  shas.Count;
-					foreach(var a in shas) {
-						while(activeCount >= 100)
+					if(shas.Count > 0) {
+						InstallStatus.Progress = 0;
+						InstallStatus.Total =  shas.Count;
+						foreach(var a in shas) {
+							while(activeCount >= 100)
+								await Task.Delay(100);
+							
+							downloadFile(a.Value);
+						}
+						
+						while(activeCount > 0)
 							await Task.Delay(100);
 						
-						downloadFile(a.Value);
+						mod.LoadConfig();
+						mod.ConfigSha = mod.Files.Files["config.json"].Sha;
+						mod.SaveConfig();
+						
+						Apply(mod);
+						
+						Aetherment.Interface.UiBuilder.AddNotification(mod.Name + " has been successfully installed and applied", "Mod Installed", Dalamud.Interface.Internal.Notifications.NotificationType.Success, 5000);
+						PenumbraApi.RefreshMod(mod);
 					}
 					
-					while(activeCount > 0)
-						await Task.Delay(100);
-					
-					if(!mod.LoadConfig())
-						mod.SaveConfig();
-					
-					Apply(mod);
-					// TODO: tell penumbra to add/reload mod
-					// TODO: make pr to penumbra to add those ipc
-					
 					InstallStatus.Busy = false;
-					
-					Aetherment.Interface.UiBuilder.AddNotification(mod.Name + " has been successfully installed and applied", "Mod Installed", Dalamud.Interface.Internal.Notifications.NotificationType.Success, 5000);
-					PenumbraApi.RefreshMod(mod);
 					
 					lock(downloadQueue)
 						downloadQueue.RemoveAt(0);
@@ -152,7 +156,7 @@ namespace Aetherment {
 			InstallStatus.Busy = true;
 			
 			if(onlyCustomize) {
-				var files = File.ReadAllText($"{filesPath}_").Split('\n');
+				var files = File.ReadAllText($"{penumPath}overlayer").Split('\n');
 				InstallStatus.Total = files.Length;
 				foreach(var line in files) {
 					var segs = line.Split('|');
@@ -182,24 +186,22 @@ namespace Aetherment {
 				Version = "todo"
 			};
 			
-			var cus = File.CreateText($"{filesPath}_");
+			var cus = File.CreateText($"{penumPath}overlayer");
 			
 			// get the game path for each file and apply options
 			var paths = new Dictionary<string, string>();
 			void walkDir(Dir dir, string path, bool isfiledir) {
 				InstallStatus.Total++;
-				
-				foreach(var sub in dir.Dirs.Values)
-					walkDir(sub, path + (path == "" ? "" : "/") + sub.Name, isfiledir || sub.Name.Contains("."));
-				
+				PluginLog.Log(path);
 				if(dir.Files.Count > 0) {
+					InstallStatus.CurrentJob = $"Applying {mod.Name}";
+					InstallStatus.CurrentJobDetails = $"({path})";
+					
 					if(isfiledir) {
 						var p = new Dictionary<string, string>();
 						foreach(var file in dir.Files.Values)
 							p[file.Name] = filesPath + file.Sha;
 						
-						InstallStatus.CurrentJob = $"Applying {mod.Name}";
-						InstallStatus.CurrentJobDetails = $"({path})";
 						var ext = Regex.Match(path, @"^[^.]+\.([a-zA-Z]+)").Groups[1].Value;
 						if(Raw.ResolveCustomizability(ext, p, mod.Options, $"{filesPath}_{dir.Sha}")) {
 							paths[path] = "_" + dir.Sha;
@@ -216,6 +218,9 @@ namespace Aetherment {
 						foreach(var file in dir.Files.Values)
 							paths[$"{path}/{file.Name}"] = file.Sha;
 				}
+				
+				foreach(var sub in dir.Dirs.Values)
+					walkDir(sub, path + (path == "" ? "" : "/") + sub.Name, isfiledir || sub.Name.Contains("."));
 				
 				InstallStatus.Progress++;
 			}
