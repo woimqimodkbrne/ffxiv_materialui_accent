@@ -9,6 +9,7 @@ using Newtonsoft.Json;
 
 using ImGuiScene;
 using Dalamud.IoC;
+using Dalamud.Game;
 using Dalamud.Plugin;
 using Dalamud.Interface;
 using Dalamud.Game.Command;
@@ -46,15 +47,17 @@ namespace Aetherment {
 		public string Name => "Aetherment";
 		private const string command = "/aetherment";
 		private const string commandAlt = "/materialui";
+		private const string commandFinder = "/texfinder";
 		
-		[PluginService][RequiredVersion("1.0")] public static DalamudPluginInterface Interface {get; private set;} = null!;
-		[PluginService][RequiredVersion("1.0")] public static CommandManager         Commands  {get; private set;} = null!;
-		[PluginService][RequiredVersion("1.0")] public static TitleScreenMenu        TitleMenu {get; private set;} = null!;
+		[PluginService][RequiredVersion("1.0")] public static DalamudPluginInterface Interface  {get; private set;} = null!;
+		[PluginService][RequiredVersion("1.0")] public static CommandManager         Commands   {get; private set;} = null!;
+		[PluginService][RequiredVersion("1.0")] public static TitleScreenMenu        TitleMenu  {get; private set;} = null!;
 		
 		internal static GameData GameData;
 		
 		internal static Config Config;
 		internal static UI Ui;
+		internal static TextureFinder TextureFinder;
 		
 		internal static Dictionary<string, TextureWrap> Textures = new();
 		internal static List<Mod> InstalledMods = new();
@@ -69,7 +72,8 @@ namespace Aetherment {
 			var path = $"{Interface.ConfigDirectory.FullName}/config.json";
 			Config = File.Exists(path) ? JsonConvert.DeserializeObject<Config>(File.ReadAllText(path)) : new Config();
 			Config.Repos.Insert(0, new GitHub.RepoInfo("Sevii77", "ffxiv_materialui_accent", "v2"));
-			Ui = new UI();
+			Ui = new();
+			TextureFinder = new();
 			
 			foreach(var modid in PenumbraApi.GetMods())
 				AddLocalMod(modid);
@@ -89,6 +93,9 @@ namespace Aetherment {
 			Commands.AddHandler(commandAlt, new CommandInfo(OnCommand) {
 				HelpMessage = "Alternative for /aetherment"
 			});
+			Commands.AddHandler(commandFinder, new CommandInfo(OnCommand) {
+				HelpMessage = "Open Texture Finder, used to find any ui texture"
+			});
 			
 			// Task.Run(async() => {
 			// 	PathsDB.Fetch();
@@ -98,8 +105,11 @@ namespace Aetherment {
 		public void Dispose() {
 			Installer.Dispose();
 			Ui.Dispose();
+			TextureFinder.Dispose();
+			
 			Commands.RemoveHandler(command);
 			Commands.RemoveHandler(commandAlt);
+			Commands.RemoveHandler(commandFinder);
 			
 			foreach(var texture in Textures.Values)
 				texture.Dispose();
@@ -155,6 +165,8 @@ namespace Aetherment {
 		private void OnCommand(string cmd, string args) {
 			if(cmd == command || cmd == commandAlt)
 				Ui.Show();
+			else if(cmd == commandFinder)
+				TextureFinder.Show();
 		}
 	}
 }

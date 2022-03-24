@@ -44,6 +44,10 @@ namespace Aetherment.GUI {
 			return ImGui.GetContentRegionAvail().Y;
 		}
 		
+		public static float HeightLeft(float after, int splitCount = 1) {
+			return (ImGui.GetContentRegionAvail().Y - after - SpacingY * splitCount) / splitCount;
+		}
+		
 		public static float Height() {
 			return PaddingY * 2 + ImGui.GetFontSize();
 		}
@@ -131,7 +135,7 @@ namespace Aetherment.GUI {
 			else if(Regex.IsMatch(url, @"https://(?:www\.)?discord\.gg/[a-zA-Z]+"))
 				ButtonImageLink(Aetherment.Textures["discord64.png"], size, rounding, "Join Discord server", url);
 			else
-				ButtonImageLink(Aetherment.Textures["discord64.png"], size, rounding, url, url); // TODO: globe icon
+				ButtonImageLink(Aetherment.Textures["globe64.png"], size, rounding, url, url);
 		}
 		
 		public static void Image(TextureWrap tex, Vector2 bounds, bool center = true) {

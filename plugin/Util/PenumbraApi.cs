@@ -88,5 +88,13 @@ namespace Aetherment.Util {
 			
 			drawModConfig.Unsubscribe(action);
 		}
+		
+		private static ICallGateSubscriber<string, string> resolveDefaultRealPath = null;
+		public static string GetGamePath(string realPath) {
+			if(resolveDefaultRealPath == null)
+				resolveDefaultRealPath = Aetherment.Interface.GetIpcSubscriber<string, string>("Penumbra.ResolveDefaultRealPath");
+			
+			return resolveDefaultRealPath.InvokeFunc(realPath);
+		}
 	}
 }

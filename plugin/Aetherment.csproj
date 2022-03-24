@@ -36,8 +36,8 @@
 		<Copy SourceFiles="@(Assets)" DestinationFolder="$(PluginPath)/assets/%(RecursiveDir)" SkipUnchangedFiles="true"/>
 		<Copy SourceFiles="@(Files)" DestinationFolder="$(PluginPath)" SkipUnchangedFiles="true"/>
 		<Copy SourceFiles="bin/Release/runtimes/win-x64/native/e_sqlite3.dll" DestinationFolder="$(PluginPath)/runtimes/win-x64/native" SkipUnchangedFiles="true"/>
-		<Exec Command="rm ../release.zip"/>
-		<Exec Command="zip a ../release.zip $(PluginPath)*"/>
+		<!-- <Exec Command="rm ../release.zip"/> -->
+		<!-- <Exec Command="zip a ../release.zip $(PluginPath)*"/> -->
 	</Target>
 	
 	<ItemGroup>
@@ -64,20 +64,24 @@
 		</Reference>
 		<Reference Include="Newtonsoft.Json">
 			<HintPath>$(DalamudLibPath)Newtonsoft.Json.dll</HintPath>
-			<Private>False</Private>
+			<Private>false</Private>
 		</Reference>
 		<Reference Include="SharpDX">
 			<HintPath>$(DalamudLibPath)SharpDX.dll</HintPath>
-			<Private>False</Private>
+			<Private>false</Private>
 		</Reference>
 		<Reference Include="SharpDX.Direct3D11">
 			<HintPath>$(DalamudLibPath)SharpDX.Direct3D11.dll</HintPath>
-			<Private>False</Private>
+			<Private>false</Private>
+		</Reference>
+		<Reference Include="FFXIVClientStructs">
+			<HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
+			<Private>false</Private>
 		</Reference>
 		
 		<Reference Include="Lumina">
 			<HintPath>../../Lumina/src/Lumina/bin/Release/net5.0/Lumina.dll</HintPath>
-			<Private>True</Private>
+			<Private>true</Private>
 		</Reference>
 	</ItemGroup>
 </Project>
