@@ -22,30 +22,30 @@ public class AethermentWindow {
 		ImGui.SetNextWindowSize(new Vector2(1070, 600));
 		// ImGui.SetNextWindowSize(new Vector2(1070, 600), ImGuiCond.FirstUseEver);
 		ImGui.Begin("Aetherment");
-		ImGui.BeginTabBar("tabs");
 		
-		if(ImGui.BeginTabItem("Settings")) {
+		ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0, 0));
+		Aeth.BeginTabBar("tabs");
+		ImGui.PopStyleVar();
+		
+		if(Aeth.TabItem("Settings")) {
 			ImGui.BeginChild("settings");
 			settings.Draw();
 			ImGui.EndChild();
-			ImGui.EndTabItem();
 		}
 		
-		if(ImGui.BeginTabItem("Mod Manager")) {
+		if(Aeth.TabItem("Mod Manager")) {
 			ImGui.BeginChild("manager");
 			manager.Draw();
 			ImGui.EndChild();
-			ImGui.EndTabItem();
 		}
 		
-		if(ImGui.BeginTabItem("Mod Browser")) {
+		if(Aeth.TabItem("Mod Browser")) {
 			ImGui.BeginChild("browser");
 			browser.Draw();
 			ImGui.EndChild();
-			ImGui.EndTabItem();
 		}
 		
-		ImGui.EndTabBar();
+		Aeth.EndTabBar();
 		ImGui.End();
 	}
 }

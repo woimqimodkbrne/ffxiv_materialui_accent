@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 
 using Main = Aetherment.Aetherment;
 using Aetherment.Server;
+using System.Numerics;
 
 namespace Aetherment.Gui.Window.Aetherment;
 
@@ -24,6 +25,24 @@ public class ModBrowser {
 	}
 	
 	public void Draw() {
+		Aeth.BeginTabBar("tabs", false);
+		
+		if(Aeth.TabItem("Search")) {
+			ImGui.BeginChild("search");
+			DrawSearch();
+			ImGui.EndChild();
+			ImGui.EndTabItem();
+		}
+		
+		Aeth.TabItem("Blah1");
+		Aeth.TabItem("Blah2");
+		Aeth.TabItem("Blah3");
+		Aeth.TabItem("Blah4");
+		
+		Aeth.EndTabBar();
+	}
+	
+	private void DrawSearch() {
 		if(ImGui.InputText("Search", ref search, 128))
 			Search();
 		
