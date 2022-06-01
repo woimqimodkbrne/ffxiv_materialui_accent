@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
-using Dalamud.Interface;
 using ImGuiNET;
 
 namespace Aetherment.Gui;
@@ -70,7 +69,7 @@ public static partial class Aeth {
 			);
 		}
 		
-		var y = (dockedBottom ? tabh : 0);
+		var y = (dockedBottom ? tabh - 1 : 0);
 		draw.AddLine(
 			new Vector2(pos.X, pos.Y + y),
 			new Vector2(pos.X + barw, pos.Y + y),

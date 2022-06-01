@@ -23,6 +23,7 @@ public class Aetherment : IDalamudPlugin {
 	
 	public Aetherment() {
 		PluginLog.Log(cool_test("hello there c:"));
+		PluginLog.Log(string.Join(" - ", (string[])cool_test2(new string[5]{"1", "2", "3", "4", "5"})));
 		
 		Server = new();
 		
@@ -43,7 +44,7 @@ public class Aetherment : IDalamudPlugin {
 	
 	private void Draw() {
 		if(aethermentGuiVisible)
-			aethermentGui.Draw();
+			aethermentGui.Draw(ref aethermentGuiVisible);
 	}
 	
 	private void OnCommand(string cmd, string args) {
@@ -57,4 +58,5 @@ public class Aetherment : IDalamudPlugin {
 	}
 	
 	[DllImport("aetherment_core.dll")] public static extern FFI.String cool_test(FFI.Str str);
+	[DllImport("aetherment_core.dll")] public static extern FFI.Vec cool_test2(FFI.Array str);
 }

@@ -21,4 +21,5 @@ crate-type = ["dylib"]
 # ]
 
 [dependencies]
+image = "0.24.2"
 noumenon = {path = "../noumenon"}

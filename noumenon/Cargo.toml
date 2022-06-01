@@ -7,4 +7,6 @@ edition = "2021"
 
 [dependencies]
 binrw = "0.8.4"
+image = "0.24.2"
+squish = "2.0.0-beta1"
 ironworks = {version = "0.3.1", features = ["ffxiv", "sqpack"]}

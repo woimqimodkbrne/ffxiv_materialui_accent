@@ -1,10 +1,10 @@
-using ImGuiNET;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Numerics;
 
+using ImGuiNET;
 using Main = Aetherment.Aetherment;
 using Aetherment.Server;
-using System.Numerics;
 
 namespace Aetherment.Gui.Window.Aetherment;
 
@@ -43,7 +43,7 @@ public class ModBrowser {
 	}
 	
 	private void DrawSearch() {
-		if(ImGui.InputText("Search", ref search, 128))
+		if(ImGui.InputText("Search", ref search, 64))
 			Search();
 		
 		if(ImGui.Button("<") && page > 0) {

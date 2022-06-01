@@ -2,8 +2,9 @@
 
 use std::io::{Cursor, Read, Seek, Write, SeekFrom};
 use binrw::{BinRead, BinReaderExt, BinWrite, binrw};
+use image::{codecs::png::PngEncoder, ImageEncoder, ColorType};
 use ironworks::{file::File, Error};
-use crate::formats::external::dds::*;
+use crate::formats::external::{dds::{Dds, Format as DFormat}, png::Png};
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
@@ -17,6 +18,7 @@ pub struct Pixel {
 #[binrw]
 #[brw(little, repr = u32)]
 #[repr(u32)]
+#[derive(Copy, Clone)]
 pub enum Format {
 	Unknown = 0x0,
 	
@@ -34,7 +36,8 @@ pub enum Format {
 	
 	R32F = 0x2150,
 	Rg16F = 0x2250,
-	Rgba16F = 0x2460,
+	Argb16 = 0x2460,
+	// Rgba16F = 0x2460,
 	Rgba32F = 0x2470,
 	
 	Dxt1 = 0x3420,
@@ -48,6 +51,42 @@ pub enum Format {
 	Null = 0x5100,
 	Shadow16 = 0x5140,
 	Shadow24 = 0x5150,
+}
+
+impl From<Format> for DFormat {
+	fn from(format: Format) -> Self {
+		match format {
+			Format::L8     => DFormat::L8,
+			Format::A8     => DFormat::A8,
+			Format::Argb4  => DFormat::A4R4G4B4,
+			Format::A1rgb5 => DFormat::A1R5G5B5,
+			Format::Argb8  => DFormat::A8R8G8B8,
+			Format::Xrgb8  => DFormat::X8R8G8B8,
+			Format::Dxt1   => DFormat::Dxt1,
+			Format::Dxt3   => DFormat::Dxt3,
+			Format::Dxt5   => DFormat::Dxt5,
+			Format::Argb16 => DFormat::A16B16G16R16,
+			_              => DFormat::Unknown,
+		}
+	}
+}
+
+impl From<DFormat> for Format {
+	fn from(format: DFormat) -> Self {
+		match format {
+			DFormat::L8           => Format::L8,
+			DFormat::A8           => Format::A8,
+			DFormat::A4R4G4B4     => Format::Argb4,
+			DFormat::A1R5G5B5     => Format::A1rgb5,
+			DFormat::A8R8G8B8     => Format::Argb8,
+			DFormat::X8R8G8B8     => Format::Xrgb8,
+			DFormat::Dxt1         => Format::Dxt1,
+			DFormat::Dxt3         => Format::Dxt3,
+			DFormat::Dxt5         => Format::Dxt5,
+			DFormat::A16B16G16R16 => Format::Argb16,
+			DFormat::Unknown      => Format::Unknown,
+		}
+	}
 }
 
 #[binrw]
@@ -94,31 +133,14 @@ impl Tex {
 		reader.read_to_end(&mut data).unwrap();
 		
 		Tex {
-			data: match header.format {
-				Format::L8     => convert_from_l8(&data),
-				Format::A8     => convert_from_a8(&data),
-				Format::Argb4  => convert_from_a4r4g4b4(&data),
-				Format::A1rgb5 => convert_from_a1r5g5b5(&data),
-				Format::Argb8  => data,
-				Format::Xrgb8  => convert_from_x8r8g8b8(&data),
-				_ => Vec::new(), // TODO: return error instead
-			},
+			data: DFormat::from(header.format).convert_from(&data).unwrap(),
 			header
 		}
 	}
 	
 	fn write<T>(&self, writer: &mut T) where T: Write + Seek {
-		// todo!();
 		self.header.write_to(writer).unwrap();
-		match self.header.format {
-			Format::L8     => writer.write_all(&convert_to_l8(&self.data)),
-			Format::A8     => writer.write_all(&convert_to_a8(&self.data)),
-			Format::Argb4  => writer.write_all(&convert_to_a4r4g4b4(&self.data)),
-			Format::A1rgb5 => writer.write_all(&convert_to_a1r5g5b5(&self.data)),
-			Format::Argb8  => writer.write_all(&self.data),
-			Format::Xrgb8  => writer.write_all(&convert_to_x8r8g8b8(&self.data)),
-			_ => return,
-		}.unwrap();
+		writer.write_all(&DFormat::from(self.header.format).convert_to(&self.data).unwrap()).unwrap();
 	}
 }
 
@@ -131,26 +153,8 @@ impl Dds for Tex {
 		reader.seek(SeekFrom::Current(4)).unwrap();
 		let depths = reader.read_le::<u32>().unwrap() as u16;
 		let mip_levels = reader.read_le::<u32>().unwrap() as u16;
-		reader.seek(SeekFrom::Start(84)).unwrap();
-		let cc: u32 = reader.read_le().unwrap();
-		reader.seek(SeekFrom::Start(92)).unwrap();
-		let rmask: u32 = reader.read_le().unwrap();
-		reader.seek(SeekFrom::Current(8)).unwrap();
-		let amask: u32 = reader.read_le().unwrap();
 		
-		let format = match (cc, rmask, amask) { // eh, good enough
-			// (0x33545844, 0,          0         ) => Format::Dxt3,
-			// (0x31545844, 0,          0         ) => Format::Dxt1,
-			// (0x35545844, 0,          0         ) => Format::Dxt3,
-			// (113,        0,          0         ) => Format::Rgba16F,
-			(0,          0xFF,       0         ) => Format::L8,
-			(0,          0,          0xFF      ) => Format::A8,
-			(0,          0x0F00,     0xF000    ) => Format::Argb4,
-			(0,          0x7C00,     0x8000    ) => Format::A1rgb5,
-			(0,          0x00FF0000, 0xFF000000) => Format::Argb8,
-			(0,          0x00FF0000, 0         ) => Format::Xrgb8,
-			_ => Format::Unknown,
-		};
+		let format = DFormat::get(reader);
 		
 		// im sure theres some fancier way but w/e
 		let mut mip_offsets = [0u32; 13];
@@ -168,18 +172,10 @@ impl Dds for Tex {
 		reader.read_to_end(&mut data).unwrap();
 		
 		Tex {
-			data: match format {
-				Format::L8     => convert_from_l8(&data),
-				Format::A8     => convert_from_a8(&data),
-				Format::Argb4  => convert_from_a4r4g4b4(&data),
-				Format::A1rgb5 => convert_from_a1r5g5b5(&data),
-				Format::Argb8  => data,
-				Format::Xrgb8  => convert_from_x8r8g8b8(&data),
-				_ => Vec::new(), // TODO: return error instead
-			},
+			data: format.convert_from(&data).unwrap(),
 			header: Header {
 				flags: 0x00800000, // TODO: care about other stuff like 3d textures
-				format,
+				format: Format::from(format),
 				width,
 				height,
 				depths,
@@ -192,5 +188,24 @@ impl Dds for Tex {
 	
 	fn write<T>(&self, _writer: &mut T) where T: Write + Seek {
 		todo!();
+	}
+}
+
+impl Png for Tex {
+	fn read<T>(_reader: &mut T) -> Self where T: Read + Seek {
+		// let png = PngDecoder::new(reader).unwrap();
+		// let data = Vec::with_capacity(png.total_bytes())
+		todo!();
+	}
+	
+	fn write<T>(&self, writer: &mut T) where T: Write + Seek {
+		let png = PngEncoder::new(writer);
+		// TODO: possibly convert to a different colortype based on header format, idk
+		png.write_image(
+			&self.data.chunks_exact(4).flat_map(|p| [p[2], p[1], p[0], p[3]]).collect::<Vec<u8>>(),
+			self.header.width as u32,
+			self.header.height as u32,
+			ColorType::Rgba8
+		).unwrap();
 	}
 }
