@@ -3,7 +3,6 @@ using System.Threading.Tasks;
 using System.Numerics;
 
 using ImGuiNET;
-using Main = Aetherment.Aetherment;
 using Aetherment.Server;
 
 namespace Aetherment.Gui.Window.Aetherment;
@@ -68,7 +67,7 @@ public class ModBrowser {
 		
 		searching = true;
 		
-		Task.Run(async() => {
+		Task.Run(() => {
 			string searchedQuery = "";
 			List<short> searchedTags = new();
 			byte searchedPage = 0;
@@ -80,7 +79,8 @@ public class ModBrowser {
 				
 				PluginLog.Log($"search {searchedQuery}");
 				
-				mods = await Main.Server.Search(searchedQuery, searchedTags.ToArray(), searchedPage);
+				// ofc c# refers to the namespace before the class inside the namespace we are importing
+				mods = Server.Server.Search(searchedQuery, searchedTags.ToArray(), searchedPage);
 			}
 			
 			searching = false;

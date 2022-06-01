@@ -25,4 +25,6 @@ public class String : SafeHandle {
 			return Encoding.UTF8.GetString((byte*)Marshal.PtrToStructure<ulong>(str.handle), (int)Marshal.PtrToStructure<ulong>(str.handle + 0x10));
 		}
 	}
+
+	public override string ToString() => (string)this;
 }
