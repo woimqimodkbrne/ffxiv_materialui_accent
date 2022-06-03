@@ -19,8 +19,8 @@ public class AethermentWindow {
 	}
 	
 	public void Draw(ref bool enabled) {
-		ImGui.SetNextWindowSize(new Vector2(1070, 600));
-		// ImGui.SetNextWindowSize(new Vector2(1070, 600), ImGuiCond.FirstUseEver);
+		// ImGui.SetNextWindowSize(new Vector2(1070, 600));
+		ImGui.SetNextWindowSize(new Vector2(1070, 600), ImGuiCond.FirstUseEver);
 		ImGui.Begin("Aetherment", ref enabled);
 		
 		ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(0, 0));

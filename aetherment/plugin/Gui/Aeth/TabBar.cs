@@ -31,7 +31,7 @@ public static partial class Aeth {
 		tabbarstack.Add(bar);
 		
 		var org = ImGui.GetCursorPos();
-		var pos = ImGui.GetWindowPos() + org;
+		var pos = ImGui.GetCursorScreenPos();
 		var barw = ImGui.GetColumnWidth();
 		var tabw = barw / Math.Max(1, bar.Tabs.Count);
 		var tabh = Aeth.FrameHeight;

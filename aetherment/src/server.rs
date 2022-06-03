@@ -1,3 +1,4 @@
+use std::io::{Cursor, Write};
 use reqwest::blocking as req;
 
 const SERVER: &'static str = "http://localhost:8080";
@@ -15,11 +16,30 @@ ffi!(fn server_search(query: &str, tags: &[i16], page: i32) -> String {
 		.unwrap()
 });
 
-ffi!(fn server_download_preview(modid: i32, file: &str) -> Vec<u8> {
-	CLIENT.get(format!("{}/mod/{}/{}", SERVER, modid, file))
+#[repr(C)] struct Img(u32, u32, Vec<u8>);
+ffi!(fn server_download_preview(modid: i32, file: &str) -> Img {
+	let d = CLIENT.get(format!("{}/mod/{}/{}", SERVER, modid, file))
 		.send()
 		.unwrap()
 		.bytes()
+		.unwrap();
+	
+	std::fs::File::create("C:\\shh\\test.png").unwrap().write_all(&d).unwrap();
+	let img = image::io::Reader::with_format(Cursor::new(d), image::ImageFormat::Png)
+		.decode()
 		.unwrap()
-		.to_vec()
+		.into_rgba8();
+	// let img = image::io::Reader::new(Cursor::new(CLIENT.get(format!("{}/mod/{}/{}", SERVER, modid, file))
+	// 	.send()
+	// 	.unwrap()
+	// 	.bytes()
+	// 	.unwrap()
+	// 	.to_vec()))
+	// 	.with_guessed_format()
+	// 	.unwrap()
+	// 	.decode()
+	// 	.unwrap()
+	// 	.into_rgba8();
+	
+	Img(img.width(), img.height(), img.into_raw())
 });

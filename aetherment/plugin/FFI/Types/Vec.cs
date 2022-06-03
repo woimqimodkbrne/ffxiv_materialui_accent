@@ -40,7 +40,7 @@ public class Vec : SafeHandle {
 		return array;
 	}
 	
-	private static T[] Convert<T>(IntPtr handle) {
+	public static T[] Convert<T>(IntPtr handle) {
 		var element_size = Marshal.SizeOf<T>();
 		var ptr = Marshal.ReadIntPtr(handle);
 		var length = (int)Marshal.PtrToStructure<ulong>(handle + 0x10);

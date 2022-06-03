@@ -22,7 +22,8 @@ public class Aetherment : IDalamudPlugin {
 	[PluginService][RequiredVersion("1.0")] public static CommandManager         Commands  {get; private set;} = null!;
 	// [PluginService][RequiredVersion("1.0")] public static TitleScreenMenu        TitleMenu  {get; private set;} = null!;
 	
-	public static Server.Server Server {get; private set;} = null!;
+	// public static Server.Server Server {get; private set;} = null!;
+	public static SharpDX.Direct3D11.Device Device => Interface.UiBuilder.Device;
 	
 	private const string command = "/aetherment";
 	
@@ -38,6 +39,7 @@ public class Aetherment : IDalamudPlugin {
 		
 		PluginLog.Log(cool_test("hello there c:"));
 		PluginLog.Log(string.Join(" - ", (string[])cool_test2(new string[5]{"1", "2", "3", "4", "5"})));
+		PluginLog.Log(string.Join(" - ", "12345".Split("")));
 		
 		aethermentGui = new();
 		
@@ -73,7 +75,7 @@ public class Aetherment : IDalamudPlugin {
 			if(aethermentGuiVisible)
 				aethermentGui.Draw(ref aethermentGuiVisible);
 		} catch(Exception e) {
-			Kill(e.Message, 1);
+			Kill(e.Message, 0);
 		}
 	}
 	
@@ -145,7 +147,7 @@ public class Aetherment : IDalamudPlugin {
 		PluginLog.Error($"\n\t{content}\n{string.Join("\n", stack)}");
 		
 		isUnloading = true;
-		Interface.UiBuilder.AddNotification("Aetherment as encountered an error and has been unloaded", null, NotificationType.Error);
+		Interface.UiBuilder.AddNotification("Aetherment has encountered an error and has been unloaded", null, NotificationType.Error, 5000);
 		UnloadPlugin();
 	}
 	
