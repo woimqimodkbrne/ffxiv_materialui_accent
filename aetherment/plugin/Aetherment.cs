@@ -22,7 +22,7 @@ public class Aetherment : IDalamudPlugin {
 	[PluginService][RequiredVersion("1.0")] public static CommandManager         Commands  {get; private set;} = null!;
 	// [PluginService][RequiredVersion("1.0")] public static TitleScreenMenu        TitleMenu  {get; private set;} = null!;
 	
-	// public static Server.Server Server {get; private set;} = null!;
+	public static Config Config {get; private set;} = null!;
 	public static SharpDX.Direct3D11.Device Device => Interface.UiBuilder.Device;
 	
 	private const string command = "/aetherment";
@@ -37,9 +37,7 @@ public class Aetherment : IDalamudPlugin {
 		logDelegate = Log;
 		initialize(Marshal.GetFunctionPointerForDelegate(logDelegate));
 		
-		PluginLog.Log(cool_test("hello there c:"));
-		PluginLog.Log(string.Join(" - ", (string[])cool_test2(new string[5]{"1", "2", "3", "4", "5"})));
-		PluginLog.Log(string.Join(" - ", "12345".Split("")));
+		Config = Config.Load();
 		
 		aethermentGui = new();
 		
