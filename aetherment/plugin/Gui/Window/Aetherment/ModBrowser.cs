@@ -11,11 +11,16 @@ namespace Aetherment.Gui.Window.Aetherment;
 public class ModBrowser {
 	private string search = "";
 	private List<short> tags = new();
-	private byte page = 0;
+	private int page = 0;
+	
+	string searchedQuery = "";
+	List<short> searchedTags = new();
+	int searchedPage = 0;
+	
+	private bool searching = false;
 	
 	private List<Mod> mods = new();
 	private Dictionary<int, (Aeth.Texture, DateTime)> previews = new(); // modid, (texture, lastaccess)
-	private bool searching = false;
 	
 	public ModBrowser() {
 		Search();
@@ -44,8 +49,10 @@ public class ModBrowser {
 	}
 	
 	private void DrawSearch() {
-		if(ImGui.InputText("Search", ref search, 64))
+		if(ImGui.InputText("Search", ref search, 64)) {
+			page = 0;
 			Search();
+		}
 		
 		var embedw = 500f;
 		var spacer = Aeth.S.ItemSpacing.X;
@@ -57,15 +64,31 @@ public class ModBrowser {
 		ImGui.Text($"{embedc}, {embedw}");
 		
 		var i = 0;
-		foreach(var mod in mods) {
-			if(i % embedc != 0)
-				ImGui.SameLine();
-			i++;
-			
-			DrawModEmbed(mod, embeds);
-		}
+		lock(mods)
+			foreach(var mod in mods) {
+				if(i % embedc != 0)
+					ImGui.SameLine();
+				i++;
+				
+				DrawModEmbed(mod, embeds);
+			}
 		
-		// if(ImGui.GetScrollY())
+		ImGui.Dummy(new Vector2(0, 100));
+		
+		if(searching) {
+			Aeth.Draw.AddText(ImGui.GetCursorScreenPos() + new Vector2(Aeth.WidthLeft / 2, -50) - ImGui.CalcTextSize("Searching...") / 2,
+			                  ImGui.GetColorU32(ImGuiCol.Text),
+			                  "Searching...");
+		} else if(page != -1) {
+			if(ImGui.GetScrollY() >= ImGui.GetScrollMaxY() - 50) {
+				page += 1;
+				Search();
+			}
+		} else {
+			Aeth.Draw.AddText(ImGui.GetCursorScreenPos() + new Vector2(Aeth.WidthLeft / 2, -50) - ImGui.CalcTextSize("Thats it") / 2,
+			                  ImGui.GetColorU32(ImGuiCol.Text),
+			                  "Thats it");
+		}
 	}
 	
 	private void DrawModEmbed(Mod mod, Vector2 size) {
@@ -142,27 +165,33 @@ public class ModBrowser {
 		if(searching)
 			return;
 		
+		if(page == -1)
+			return;
+		
 		searching = true;
 		
 		Task.Run(() => {
-			string searchedQuery = "";
-			List<short> searchedTags = new();
-			byte searchedPage = 0;
-			
 			while(search != searchedQuery || tags != searchedTags || page != searchedPage) {
+				if(search != searchedQuery || tags != searchedTags) {
+					lock(mods)
+						mods.Clear();
+					previews.Clear();
+				}
+				
 				searchedQuery = search;
 				searchedTags = tags; // probably doesnt copy, TODO: check that
 				searchedPage = page;
 				
 				PluginLog.Log($"search {searchedQuery}");
 				
-				if(search != searchedQuery || tags != searchedTags) {
-					mods.Clear();
-					previews.Clear();
+				// ofc c# refers to the namespace before the class inside the namespace we are importing
+				var m = Server.Server.Search(searchedQuery, searchedTags.ToArray(), searchedPage);
+				if(m.Length == 0) {
+					page = -1;
+					break;
 				}
 				
-				// ofc c# refers to the namespace before the class inside the namespace we are importing
-				mods.AddRange(Server.Server.Search(searchedQuery, searchedTags.ToArray(), searchedPage));
+				mods.AddRange(m);
 			}
 			
 			searching = false;
