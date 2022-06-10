@@ -16,6 +16,14 @@ ffi!(fn server_search(query: &str, tags: &[i16], page: i32) -> String {
 		.unwrap()
 });
 
+ffi!(fn server_mod(id: i32) -> String {
+	CLIENT.get(format!("{}/mod/{}.json", SERVER, id))
+		.send()
+		.unwrap()
+		.text()
+		.unwrap()
+});
+
 #[repr(C)] struct Img(u32, u32, Vec<u8>);
 ffi!(fn server_download_preview(modid: i32, file: &str) -> Img {
 	let img = image::io::Reader::new(Cursor::new(CLIENT.get(format!("{}/mod/{}/{}", SERVER, modid, file))

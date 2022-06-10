@@ -1,4 +1,8 @@
 #![allow(improper_ctypes_definitions)]
+#![feature(panic_backtrace_config)]
+
+use std::panic::BacktraceStyle;
+use serde::Serialize;
 
 #[macro_use]
 extern crate lazy_static;
@@ -15,6 +19,7 @@ macro_rules! log {
 extern fn initialize(log: fn(u8, String)) {
 	unsafe { LOG = log }
 	
+	std::panic::set_backtrace_style(BacktraceStyle::Full);
 	std::panic::set_hook(Box::new(|info| {
 		log!(ftl, "{}", info);
 	}));
@@ -48,7 +53,16 @@ macro_rules! ffi {
 	};
 }
 
+pub fn serialize_json(json: serde_json::Value) -> String {
+	let buf = Vec::new();
+	let formatter = serde_json::ser::PrettyFormatter::with_indent(b"\t");
+	let mut ser = serde_json::Serializer::with_formatter(buf, formatter);
+	json.serialize(&mut ser).unwrap();
+	String::from_utf8(ser.into_inner()).unwrap()
+}
+
 pub mod server;
+pub mod import;
 
 ffi!(fn free_object(s: *mut ()) {
 	unsafe { Box::from_raw(s); }

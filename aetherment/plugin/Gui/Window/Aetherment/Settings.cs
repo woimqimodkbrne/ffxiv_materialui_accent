@@ -22,6 +22,7 @@ public class Settings {
 		}
 		
 		if(Aeth.TabItem("Advanced")) {
+			ImGui.InputText("Local Mods Directory", ref Main.Config.LocalPath, 128);
 			ImGui.Checkbox("File Explorer", ref Main.Config.FileExplorer);
 			ImGui.Checkbox("Mod Development", ref Main.Config.ModDev);
 		}

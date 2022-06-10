@@ -13,6 +13,12 @@ public class Server {
 		return JsonConvert.DeserializeObject<Mod[]>(search(query, tags, page)) is Mod[] r ? r : new Mod[0];
 	}
 	
+	[DllImport("aetherment_core.dll", EntryPoint = "server_mod")]
+	private static extern FFI.String mod_page(int id);
+	public static Mod? ModPage(int id) {
+		return JsonConvert.DeserializeObject<Mod>(mod_page(id));
+	}
+	
 	// my 'beautiful' ffi is falling apart, idk how to handle structs with rust types
 	[DllImport("aetherment_core.dll", EntryPoint = "server_download_preview")]
 	private static extern IntPtr download_preview(int modid, FFI.Str filename);

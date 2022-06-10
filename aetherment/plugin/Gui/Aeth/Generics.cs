@@ -57,4 +57,39 @@ public static partial class Aeth {
 		
 		Draw.AddText(new Vector2(pos.X, pos.Y + line * TextHeight), clr.Value, curline);
 	}
+	
+	public static void HoverTooltip(string label) {
+		if(ImGui.IsItemHovered()) {
+			ImGui.BeginTooltip();
+			ImGui.TextUnformatted(label);
+			ImGui.EndTooltip();
+		}
+			
+	}
+	
+	public static bool ButtonIcon(FontAwesomeIcon icon) => ButtonIcon(icon.ToIconString());
+	
+	public static bool ButtonIcon(string icon) {
+		ImGui.PushFont(UiBuilder.IconFont);
+		
+		var size = new Vector2(FrameHeight);
+		var pos = ImGui.GetCursorPos();
+		var hover = false;
+		ImGui.PushStyleVar(ImGuiStyleVar.FramePadding, new Vector2(0, S.FramePadding.Y));
+		ImGui.Dummy(size);
+		if(ImGui.IsItemHovered()) {
+			ImGui.PushStyleColor(ImGuiCol.Text, S.Colors[1]);
+			hover = true;
+		}
+		
+		ImGui.SetCursorPos(pos);
+		var a = ImGui.Button(icon, size);
+		ImGui.PopStyleVar();
+		
+		if(hover)
+			ImGui.PopStyleColor();
+		ImGui.PopFont();
+		
+		return a;
+	}
 }

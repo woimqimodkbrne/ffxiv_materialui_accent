@@ -7,11 +7,11 @@ namespace Aetherment;
 public class Config {
 	private static string configPath => $"{Aetherment.Interface.ConfigDirectory.FullName}/config.json";
 	
-	[JsonIgnore]
-	private int hash;
+	public string LocalPath = "";
+	public bool FileExplorer = false;
+	public bool ModDev = false;
 	
-	public bool FileExplorer = true;
-	public bool ModDev = true;
+	[JsonIgnore] private int hash;
 	
 	public override int GetHashCode() {
 		int result = 0;

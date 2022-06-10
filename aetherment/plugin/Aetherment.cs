@@ -73,7 +73,7 @@ public class Aetherment : IDalamudPlugin {
 			if(aethermentGuiVisible)
 				aethermentGui.Draw(ref aethermentGuiVisible);
 		} catch(Exception e) {
-			Kill(e.Message, 0);
+			Kill(e.ToString().Replace("   ", "\t"), 0);
 		}
 	}
 	
@@ -140,7 +140,7 @@ public class Aetherment : IDalamudPlugin {
 		for(int i = depthStrip; i < frames.Length; i++)
 			// we dont care about the stack produced by ffi functions themselves
 			// or by functions outside our own assembly
-			if(frames[i].GetFileLineNumber() > 0 && frames[i].GetMethod()?.Module == typeof(Aetherment).Module) 
+			if(frames[i].GetFileLineNumber() > 0 && frames[i].GetMethod()?.Module == typeof(Aetherment).Module)
 				stack.Add($"\tat {frames[i].GetMethod()}, {frames[i].GetFileName()}:{frames[i].GetFileLineNumber()}:{frames[i].GetFileColumnNumber()}");
 		PluginLog.Error($"\n\t{content}\n{string.Join("\n", stack)}");
 		

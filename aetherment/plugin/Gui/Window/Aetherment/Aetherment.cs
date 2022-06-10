@@ -1,5 +1,6 @@
 using System.Numerics;
 using ImGuiNET;
+using Main = Aetherment.Aetherment;
 
 namespace Aetherment.Gui.Window.Aetherment;
 
@@ -7,11 +8,13 @@ public class AethermentWindow {
 	private Settings settings;
 	private ModManager manager;
 	private ModBrowser browser;
+	private ModDev dev;
 	
 	public AethermentWindow() {
 		settings = new();
 		manager = new();
 		browser = new();
+		dev = new();
 	}
 	
 	~AethermentWindow() {
@@ -42,6 +45,18 @@ public class AethermentWindow {
 		if(Aeth.TabItem("Mod Browser")) {
 			ImGui.BeginChild("browser");
 			browser.Draw();
+			ImGui.EndChild();
+		}
+		
+		if(Main.Config.FileExplorer && Aeth.TabItem("File Explorer")) {
+			ImGui.BeginChild("explorer");
+			// dev.Draw();
+			ImGui.EndChild();
+		}
+		
+		if(Main.Config.ModDev && Aeth.TabItem("Mod Development")) {
+			ImGui.BeginChild("dev", Vector2.Zero, false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
+			dev.Draw();
 			ImGui.EndChild();
 		}
 		
