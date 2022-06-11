@@ -40,3 +40,17 @@ ffi!(fn server_download_preview(modid: i32, file: &str) -> Img {
 	
 	Img(img.width(), img.height(), img.into_raw())
 });
+
+// This shouldnt be here
+// TODO: organize this mess
+ffi!(fn read_image(file: &str) -> Img {
+	let img = image::io::Reader::open(file)
+		.unwrap()
+		.with_guessed_format()
+		.unwrap()
+		.decode()
+		.unwrap()
+		.into_rgba8();
+	
+	Img(img.width(), img.height(), img.into_raw())
+});

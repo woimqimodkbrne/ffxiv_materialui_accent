@@ -22,6 +22,7 @@ public class ModDev {
 		[JsonIgnore] public string main_mod_label;
 		public bool nsfw;
 		[JsonIgnore] public (string, int)[] list;
+		[JsonIgnore] public List<Aeth.Texture> previews;
 		
 		public Meta() {
 			name = "";
@@ -32,6 +33,7 @@ public class ModDev {
 			main_mod_label = "";
 			nsfw = false;
 			list = new (string, int)[0];
+			previews = new();
 		}
 	}
 	
@@ -67,10 +69,12 @@ public class ModDev {
 	}
 	
 	private void ReloadselectedMod() {
-		var path = $"{new DirectoryInfo(Main.Config.LocalPath).FullName}/{selectedMod}/meta.json";
-		curMod = File.Exists(path) ? JsonConvert.DeserializeObject<Meta>(File.ReadAllText(path)) : new();
+		var path = $"{new DirectoryInfo(Main.Config.LocalPath).FullName}/{selectedMod}";
+		var pathmeta = $"{path}/meta.json";
+		curMod = File.Exists(pathmeta) ? JsonConvert.DeserializeObject<Meta>(File.ReadAllText(pathmeta)) : new();
 		curMod.main_mod_label = "";
 		curMod.list = new (string, int)[0];
+		curMod.previews = new();
 		
 		var s = selectedMod;
 		Task.Run(() => {
@@ -80,6 +84,12 @@ public class ModDev {
 			if(curMod.main_mod != null)
 				if(Server.Server.ModPage(curMod.main_mod.Value) is Server.Mod m)
 					curMod.main_mod_label = m.Name;
+			
+			try { // who needs checks anyways
+				foreach(var p in new DirectoryInfo($"{path}/previews").EnumerateFiles())
+					lock(curMod.previews)
+						curMod.previews.Add(FFI.Extern.ReadImage(p.FullName));
+			} catch {}
 		});
 	}
 	
@@ -158,6 +168,54 @@ public class ModDev {
 				limit = $"{curMod.description.Length}/10000";
 				Aeth.Offset(w - ImGui.CalcTextSize(limit).X - 4, -Aeth.S.ItemSpacing.Y, false);
 				ImGui.TextColored(curMod.description.Length > 10000 ? ImGuiColors.DPSRed : Aeth.S.Colors[(int)ImGuiCol.Text], limit);
+				
+				ImGui.Text("Previews");
+				ImGui.BeginChild("previews", new Vector2(0, 150), false, ImGuiWindowFlags.HorizontalScrollbar);
+				// previews
+				var ps = new Vector2(225, 150);
+				foreach(var img in curMod.previews) {
+					Aeth.BoxedImage(ps, img);
+					ImGui.SameLine();
+				}
+				
+				// new preview
+				pos = ImGui.GetCursorScreenPos();
+				ImGui.Dummy(ps);
+				Aeth.Draw.AddRectFilled(pos, pos + ps, 0xFF101010, Aeth.S.FrameRounding);
+				pos += ps / 2;
+				Aeth.Draw.AddRectFilled(pos + new Vector2(-5, -40),
+				                        pos + new Vector2( 5,  40),
+				                        0xFFFFFFFF, Aeth.S.FrameRounding);
+				Aeth.Draw.AddRectFilled(pos + new Vector2(-40, -5),
+				                        pos + new Vector2( 40,  5),
+				                        0xFFFFFFFF, Aeth.S.FrameRounding);
+				// TODO: dalamud file selector
+				// TODO: better name, this wont take into account non last preview deletion
+				// TODO: name also always assumes there is a extension, this might not be the case
+				if(ImGui.IsItemClicked())
+					ImGui.OpenPopup("previewadd");
+				Aeth.HoverTooltip("Add Preview");
+				if(ImGui.BeginPopupContextItem("previewadd")) {
+					ImGui.InputTextWithHint("##input", "Image path", ref importpath, 128);
+					if(ImGui.Button("Add")) {
+						var path = importpath;
+						var previewspath = $"{new DirectoryInfo(Main.Config.LocalPath).FullName}/{selectedMod}/previews";
+						importpath = "";
+						Task.Run(() => {
+							var dir = Directory.CreateDirectory(previewspath);
+							var destpath = $"{previewspath}/{dir.GetFiles().Length + 1}.{path.Split(".").Last()}";
+							File.Copy(path, destpath);
+							// TODO: thread probably
+							lock(curMod.previews)
+								curMod.previews.Add(FFI.Extern.ReadImage(destpath));
+						});
+						ImGui.CloseCurrentPopup();
+					}
+					ImGui.EndPopup();
+				}
+					
+				
+				ImGui.EndChild();
 				
 				ImGui.Text("TODO: contributor selection");
 				

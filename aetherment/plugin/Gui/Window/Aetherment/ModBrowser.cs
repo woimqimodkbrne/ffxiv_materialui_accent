@@ -106,20 +106,11 @@ public class ModBrowser {
 		var rounding = Aeth.S.FrameRounding;
 		Aeth.Draw.AddRectFilled(pos, pos + size, ImGui.GetColorU32(ImGuiCol.FrameBg), rounding);
 		
-		// Preview bg
+		// Preview
 		var previewPos = pos + new Vector2(2, 2);
 		var previewSize = new Vector2((size.Y - 4) * 1.5f, size.Y - 4);
-		Aeth.Draw.AddRectFilled(previewPos, previewPos + previewSize, 0xFF101010, rounding);
-		
-		// Preview
 		var tex = GetPreview(mod);
-		var scale = Math.Min(previewSize.X / tex.Width, previewSize.Y / tex.Height);
-		var w = tex.Width * scale;
-		var h = tex.Height * scale;
-		previewPos.X += (previewSize.X - w) / 2;
-		previewPos.Y += (previewSize.Y - h) / 2;
-		rounding -= Math.Min(rounding, Math.Max(previewSize.X - w, previewSize.Y - h) / 2);
-		Aeth.Draw.AddImageRounded(tex, previewPos, previewPos + new Vector2(w, h), Vector2.Zero, Vector2.One, 0xFFFFFFFF, rounding);
+		Aeth.BoxedImage(previewPos, previewSize, tex);
 		
 		// Name
 		Aeth.WrappedText(mod.Name,
@@ -191,7 +182,8 @@ public class ModBrowser {
 					break;
 				}
 				
-				mods.AddRange(m);
+				lock(mods)
+					mods.AddRange(m);
 			}
 			
 			searching = false;

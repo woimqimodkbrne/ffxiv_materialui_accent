@@ -92,4 +92,21 @@ public static partial class Aeth {
 		
 		return a;
 	}
+	
+	public static void BoxedImage(Vector2 size, Texture tex) {
+		BoxedImage(ImGui.GetCursorScreenPos(), size, tex);
+		ImGui.Dummy(size);
+	}
+	
+	public static void BoxedImage(Vector2 pos, Vector2 size, Texture tex) {
+		var rounding = S.FrameRounding;
+		Aeth.Draw.AddRectFilled(pos, pos + size, 0xFF101010, rounding);
+		var scale = Math.Min(size.X / tex.Width, size.Y / tex.Height);
+		var w = tex.Width * scale;
+		var h = tex.Height * scale;
+		pos.X += (size.X - w) / 2;
+		pos.Y += (size.Y - h) / 2;
+		rounding -= Math.Min(rounding, Math.Max(size.X - w, size.Y - h) / 2);
+		Draw.AddImageRounded(tex, pos, pos + new Vector2(w, h), Vector2.Zero, Vector2.One, 0xFFFFFFFF, rounding);
+	}
 }

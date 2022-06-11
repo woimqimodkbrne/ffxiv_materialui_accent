@@ -24,12 +24,7 @@ public class Server {
 	private static extern IntPtr download_preview(int modid, FFI.Str filename);
 	public static Gui.Aeth.Texture DownloadPreview(int modid, string filename) {
 		var imgptr = download_preview(modid, filename);
-		var width = Marshal.PtrToStructure<uint>(imgptr);
-		var height = Marshal.PtrToStructure<uint>(imgptr + 4);
-		var img = FFI.Vec.Convert<byte>(imgptr + 8);
-		FFI.Extern.FreeObject(imgptr);
-		
-		return new Gui.Aeth.Texture(img, width, height);
+		return FFI.Extern.ReadImage(imgptr);
 	}
 }
 
