@@ -125,9 +125,13 @@ public class ModDev {
 			ImGui.InputTextWithHint("##input", "Penumbra Mod Path", ref importpath, 128);
 			if(ImGui.Button("Import")) {
 				PluginLog.Log("import");
+				var origin = importpath;
 				var target = $"{new DirectoryInfo(Main.Config.LocalPath).FullName}/{new DirectoryInfo(importpath).Name}";
-				ImportPenumbra(importpath, target);
-				ReloadList();
+				importpath = "";
+				Task.Run(() => {
+					ImportPenumbra(origin, target);
+					ReloadList();
+				});
 				ImGui.CloseCurrentPopup();
 			}
 			ImGui.EndPopup();

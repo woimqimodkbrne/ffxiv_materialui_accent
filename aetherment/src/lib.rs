@@ -62,7 +62,10 @@ pub fn serialize_json(json: serde_json::Value) -> String {
 }
 
 pub mod server;
-pub mod import;
+pub mod moddev {
+	pub mod import;
+	pub mod compress;
+}
 
 ffi!(fn free_object(s: *mut ()) {
 	unsafe { Box::from_raw(s); }
