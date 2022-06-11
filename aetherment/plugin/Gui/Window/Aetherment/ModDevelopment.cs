@@ -170,7 +170,7 @@ public class ModDev {
 				ImGui.TextColored(curMod.description.Length > 10000 ? ImGuiColors.DPSRed : Aeth.S.Colors[(int)ImGuiCol.Text], limit);
 				
 				ImGui.Text("Previews");
-				ImGui.BeginChild("previews", new Vector2(0, 150), false, ImGuiWindowFlags.HorizontalScrollbar);
+				ImGui.BeginChild("previews", new Vector2(0, 150 + Aeth.S.ScrollbarSize), false, ImGuiWindowFlags.AlwaysHorizontalScrollbar);
 				// previews
 				var ps = new Vector2(225, 150);
 				foreach(var img in curMod.previews) {
@@ -205,7 +205,6 @@ public class ModDev {
 							var dir = Directory.CreateDirectory(previewspath);
 							var destpath = $"{previewspath}/{dir.GetFiles().Length + 1}.{path.Split(".").Last()}";
 							File.Copy(path, destpath);
-							// TODO: thread probably
 							lock(curMod.previews)
 								curMod.previews.Add(FFI.Extern.ReadImage(destpath));
 						});
@@ -213,8 +212,6 @@ public class ModDev {
 					}
 					ImGui.EndPopup();
 				}
-					
-				
 				ImGui.EndChild();
 				
 				ImGui.Text("TODO: contributor selection");
