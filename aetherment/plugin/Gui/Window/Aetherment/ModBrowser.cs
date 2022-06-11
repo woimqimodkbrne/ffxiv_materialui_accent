@@ -119,7 +119,7 @@ public class ModBrowser {
 		                 "");
 		
 		// Description
-		Aeth.WrappedText(mod.Description,
+		Aeth.WrappedText(mod.Description.Replace("\n", " "),
 		                 new Vector2(pos.X + previewSize.X + 8, pos.Y + 6 + Aeth.TextHeight),
 		                 new Vector2(size.X - previewSize.X - 10, size.Y - (Aeth.TextHeight + 6) * 2));
 		

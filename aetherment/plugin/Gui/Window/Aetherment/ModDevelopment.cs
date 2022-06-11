@@ -256,7 +256,9 @@ public class ModDev {
 			Aeth.HoverTooltip("Save Changes");
 			
 			ImGui.SameLine();
-			Aeth.ButtonIcon(""); // fa-cloud-upload-alt
+			if(Aeth.ButtonIcon("")) // fa-cloud-upload-alt
+				// TODO: progress bar
+				Task.Run(() => {Upload($"{new DirectoryInfo(Main.Config.LocalPath).FullName}/{selectedMod}");});
 			Aeth.HoverTooltip("Upload");
 		}
 		
@@ -265,4 +267,7 @@ public class ModDev {
 	
 	[DllImport("aetherment_core.dll", EntryPoint = "import_penumbra")]
 	public static extern void ImportPenumbra(FFI.Str penumbra_path, FFI.Str target_path);
+	
+	[DllImport("aetherment_core.dll", EntryPoint = "upload_mod")]
+	public static extern void Upload(FFI.Str mod_path);
 }
