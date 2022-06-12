@@ -16,7 +16,7 @@ ffi!(fn server_search(query: &str, tags: &[i16], page: i32) -> String {
 		.unwrap()
 });
 
-ffi!(fn server_mod(id: i32) -> String {
+ffi!(fn server_mod(id: &str) -> String {
 	CLIENT.get(format!("{}/mod/{}.json", SERVER, id))
 		.send()
 		.unwrap()
@@ -25,7 +25,7 @@ ffi!(fn server_mod(id: i32) -> String {
 });
 
 #[repr(C)] struct Img(u32, u32, Vec<u8>);
-ffi!(fn server_download_preview(modid: i32, file: &str) -> Img {
+ffi!(fn server_download_preview(modid: &str, file: &str) -> Img {
 	let img = image::io::Reader::new(Cursor::new(CLIENT.get(format!("{}/mod/{}/{}", SERVER, modid, file))
 		.send()
 		.unwrap()
@@ -60,10 +60,14 @@ ffi!(fn read_image(file: &str) -> Img {
 ffi!(fn upload_mod(mod_path: &str) {
 	let mod_path = Path::new(mod_path);
 	
+	crate::moddev::index::index(mod_path);
+	
 	// TODO: login, proper token, figure out a proper way to store the token
 	let mut form = req::multipart::Form::new()
 		.text("token", "\0".repeat(64))
-		.part("meta", req::multipart::Part::reader(File::open(mod_path.join("meta.json")).unwrap()));
+		.part("meta", req::multipart::Part::reader(File::open(mod_path.join("meta.json")).unwrap()))
+		.part("datas", req::multipart::Part::reader(File::open(mod_path.join("datas.json")).unwrap()))
+		.part("index", req::multipart::Part::reader(File::open(mod_path.join("index.json")).unwrap()));
 	
 	let previews_path = mod_path.join("previews");
 	if previews_path.exists() {
@@ -72,11 +76,8 @@ ffi!(fn upload_mod(mod_path: &str) {
 		}
 	}
 	
-	crate::moddev::compress::compress(mod_path);
 	for f in fs::read_dir(mod_path.join("files_compressed")).unwrap().into_iter() {
-		let f = f.unwrap();
-		form = form.part("file", req::multipart::Part::reader(File::open(f.path()).unwrap())
-			.file_name(f.file_name().to_str().unwrap().to_string()));
+		form = form.part("file", req::multipart::Part::reader(File::open(f.unwrap().path()).unwrap()));
 	}
 	
 	let resp = CLIENT.post(format!("{}/mod", SERVER))

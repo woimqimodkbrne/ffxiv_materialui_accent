@@ -16,23 +16,23 @@ public class ModDev {
 	private struct Meta {
 		public string name;
 		public string description;
-		public int[] contributors;
-		public int[] dependencies;
-		public int? main_mod;
+		public string[] contributors;
+		public string[] dependencies;
+		public string? main_mod;
 		[JsonIgnore] public string main_mod_label;
 		public bool nsfw;
-		[JsonIgnore] public (string, int)[] list;
+		[JsonIgnore] public (string, string)[] list;
 		[JsonIgnore] public List<Aeth.Texture> previews;
 		
 		public Meta() {
 			name = "";
 			description = "";
-			contributors = new int[0];
-			dependencies = new int[0];
+			contributors = new string[0];
+			dependencies = new string[0];
 			main_mod = null;
 			main_mod_label = "";
 			nsfw = false;
-			list = new (string, int)[0];
+			list = new (string, string)[0];
 			previews = new();
 		}
 	}
@@ -73,7 +73,7 @@ public class ModDev {
 		var pathmeta = $"{path}/meta.json";
 		curMod = File.Exists(pathmeta) ? JsonConvert.DeserializeObject<Meta>(File.ReadAllText(pathmeta)) : new();
 		curMod.main_mod_label = "";
-		curMod.list = new (string, int)[0];
+		curMod.list = new (string, string)[0];
 		curMod.previews = new();
 		
 		var s = selectedMod;
@@ -82,7 +82,7 @@ public class ModDev {
 				return;
 			
 			if(curMod.main_mod != null)
-				if(Server.Server.ModPage(curMod.main_mod.Value) is Server.Mod m)
+				if(Server.Server.ModPage(curMod.main_mod) is Server.Mod m)
 					curMod.main_mod_label = m.Name;
 			
 			try { // who needs checks anyways

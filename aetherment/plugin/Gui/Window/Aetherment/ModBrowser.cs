@@ -20,7 +20,7 @@ public class ModBrowser {
 	private bool searching = false;
 	
 	private List<Mod> mods = new();
-	private Dictionary<int, (Aeth.Texture, DateTime)> previews = new(); // modid, (texture, lastaccess)
+	private Dictionary<string, (Aeth.Texture, DateTime)> previews = new(); // modid, (texture, lastaccess)
 	
 	public ModBrowser() {
 		Search();
@@ -144,8 +144,10 @@ public class ModBrowser {
 			var id = mod.Id;
 			var preview = mod.Previews[0];
 			Task.Run(() => {
-				if(previews.TryGetValue(id, out var val))
+				if(previews.TryGetValue(id, out var val)) {
+					PluginLog.Log($"{id}, {preview}");
 					previews[id] = (Server.Server.DownloadPreview(id, preview), val.Item2);
+				}
 			});
 		}
 		

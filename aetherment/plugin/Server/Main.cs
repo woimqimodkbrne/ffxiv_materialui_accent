@@ -14,40 +14,16 @@ public class Server {
 	}
 	
 	[DllImport("aetherment_core.dll", EntryPoint = "server_mod")]
-	private static extern FFI.String mod_page(int id);
-	public static Mod? ModPage(int id) {
+	private static extern FFI.String mod_page(FFI.Str id);
+	public static Mod? ModPage(string id) {
 		return JsonConvert.DeserializeObject<Mod>(mod_page(id));
 	}
 	
 	// my 'beautiful' ffi is falling apart, idk how to handle structs with rust types
 	[DllImport("aetherment_core.dll", EntryPoint = "server_download_preview")]
-	private static extern IntPtr download_preview(int modid, FFI.Str filename);
-	public static Gui.Aeth.Texture DownloadPreview(int modid, string filename) {
+	private static extern IntPtr download_preview(FFI.Str modid, FFI.Str filename);
+	public static Gui.Aeth.Texture DownloadPreview(string modid, string filename) {
 		var imgptr = download_preview(modid, filename);
 		return FFI.Extern.ReadImage(imgptr);
 	}
 }
-
-// public class Server : IDisposable {
-// 	private const string serverUrl = "http://localhost:8080";
-	
-// 	private HttpClient httpClient;
-	
-// 	public Server() {
-// 		var handler = new HttpClientHandler();
-// 		handler.Proxy = null;
-// 		handler.UseProxy = false;
-		
-// 		httpClient = new HttpClient(handler);
-// 	}
-	
-// 	public void Dispose() {
-// 		httpClient.Dispose();
-// 	}
-	
-// 	public async Task<Mod[]> Search(string query, short[] tags, byte page) {
-// 		var url = $"{serverUrl}/search.json?query={query}&tags={string.Join(",", tags)}&page={page}";
-// 		var result = await httpClient.GetStringAsync(url);
-// 		return JsonConvert.DeserializeObject<Mod[]>(result) is Mod[] r ? r : new Mod[0];
-// 	}
-// }

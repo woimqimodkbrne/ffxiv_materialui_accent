@@ -1,7 +1,7 @@
 namespace Aetherment.Server;
 
 public struct Mod {
-	public int Id;
+	public string Id;
 	public string Name;
 	public string Description;
 	public IdName Author;
@@ -18,6 +18,6 @@ public struct Mod {
 }
 
 public struct IdName {
-	public int Id;
+	public string Id;
 	public string Name;
 }

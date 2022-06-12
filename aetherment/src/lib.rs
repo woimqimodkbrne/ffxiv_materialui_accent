@@ -64,7 +64,7 @@ pub fn serialize_json(json: serde_json::Value) -> String {
 pub mod server;
 pub mod moddev {
 	pub mod import;
-	pub mod compress;
+	pub mod index;
 }
 
 ffi!(fn free_object(s: *mut ()) {

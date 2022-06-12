@@ -62,9 +62,6 @@ ffi!(fn import_penumbra(penumbra_path: &str, target_path: &str) {
 		&target_path
 	);
 	
-	// TODO: probably dont make it reread all the files again, simply compress inside import block
-	crate::moddev::compress::compress(target_path);
-	
 	let mut new_datas = File::create(target_path.join("datas.json")).unwrap();
 	new_datas.write_all(serialize_json(json!({
 		"penumbra": {
