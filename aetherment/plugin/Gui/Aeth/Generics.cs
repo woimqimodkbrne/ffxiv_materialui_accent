@@ -29,9 +29,18 @@ public static partial class Aeth {
 		}
 	}
 	
+	public static void WrappedText(string text, Vector2 size, string split = " ", uint? clr = null) {
+		Aeth.WrappedText(text, ImGui.GetCursorScreenPos(), size, split, clr);
+		ImGui.Dummy(size);
+	}
+	
+	public static void WrappedText(string text, float width, string split = " ", uint? clr = null) {
+		ImGui.Dummy(new Vector2(0, Aeth.WrappedText(text, ImGui.GetCursorScreenPos(), new Vector2(width, float.MaxValue), split, clr)));
+	}
+	
 	// TODO: mby rewrite it to constantly half until it reaches the perfect size, idk the fancy name for it
 	// TODO: regex based splitting and cutting away useless chars like trailing commas
-	public static void WrappedText(string text, Vector2 pos, Vector2 size, string split = " ", uint? clr = null) {
+	public static float WrappedText(string text, Vector2 pos, Vector2 size, string split = " ", uint? clr = null) {
 		if(clr == null)
 			clr = ImGui.GetColorU32(ImGuiCol.Text);
 		
@@ -50,12 +59,14 @@ public static partial class Aeth {
 				line++;
 				curline = seg;
 				if(line == lines)
-					return;
+					return (line + 1) * TextHeight;
 			} else
 				curline += split + seg;
 		}
 		
 		Draw.AddText(new Vector2(pos.X, pos.Y + line * TextHeight), clr.Value, curline);
+		
+		return (line + 1) * TextHeight;
 	}
 	
 	public static void HoverTooltip(string label) {

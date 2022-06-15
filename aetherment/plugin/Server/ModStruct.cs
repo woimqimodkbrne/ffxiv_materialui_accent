@@ -12,9 +12,9 @@ public struct Mod {
 	public long SizeDownload;
 	public short[] Tags;
 	public string[] Previews;
-	public bool nsfw;
-	public int likes;
-	public int downloads;
+	public bool Nsfw;
+	public int Likes;
+	public int Downloads;
 }
 
 public struct IdName {

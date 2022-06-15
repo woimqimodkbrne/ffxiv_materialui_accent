@@ -1,11 +1,22 @@
 #![allow(improper_ctypes_definitions)]
 #![feature(panic_backtrace_config)]
+#![feature(seek_stream_len)]
 
 use std::panic::BacktraceStyle;
+use ironworks::{Ironworks, sqpack::SqPack, ffxiv};
 use serde::Serialize;
+use reqwest::blocking as req;
 
 #[macro_use]
 extern crate lazy_static;
+
+pub const SERVER: &'static str = "http://localhost:8080";
+lazy_static! {
+	pub static ref CLIENT: req::Client = req::Client::new();
+	
+	pub static ref IRONWORKS: ironworks::Ironworks = Ironworks::new()
+		.resource(SqPack::new(ffxiv::FsResource::search().unwrap()));
+}
 
 static mut LOG: fn(u8, String) = |_, _| {};
 
@@ -23,6 +34,11 @@ extern fn initialize(log: fn(u8, String)) {
 	std::panic::set_hook(Box::new(|info| {
 		log!(ftl, "{}", info);
 	}));
+	
+	// use noumenon::formats::{game::tex::Tex, external::dds::Dds};
+	// let mut fr = std::fs::File::open("C:/ffxiv/aetherment/UI Test/files/overlay.dds").unwrap();
+	// let mut fw = std::fs::File::create("C:/ffxiv/aetherment/UI Test/files/overlay.tex").unwrap();
+	// <Tex as Dds>::read(&mut fr).write(&mut fw);
 }
 
 #[macro_export]
@@ -61,10 +77,15 @@ pub fn serialize_json(json: serde_json::Value) -> String {
 	String::from_utf8(ser.into_inner()).unwrap()
 }
 
-pub mod server;
-pub mod moddev {
-	pub mod import;
-	pub mod index;
+mod server;
+mod moddev {
+	mod import;
+	mod index;
+	mod upload;
+}
+mod downloader {
+	mod download;
+	mod penumbra;
 }
 
 ffi!(fn free_object(s: *mut ()) {

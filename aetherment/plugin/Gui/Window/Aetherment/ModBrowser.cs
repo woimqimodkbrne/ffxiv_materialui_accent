@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Numerics;
-
+using System;
+using System.Linq;
+using System.Runtime.InteropServices;
 using ImGuiNET;
 using Aetherment.Server;
-using System;
+
+using Main = Aetherment.Aetherment;
 
 namespace Aetherment.Gui.Window.Aetherment;
 
@@ -19,8 +22,10 @@ public class ModBrowser {
 	
 	private bool searching = false;
 	
+	private List<Mod> openMods = new();
 	private List<Mod> mods = new();
 	private Dictionary<string, (Aeth.Texture, DateTime)> previews = new(); // modid, (texture, lastaccess)
+	private Aeth.TabBar? tabbar;
 	
 	public ModBrowser() {
 		Search();
@@ -31,21 +36,50 @@ public class ModBrowser {
 	}
 	
 	public void Draw() {
-		Aeth.BeginTabBar("tabs", false);
+		tabbar = Aeth.BeginTabBar("tabs", false);
 		
 		if(Aeth.TabItem("Search")) {
 			ImGui.BeginChild("search");
 			DrawSearch();
 			ImGui.EndChild();
-			ImGui.EndTabItem();
 		}
 		
-		Aeth.TabItem("Blah1");
-		Aeth.TabItem("Blah2");
-		Aeth.TabItem("Blah3");
-		Aeth.TabItem("Blah4");
+		foreach(var mod in openMods)
+			if(Aeth.TabItem(mod.Name)) {
+				ImGui.BeginChild(mod.Id);
+				DrawModPage(mod);
+				ImGui.EndChild();
+			}
 		
 		Aeth.EndTabBar();
+	}
+	
+	private void DrawModPage(Mod mod) {
+		// TODO: make it a *bit* fancier
+		ImGui.TextUnformatted(mod.Name);
+		ImGui.TextUnformatted($"by {mod.Author.Name} and {string.Join(", ", mod.Contributors.Select((u) => u.Name).ToArray())}");
+		ImGui.TextUnformatted($"dependencies: {string.Join(", ", mod.Dependencies.Select((u) => u.Name).ToArray())}");
+		ImGui.TextUnformatted($"likes: {mod.Likes}, downloads: {mod.Downloads}, nsfw: {mod.Nsfw}");
+		Aeth.WrappedText(mod.Description, Aeth.WidthLeft);
+		if(ImGui.Button("Download"))
+			Download(mod.Id, new DownloadSettings {
+				ConfigPath = Main.Interface.GetPluginConfigDirectory(),
+				PenumbraPath = Main.Interface.GetIpcSubscriber<string>("Penumbra.GetModDirectory").InvokeFunc()
+			});
+	}
+	
+	private void OpenModPage(Mod mod) {
+		if(tabbar == null)
+			return;
+		
+		for(int i = 0; i < openMods.Count; i++)
+			if(openMods[i].Name == mod.Name) {
+				tabbar.Tab = i + 1;
+				return;
+			}
+		
+		openMods.Add(mod);
+		tabbar.Tab = openMods.Count;
 	}
 	
 	private void DrawSearch() {
@@ -102,6 +136,9 @@ public class ModBrowser {
 			return;
 		}
 		
+		if(ImGui.IsItemClicked())
+			OpenModPage(mod);
+		
 		// Embed bg
 		var rounding = Aeth.S.FrameRounding;
 		Aeth.Draw.AddRectFilled(pos, pos + size, ImGui.GetColorU32(ImGuiCol.FrameBg), rounding);
@@ -144,10 +181,8 @@ public class ModBrowser {
 			var id = mod.Id;
 			var preview = mod.Previews[0];
 			Task.Run(() => {
-				if(previews.TryGetValue(id, out var val)) {
-					PluginLog.Log($"{id}, {preview}");
+				if(previews.TryGetValue(id, out var val))
 					previews[id] = (Server.Server.DownloadPreview(id, preview), val.Item2);
-				}
 			});
 		}
 		
@@ -191,4 +226,12 @@ public class ModBrowser {
 			searching = false;
 		});
 	}
+	
+	private struct DownloadSettings {
+		public FFI.Str ConfigPath;
+		public FFI.Str PenumbraPath;
+	}
+	
+	[DllImport("aetherment_core.dll", EntryPoint = "download_mod")]
+	private static extern void Download(FFI.Str id, DownloadSettings settings);
 }

@@ -1,4 +1,5 @@
 use std::{path::Path, collections::HashMap, fs::{self, File}, io::{Read, Write}};
+use path_slash::PathExt;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde_json::json;
 
@@ -26,7 +27,7 @@ pub fn index(mod_path: &Path) {
 		}
 		
 		let hash = hasher.finalize().to_hex().as_str()[..24].to_string();
-		index.entry(hash).or_insert_with(|| Vec::new()).push(path.strip_prefix(mod_path).unwrap().to_owned());
+		index.entry(hash).or_insert_with(|| Vec::new()).push(path.strip_prefix(mod_path).unwrap().to_slash_lossy());
 		
 		hasher.reset();
 	}
@@ -82,7 +83,7 @@ pub fn index(mod_path: &Path) {
 			return;
 		}
 		
-		log!(log, "{} Compressing {}", mod_name, path[0].to_str().unwrap());
+		log!(log, "{} Compressing {}", mod_name, path[0]);
 		let mut file = File::open(mod_path.join(&path[0])).unwrap();
 		let file_new = File::create(new_path).unwrap();
 		let mut buf = [0u8; 4096];

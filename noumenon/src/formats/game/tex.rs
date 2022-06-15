@@ -8,11 +8,12 @@ use crate::formats::external::{dds::{Dds, Format as DFormat}, png::Png};
 
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
+#[repr(C)]
 pub struct Pixel {
-	b: u8,
-	g: u8,
-	r: u8,
-	a: u8,
+	pub b: u8,
+	pub g: u8,
+	pub r: u8,
+	pub a: u8,
 }
 
 #[binrw]
@@ -103,8 +104,8 @@ pub struct Header {
 }
 
 pub struct Tex {
-	header: Header,
-	data: Vec<u8>,
+	pub header: Header,
+	pub data: Vec<u8>,
 }
 
 // used to load from spack using ironworks
@@ -116,14 +117,14 @@ impl File for Tex {
 
 impl Tex {
 	pub fn as_pixels(&self) -> &[Pixel] {
-		unsafe { ::std::slice::from_raw_parts(self.data[0] as *const _, self.data.len() / 4) }
+		unsafe { ::std::slice::from_raw_parts(self.data.as_ptr() as *const _, self.data.len() / 4) }
 	}
 	
 	pub fn as_pixels_mut(&mut self) -> &mut [Pixel] {
-		unsafe { ::std::slice::from_raw_parts_mut(self.data[0] as *mut _, self.data.len() / 4) }
+		unsafe { ::std::slice::from_raw_parts_mut(self.data.as_mut_ptr() as *mut _, self.data.len() / 4) }
 	}
 	
-	fn read<T>(reader: &mut T) -> Self where T: Read + Seek {
+	pub fn read<T>(reader: &mut T) -> Self where T: Read + Seek {
 		// unwrap cuz ? doesn't seem to like it and cba figuring out why or using match
 		let header = <Header as BinRead>::read(reader).unwrap();
 		
@@ -138,7 +139,7 @@ impl Tex {
 		}
 	}
 	
-	fn write<T>(&self, writer: &mut T) where T: Write + Seek {
+	pub fn write<T>(&self, writer: &mut T) where T: Write + Seek {
 		self.header.write_to(writer).unwrap();
 		writer.write_all(&DFormat::from(self.header.format).convert_to(&self.data).unwrap()).unwrap();
 	}
