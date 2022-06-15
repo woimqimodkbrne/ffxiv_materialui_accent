@@ -80,8 +80,8 @@ fn import_block(block: &serde_json::Value, penumbra_path: &Path, target_path: &P
 	
 	for (gamepath, realpath) in block["Files"].as_object().unwrap() {
 		let mut f = File::open(penumbra_path.join(realpath.as_str().unwrap())).unwrap();
-		while f.read(&mut buf).unwrap() != 0 {
-			hasher.update(&buf);
+		while let readcount = f.read(&mut buf).unwrap() && readcount != 0 {
+			hasher.update(&buf[0..readcount]);
 		}
 		
 		// Im sure 96/256 bits is enough, right? right??
@@ -94,8 +94,8 @@ fn import_block(block: &serde_json::Value, penumbra_path: &Path, target_path: &P
 			log!(log, "{} Importing {}", target_path.file_name().unwrap().to_str().unwrap(), newpath.file_name().unwrap().to_str().unwrap());
 			let mut f2 = File::create(newpath).unwrap();
 			f.seek(SeekFrom::Start(0)).unwrap();
-			while f.read(&mut buf).unwrap() != 0 {
-				f2.write_all(&buf).unwrap();
+			while let readcount = f.read(&mut buf).unwrap() && readcount != 0 {
+				f2.write_all(&buf[0..readcount]).unwrap();
 			}
 			f2.flush().unwrap();
 		}

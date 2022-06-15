@@ -1,6 +1,7 @@
 #![allow(improper_ctypes_definitions)]
 #![feature(panic_backtrace_config)]
 #![feature(seek_stream_len)]
+#![feature(let_chains)]
 
 use std::panic::BacktraceStyle;
 use ironworks::{Ironworks, sqpack::SqPack, ffxiv};

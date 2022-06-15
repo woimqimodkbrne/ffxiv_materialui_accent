@@ -152,19 +152,22 @@ impl Dds for Tex {
 		let height = reader.read_le::<u32>().unwrap() as u16;
 		let width = reader.read_le::<u32>().unwrap() as u16;
 		reader.seek(SeekFrom::Current(4)).unwrap();
-		let depths = reader.read_le::<u32>().unwrap() as u16;
+		let depths = 1.max(reader.read_le::<u32>().unwrap() as u16);
 		let mip_levels = reader.read_le::<u32>().unwrap() as u16;
 		
 		let format = DFormat::get(reader);
 		
 		// im sure theres some fancier way but w/e
 		let mut mip_offsets = [0u32; 13];
+		let mut mip_offset = 80;
 		for i in 0..13 {
 			mip_offsets[i] = if (i as u16) < mip_levels {
-				80 + ((width as u32 * height as u32 * 4) as f32 * (0.25f32.powi(i as i32))) as u32 
+				mip_offset
 			} else {
 				0
-			}
+			};
+			
+			mip_offset += ((width as u32 * height as u32 * 4) as f32 * (0.25f32.powi(i as i32))) as u32;
 		}
 		
 		reader.seek(SeekFrom::End(0)).unwrap();

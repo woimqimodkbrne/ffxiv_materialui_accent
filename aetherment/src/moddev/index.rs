@@ -2,7 +2,6 @@ use std::{path::Path, collections::HashMap, fs::{self, File}, io::{Read, Write}}
 use path_slash::PathExt;
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use serde_json::json;
-
 use crate::serialize_json;
 
 ffi!(fn index_mod(mod_path: &str) {
@@ -22,8 +21,8 @@ pub fn index(mod_path: &Path) {
 		let path = entry.unwrap().into_path();
 		log!(log, "{} Hashing {}", mod_name, path.to_str().unwrap());
 		let mut file = File::open(&path).unwrap();
-		while file.read(&mut buf).unwrap() != 0 {
-			hasher.update(&buf);
+		while let readcount = file.read(&mut buf).unwrap() && readcount != 0 {
+			hasher.update(&buf[0..readcount]);
 		}
 		
 		let hash = hasher.finalize().to_hex().as_str()[..24].to_string();
@@ -86,11 +85,10 @@ pub fn index(mod_path: &Path) {
 		log!(log, "{} Compressing {}", mod_name, path[0]);
 		let mut file = File::open(mod_path.join(&path[0])).unwrap();
 		let file_new = File::create(new_path).unwrap();
-		let mut buf = [0u8; 4096];
-		
 		let mut writer = flate2::write::ZlibEncoder::new(file_new, flate2::Compression::default());
-		while file.read(&mut buf).unwrap() != 0 {
-			writer.write_all(&buf).unwrap();
+		let mut buf = [0u8; 4096];
+		while let readcount = file.read(&mut buf).unwrap() && readcount != 0 {
+			writer.write_all(&buf[0..readcount]).unwrap();
 		}
 		writer.finish().unwrap();
 	});

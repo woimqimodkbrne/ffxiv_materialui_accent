@@ -115,7 +115,6 @@ pub fn download<'a>(settings: &'a Settings, meta: &'a Meta, config: &'a Config, 
 		
 		f.into_iter().for_each(|(gamepath, p)| match p {
 			PenumbraFile::Simple(path) => {
-				log!(log, "simple {}", gamepath);
 				if let Some(&hash) = file_hashes.get(&path.as_ref()) {
 					files.insert(gamepath.as_ref(), files_path.join(hash).strip_prefix(&mod_path).unwrap().to_slash_lossy());
 				}
@@ -126,7 +125,6 @@ pub fn download<'a>(settings: &'a Settings, meta: &'a Meta, config: &'a Config, 
 				}
 			},
 			PenumbraFile::Complex(paths) => {
-				log!(log, "complex {}", gamepath);
 				paths.iter()
 					.for_each(|layer| layer
 						.iter()
@@ -137,7 +135,7 @@ pub fn download<'a>(settings: &'a Settings, meta: &'a Meta, config: &'a Config, 
 							// changed_files.insert(file_path.strip_prefix(&mod_path).unwrap().to_slash_lossy());
 						}));
 				
-				files.insert(gamepath.as_ref(), resolve_customizability(&mod_path, file_hashes, &conf_settings, paths)
+				files.insert(gamepath.as_ref(), resolve_customizability(&mod_path, file_hashes, &conf_settings, gamepath, paths)
 				                                	.strip_prefix(&mod_path).unwrap().to_slash_lossy());
 			},
 		});
@@ -205,13 +203,12 @@ pub fn download<'a>(settings: &'a Settings, meta: &'a Meta, config: &'a Config, 
 		.unwrap();
 }
 
-fn resolve_customizability<'a>(mod_path: &Path, file_hashes: &HashMap<&str, &str>, settings: &HashMap<String, ConfSettings>, path: &'a Vec<Vec<Option<String>>>) -> PathBuf {
+fn resolve_customizability<'a>(mod_path: &Path, file_hashes: &HashMap<&str, &str>, settings: &HashMap<String, ConfSettings>, gamepath: &str, path: &'a Vec<Vec<Option<String>>>) -> PathBuf {
 	let files_path = mod_path.join("files");
 	
-	let load_file = |path| -> Vec<u8> {
+	let load_file = |path: &str| -> Vec<u8> {
 		if let Some(hash) = file_hashes.get(path) {
-			log!(log, "mod path {}", path);
-			let mut f = File::open(files_path.join(hash))
+			let mut f = File::open(files_path.join(format!("{}.{}", hash, path.split(".").last().unwrap())))
 				.unwrap();
 			
 			let mut buf = Vec::with_capacity(f.stream_len().unwrap() as usize);
@@ -219,7 +216,6 @@ fn resolve_customizability<'a>(mod_path: &Path, file_hashes: &HashMap<&str, &str
 			
 			buf
 		} else {
-			log!(log, "game path {}", path);
 			// TODO: allow reading from mods with lower priority
 			// TODO: handle cases where the file doesnt exist, probably
 			IRONWORKS.file::<Vec<u8>>(path).unwrap()
@@ -235,18 +231,18 @@ fn resolve_customizability<'a>(mod_path: &Path, file_hashes: &HashMap<&str, &str
 				ConfSettings::Rgb(val) => {
 					let mut tex = Tex::read(&mut Cursor::new(&data));
 					tex.as_pixels_mut().iter_mut().for_each(|pixel| {
-						pixel.b = (pixel.b as f32 * val[0]) as u8;
+						pixel.b = (pixel.b as f32 * val[2]) as u8;
 						pixel.g = (pixel.g as f32 * val[1]) as u8;
-						pixel.r = (pixel.r as f32 * val[2]) as u8;
+						pixel.r = (pixel.r as f32 * val[0]) as u8;
 					});
 					tex.write(&mut Cursor::new(&mut data));
 				},
 				ConfSettings::Rgba(val) => {
 					let mut tex = Tex::read(&mut Cursor::new(&data));
 					tex.as_pixels_mut().iter_mut().for_each(|pixel| {
-						pixel.b = (pixel.b as f32 * val[0]) as u8;
+						pixel.b = (pixel.b as f32 * val[2]) as u8;
 						pixel.g = (pixel.g as f32 * val[1]) as u8;
-						pixel.r = (pixel.r as f32 * val[2]) as u8;
+						pixel.r = (pixel.r as f32 * val[0]) as u8;
 						pixel.a = (pixel.r as f32 * val[3]) as u8;
 					});
 					tex.write(&mut Cursor::new(&mut data));
@@ -305,7 +301,7 @@ fn resolve_customizability<'a>(mod_path: &Path, file_hashes: &HashMap<&str, &str
 	}
 	
 	fs::create_dir_all(&mod_path.join("files2")).unwrap();
-	let path = mod_path.join("files2").join(blake3::hash(&result).to_hex().as_str()[..24].to_string());
+	let path = mod_path.join("files2").join(format!("{}.{}", blake3::hash(&result).to_hex().as_str()[..24].to_string(), gamepath.split(".").last().unwrap()));
 	
 	File::create(&path)
 		.unwrap()

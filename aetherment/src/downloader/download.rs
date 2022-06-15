@@ -71,7 +71,7 @@ ffi!(fn download_mod(id: &str, settings: &Settings) {
 			return None;
 		}
 		
-		let target_path = target_dir.join(file_hashes[file]);
+		let target_path = target_dir.join(format!("{}.{}", file_hashes[file], file.split(".").last().unwrap()));
 		if target_path.exists() {
 			return None;
 		}
