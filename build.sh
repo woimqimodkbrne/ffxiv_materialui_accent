@@ -1,4 +1,4 @@
-
+RUST_BACKTRACE=1
 cargo build --lib --release --manifest-path=./aetherment/Cargo.toml
 # -f on mv does fuckall
 rm $APPDATA/XIVLauncher/devPlugins/Aetherment/aetherment_core.dll

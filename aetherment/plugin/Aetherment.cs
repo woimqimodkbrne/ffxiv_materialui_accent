@@ -69,30 +69,18 @@ public class Aetherment : IDalamudPlugin {
 	}
 	
 	private void Draw() {
-		try {
-			if(aethermentGuiVisible)
-				aethermentGui.Draw(ref aethermentGuiVisible);
-		} catch(Exception e) {
-			Kill(e.ToString().Replace("   ", "\t"), 0);
-		}
+		if(aethermentGuiVisible)
+			aethermentGui.Draw(ref aethermentGuiVisible);
 	}
 	
 	private void OnCommand(string cmd, string args) {
-		try {
-			if(cmd != command)
-				return;
-			
-			if(args == "texfinder")
-				return; //todo
-			else if(args == "panic")
-				panic("you asked for it");
-			else if(args == "panic2")
-				throw new Exception("ohoh");
-			else
-				aethermentGuiVisible = !aethermentGuiVisible;
-		} catch(Exception e) {
-			Kill(e.Message, 1);
-		}
+		if(cmd != command)
+			return;
+		
+		if(args == "texfinder")
+			return; //todo
+		else
+			aethermentGuiVisible = !aethermentGuiVisible;
 	}
 	
 	#pragma warning disable CS8600,CS8602,CS8603,CS8604 // shhh
@@ -150,9 +138,8 @@ public class Aetherment : IDalamudPlugin {
 	}
 	
 	private LogDelegate logDelegate;
-	private delegate void LogDelegate(byte mod, IntPtr contentptr);
-	private void Log(byte mode, IntPtr contentptr) {
-		var content = new FFI.String(contentptr); // have i told you yet how much i hate c#?
+	private delegate void LogDelegate(byte mod, FFI.String content);
+	private void Log(byte mode, FFI.String content) {
 		if(mode == 255) {
 			Kill(content, 2);
 		} else
@@ -160,7 +147,4 @@ public class Aetherment : IDalamudPlugin {
 	}
 	
 	[DllImport("aetherment_core.dll")] private static extern void initialize(IntPtr log);
-	[DllImport("aetherment_core.dll")] private static extern FFI.String cool_test(FFI.Str str);
-	[DllImport("aetherment_core.dll")] private static extern FFI.Vec cool_test2(FFI.Array str);
-	[DllImport("aetherment_core.dll")] private static extern void panic(FFI.Str str);
 }

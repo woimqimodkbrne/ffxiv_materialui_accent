@@ -1,5 +1,6 @@
 #![allow(improper_ctypes_definitions)]
 #![feature(panic_backtrace_config)]
+#![feature(backtrace)]
 #![feature(seek_stream_len)]
 #![feature(let_chains)]
 
@@ -42,33 +43,35 @@ extern fn initialize(log: fn(u8, String)) {
 	// <Tex as Dds>::read(&mut fr).write(&mut fw);
 }
 
+#[repr(C)]
+struct FfiResult<T> {
+	pub error: bool,
+	pub obj: T,
+}
+
 #[macro_export]
 macro_rules! ffi {
-	// types that we can just send across as is
-	// yes, this dumb but it works
-	(fn $name:ident ($($param_name:ident: $param_type:ty),*) $inner:block) => {ffi!($name>$($param_name, $param_type)*>()>$inner);};
-	(fn $name:ident ($($param_name:ident: $param_type:ty),*) -> i8 $inner:block) => {ffi!($name>$($param_name, $param_type)*>i8>$inner);};
-	(fn $name:ident ($($param_name:ident: $param_type:ty),*) -> u8 $inner:block) => {ffi!($name>$($param_name, $param_type)*>u8>$inner);};
-	(fn $name:ident ($($param_name:ident: $param_type:ty),*) -> i16 $inner:block) => {ffi!($name>$($param_name, $param_type)*>i16>$inner);};
-	(fn $name:ident ($($param_name:ident: $param_type:ty),*) -> u16 $inner:block) => {ffi!($name>$($param_name, $param_type)*>u16>$inner);};
-	(fn $name:ident ($($param_name:ident: $param_type:ty),*) -> i32 $inner:block) => {ffi!($name>$($param_name, $param_type)*>i32>$inner);};
-	(fn $name:ident ($($param_name:ident: $param_type:ty),*) -> u32 $inner:block) => {ffi!($name>$($param_name, $param_type)*>u32>$inner);};
-	(fn $name:ident ($($param_name:ident: $param_type:ty),*) -> i64 $inner:block) => {ffi!($name>$($param_name, $param_type)*>i64>$inner);};
-	(fn $name:ident ($($param_name:ident: $param_type:ty),*) -> u64 $inner:block) => {ffi!($name>$($param_name, $param_type)*>u64>$inner);};
-	
-	($name:ident>$($param_name:ident, $param_type:ty)*>$return_type:ty>$inner:block) => {
-		#[no_mangle]
-		extern fn $name($($param_name: $param_type,)*) -> $return_type $inner
+	(fn $name:ident ($($param_name:ident: $param_type:ty),*) $inner:block) => {
+		ffi!(fn $name ($($param_name: $param_type),*) -> () $inner);
 	};
 	
-	// types that we box
 	(fn $name:ident ($($param_name:ident: $param_type:ty),*) -> $return_type:ty $inner:block) => {
 		#[no_mangle]
-		extern fn $name($($param_name: $param_type, )*) -> *mut $return_type {
-			Box::into_raw(Box::new($inner))
+		extern fn $name($($param_name: $param_type,)*) -> *const () {
+			match || -> anyhow::Result<$return_type> {
+				Ok($inner)
+			}() {
+				Ok(v) => Box::into_raw(Box::new(crate::FfiResult{error: false, obj: v})) as *const (),
+				// This error sucks and theres no traceback, cant manage to add it somehow
+				Err(e) => Box::into_raw(Box::new(crate::FfiResult{error: true, obj: format!("{:?}", e)})) as *const (),
+			}
 		}
 	};
 }
+
+ffi!(fn free_object(s: *mut ()) {
+	unsafe { Box::from_raw(s); }
+});
 
 pub fn serialize_json(json: serde_json::Value) -> String {
 	let buf = Vec::new();
@@ -88,19 +91,3 @@ mod downloader {
 	mod download;
 	mod penumbra;
 }
-
-ffi!(fn free_object(s: *mut ()) {
-	unsafe { Box::from_raw(s); }
-});
-
-ffi!(fn cool_test(s: &str) -> String {
-	format!("cool str! {}, this was send from rust", s)
-});
-
-ffi!(fn cool_test2(s: &[&str]) -> Vec<String> {
-	s.into_iter().map(|e| (e.parse::<i32>().unwrap() * -2).to_string()).collect()
-});
-
-ffi!(fn panic(s: &str) {
-	panic!("{}", s);
-});
