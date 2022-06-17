@@ -3,6 +3,3 @@ members = [
 	"aetherment",
 	"noumenon",
 ]
-
-[profile.release]
-debug = true

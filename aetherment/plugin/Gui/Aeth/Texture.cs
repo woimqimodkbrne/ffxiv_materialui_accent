@@ -6,7 +6,9 @@ namespace Aetherment.Gui;
 
 public static partial class Aeth {
 	public struct TextureOptions {
+		public SharpDX.DXGI.Format Format = SharpDX.DXGI.Format.R8G8B8A8_UNorm;
 		
+		public TextureOptions() {}
 	}
 	
 	public class Texture {
@@ -21,7 +23,7 @@ public static partial class Aeth {
 			Height = 1;
 		}
 		
-		public Texture(byte[] data, uint width, uint height, TextureOptions options = new TextureOptions()) {
+		public Texture(byte[] data, uint width, uint height, TextureOptions? options = null) {
 			unsafe {
 				fixed(void* dataPtr = data) {
 					CreateTexture(new IntPtr(dataPtr), width, height, options);
@@ -29,10 +31,12 @@ public static partial class Aeth {
 			}
 		}
 		
-		public Texture(IntPtr data, uint width, uint height, TextureOptions options = new TextureOptions()) =>
+		public Texture(IntPtr data, uint width, uint height, TextureOptions? options = null) =>
 			CreateTexture(data, width, height, options);
 		
-		private unsafe void CreateTexture(IntPtr data, uint width, uint height, TextureOptions options = new TextureOptions()) {
+		private unsafe void CreateTexture(IntPtr data, uint width, uint height, TextureOptions? options = null) {
+			options ??= new TextureOptions();
+			
 			Width = (int)width;
 			Height = (int)height;
 			
@@ -41,7 +45,7 @@ public static partial class Aeth {
 				Height = Height,
 				MipLevels = 1,
 				ArraySize = 1,
-				Format = SharpDX.DXGI.Format.R8G8B8A8_UNorm,
+				Format = options.Value.Format,
 				SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
 				Usage = ResourceUsage.Immutable,
 				BindFlags = BindFlags.ShaderResource,

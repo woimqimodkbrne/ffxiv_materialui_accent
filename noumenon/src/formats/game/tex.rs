@@ -208,7 +208,10 @@ impl Png for Tex {
 		let png = PngEncoder::new(writer);
 		// TODO: possibly convert to a different colortype based on header format, idk
 		png.write_image(
-			&self.data.chunks_exact(4).flat_map(|p| [p[2], p[1], p[0], p[3]]).collect::<Vec<u8>>(),
+			&self.data[0..(self.header.width as usize * self.header.height as usize * 4)]
+				.chunks_exact(4)
+				.flat_map(|p| [p[2], p[1], p[0], p[3]])
+				.collect::<Vec<u8>>(),
 			self.header.width as u32,
 			self.header.height as u32,
 			ColorType::Rgba8

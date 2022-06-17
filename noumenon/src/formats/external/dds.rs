@@ -128,10 +128,10 @@ fn convert_from_a4r4g4b4(data: &[u8]) -> Vec<u8> {
 		.flat_map(|p| {
 			let v = ((p[1] as u16) << 8) + p[0] as u16;
 			[
-				(v & 0x000F << 4) as u8,
-				(v & 0x00F0     ) as u8,
-				(v & 0x0F00 >> 4) as u8,
-				(v & 0xF000 >> 8) as u8,
+				((v & 0x000F) << 4) as u8,
+				((v & 0x00F0)     ) as u8,
+				((v & 0x0F00) >> 4) as u8,
+				((v & 0xF000) >> 8) as u8,
 			]
 		}).collect::<Vec<u8>>()
 }
@@ -155,10 +155,10 @@ fn convert_from_a1r5g5b5(data: &[u8]) -> Vec<u8> {
 		.flat_map(|p| {
 			let v = ((p[1] as u16) << 8) + p[0] as u16;
 			[
-				(v & 0x001F << 3) as u8,
-				(v & 0x03E0 >> 2) as u8,
-				(v & 0x7C00 >> 7) as u8,
-				(v & 0x8000 >> 8) as u8,
+				((v & 0x001F) << 3) as u8,
+				((v & 0x03E0) >> 2) as u8,
+				((v & 0x7C00) >> 7) as u8,
+				((v & 0x8000) >> 8) as u8,
 			]
 		}).collect::<Vec<u8>>()
 }
@@ -202,9 +202,7 @@ fn convert_from_compressed(format: SFormat, width: usize, height: usize, data: &
 	output
 }
 
-// todo: proper width, cant use same hack as above
 fn convert_to_compressed(format: SFormat, width: usize, height: usize, data: &[u8]) -> Vec<u8> {
-	// let height = data.len() / (width * 4);
 	let mut output = Vec::with_capacity(format.compressed_size(width, height));
 	format.compress(data, width, height, squish::Params {
 		algorithm: squish::Algorithm::IterativeClusterFit,

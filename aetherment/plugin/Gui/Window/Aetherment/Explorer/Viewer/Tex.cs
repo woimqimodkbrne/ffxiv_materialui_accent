@@ -78,7 +78,9 @@ public class Tex: Viewer {
 	}
 	
 	private unsafe void LoadPreview() {
-		preview = new(tex->data.DataPtr, tex->header.width, tex->header.height);
+		preview = new(tex->data.DataPtr, tex->header.width, tex->header.height, new Aeth.TextureOptions{
+			Format = SharpDX.DXGI.Format.B8G8R8A8_UNorm,
+		});
 	}
 	
 	protected override void DrawViewer() {
