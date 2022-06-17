@@ -29,7 +29,7 @@ pub enum Format {
 }
 
 impl Format {
-	pub fn convert_from(&self, data: &[u8]) -> Option<Vec<u8>> {
+	pub fn convert_from(&self, width: usize, height: usize, data: &[u8]) -> Option<Vec<u8>> {
 		match self {
 			Format::L8       => Some(convert_from_l8(data)),
 			Format::A8       => Some(convert_from_a8(data)),
@@ -37,14 +37,14 @@ impl Format {
 			Format::A1R5G5B5 => Some(convert_from_a1r5g5b5(data)),
 			Format::A8R8G8B8 => Some(Vec::from(data)),
 			Format::X8R8G8B8 => Some(convert_from_x8r8g8b8(data)),
-			Format::Dxt1     => Some(convert_from_compressed(SFormat::Bc1, data)),
-			Format::Dxt3     => Some(convert_from_compressed(SFormat::Bc3, data)),
-			Format::Dxt5     => Some(convert_from_compressed(SFormat::Bc5, data)),
+			Format::Dxt1     => Some(convert_from_compressed(SFormat::Bc1, width, height, data)),
+			Format::Dxt3     => Some(convert_from_compressed(SFormat::Bc2, width, height, data)),
+			Format::Dxt5     => Some(convert_from_compressed(SFormat::Bc3, width, height, data)),
 			_                => None,
 		}
 	}
 	
-	pub fn convert_to(&self, data: &[u8]) -> Option<Vec<u8>> {
+	pub fn convert_to(&self, width: usize, height: usize, data: &[u8]) -> Option<Vec<u8>> {
 		match self {
 			Format::L8       => Some(convert_to_l8(data)),
 			Format::A8       => Some(convert_to_a8(data)),
@@ -52,9 +52,9 @@ impl Format {
 			Format::A1R5G5B5 => Some(convert_to_a1r5g5b5(data)),
 			Format::A8R8G8B8 => Some(Vec::from(data)),
 			Format::X8R8G8B8 => Some(convert_to_x8r8g8b8(data)),
-			Format::Dxt1     => Some(convert_to_compressed(SFormat::Bc1, data)),
-			Format::Dxt3     => Some(convert_to_compressed(SFormat::Bc3, data)),
-			Format::Dxt5     => Some(convert_to_compressed(SFormat::Bc5, data)),
+			Format::Dxt1     => Some(convert_to_compressed(SFormat::Bc1, width, height, data)),
+			Format::Dxt3     => Some(convert_to_compressed(SFormat::Bc2, width, height, data)),
+			Format::Dxt5     => Some(convert_to_compressed(SFormat::Bc3, width, height, data)),
 			_                => None,
 		}
 	}
@@ -194,21 +194,17 @@ fn convert_to_x8r8g8b8(data: &[u8]) -> Vec<u8> {
 
 // ---------------------------------------- //
 
-fn convert_from_compressed(format: SFormat, data: &[u8]) -> Vec<u8> {
-	// we just assume width is 4 since it doesnt really matter
-	// its all 4x4 block based anyways
-	// (if actual width isnt divisible by 4 thats a you issue)
-	let width = 4;
-	let uncompressed_len = data.len() * format.block_size();
-	let height = uncompressed_len / (width * 4);
-	let mut output = Vec::with_capacity(uncompressed_len);
+fn convert_from_compressed(format: SFormat, width: usize, height: usize, data: &[u8]) -> Vec<u8> {
+	// let uncompressed_len = data.len() / format.block_size() * 16 * 4;
+	// let height = uncompressed_len / (width * 4);
+	let mut output = vec![0u8; width * height * 4];
 	format.decompress(data, width, height, &mut output);
 	output
 }
 
-fn convert_to_compressed(format: SFormat, data: &[u8]) -> Vec<u8> {
-	let width = 4;
-	let height = data.len() / (width * 4);
+// todo: proper width, cant use same hack as above
+fn convert_to_compressed(format: SFormat, width: usize, height: usize, data: &[u8]) -> Vec<u8> {
+	// let height = data.len() / (width * 4);
 	let mut output = Vec::with_capacity(format.compressed_size(width, height));
 	format.compress(data, width, height, squish::Params {
 		algorithm: squish::Algorithm::IterativeClusterFit,

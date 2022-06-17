@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::io::{Cursor, Read, Seek, Write, SeekFrom};
+use std::{io::{Cursor, Read, Seek, Write, SeekFrom}, borrow::Cow};
 use binrw::{BinRead, BinReaderExt, BinWrite, binrw};
 use image::{codecs::png::PngEncoder, ImageEncoder, ColorType};
 use ironworks::{file::File, Error};
@@ -92,6 +92,7 @@ impl From<DFormat> for Format {
 
 #[binrw]
 #[brw(little)]
+#[repr(C)]
 pub struct Header {
 	flags: u32,
 	format: Format,
@@ -103,6 +104,7 @@ pub struct Header {
 	mip_offsets: [u32; 13],
 }
 
+#[repr(C)]
 pub struct Tex {
 	pub header: Header,
 	pub data: Vec<u8>,
@@ -110,8 +112,8 @@ pub struct Tex {
 
 // used to load from spack using ironworks
 impl File for Tex {
-	fn read(data: Vec<u8>) -> Result<Self> {
-		Ok(Tex::read(&mut Cursor::new(&data)))
+	fn read<'a>(data: impl Into<Cow<'a, [u8]>>) -> Result<Self> {
+		Ok(Tex::read(&mut Cursor::new(&data.into())))
 	}
 }
 
@@ -134,14 +136,14 @@ impl Tex {
 		reader.read_to_end(&mut data).unwrap();
 		
 		Tex {
-			data: DFormat::from(header.format).convert_from(&data).unwrap(),
+			data: DFormat::from(header.format).convert_from(header.width as usize, header.height as usize, &data).unwrap(),
 			header
 		}
 	}
 	
 	pub fn write<T>(&self, writer: &mut T) where T: Write + Seek {
 		self.header.write_to(writer).unwrap();
-		writer.write_all(&DFormat::from(self.header.format).convert_to(&self.data).unwrap()).unwrap();
+		writer.write_all(&DFormat::from(self.header.format).convert_to(self.header.width as usize, self.header.height as usize, &self.data).unwrap()).unwrap();
 	}
 }
 
@@ -176,7 +178,7 @@ impl Dds for Tex {
 		reader.read_to_end(&mut data).unwrap();
 		
 		Tex {
-			data: format.convert_from(&data).unwrap(),
+			data: format.convert_from(width as usize, height as usize, &data).unwrap(),
 			header: Header {
 				flags: 0x00800000, // TODO: care about other stuff like 3d textures
 				format: Format::from(format),

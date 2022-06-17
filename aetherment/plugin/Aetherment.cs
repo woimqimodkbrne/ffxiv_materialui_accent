@@ -140,9 +140,11 @@ public class Aetherment : IDalamudPlugin {
 	private LogDelegate logDelegate;
 	private delegate void LogDelegate(byte mod, FFI.String content);
 	private void Log(byte mode, FFI.String content) {
-		if(mode == 255) {
+		if(mode == 255)
 			Kill(content, 2);
-		} else
+		else if(mode == 1)
+			PluginLog.Error(content);
+		else
 			PluginLog.Log(content);
 	}
 	

@@ -8,12 +8,14 @@ public class AethermentWindow {
 	private Settings settings;
 	private ModManager manager;
 	private ModBrowser browser;
+	private Explorer.Explorer explorer;
 	private ModDev dev;
 	
 	public AethermentWindow() {
 		settings = new();
 		manager = new();
 		browser = new();
+		explorer = new();
 		dev = new();
 	}
 	
@@ -50,7 +52,7 @@ public class AethermentWindow {
 		
 		if(Main.Config.FileExplorer && Aeth.TabItem("File Explorer")) {
 			ImGui.BeginChild("explorer");
-			// dev.Draw();
+			explorer.Draw();
 			ImGui.EndChild();
 		}
 		

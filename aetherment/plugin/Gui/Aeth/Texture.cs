@@ -12,8 +12,8 @@ public static partial class Aeth {
 	public class Texture {
 		private ShaderResourceView? resource;
 		
-		public readonly int Width;
-		public readonly int Height;
+		public int Width;
+		public int Height;
 		
 		public Texture() {
 			resource = null;
@@ -22,6 +22,17 @@ public static partial class Aeth {
 		}
 		
 		public Texture(byte[] data, uint width, uint height, TextureOptions options = new TextureOptions()) {
+			unsafe {
+				fixed(void* dataPtr = data) {
+					CreateTexture(new IntPtr(dataPtr), width, height, options);
+				}
+			}
+		}
+		
+		public Texture(IntPtr data, uint width, uint height, TextureOptions options = new TextureOptions()) =>
+			CreateTexture(data, width, height, options);
+		
+		private unsafe void CreateTexture(IntPtr data, uint width, uint height, TextureOptions options = new TextureOptions()) {
 			Width = (int)width;
 			Height = (int)height;
 			
@@ -44,15 +55,13 @@ public static partial class Aeth {
 			var pitch = Width * 4;
 			
 			unsafe {
-				fixed(void* dataPtr = data) {
-					var tex = new Texture2D(Aetherment.Device, desc, new SharpDX.DataRectangle(new IntPtr(dataPtr), pitch));
-					resource = new ShaderResourceView(Aetherment.Device, tex, new ShaderResourceViewDescription {
-						Format = desc.Format,
-						Dimension = ShaderResourceViewDimension.Texture2D,
-						Texture2D = {MipLevels = desc.MipLevels},
-					});
-					tex.Dispose();
-				}
+				var tex = new Texture2D(Aetherment.Device, desc, new SharpDX.DataRectangle(data, pitch));
+				resource = new ShaderResourceView(Aetherment.Device, tex, new ShaderResourceViewDescription {
+					Format = desc.Format,
+					Dimension = ShaderResourceViewDimension.Texture2D,
+					Texture2D = {MipLevels = desc.MipLevels},
+				});
+				tex.Dispose();
 			}
 		}
 		

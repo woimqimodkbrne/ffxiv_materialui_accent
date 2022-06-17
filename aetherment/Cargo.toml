@@ -21,7 +21,7 @@ crate-type = ["dylib"]
 # ]
 
 [dependencies]
-anyhow = "1.0.57"
+anyhow = {version = "1.0.57"}
 rayon = "1.5.3"
 walkdir = "2.3.2"
 path-slash = "0.1.4"
@@ -34,4 +34,4 @@ lazy_static = "1.4.0"
 image = "0.24.2"
 reqwest = {version = "0.11.10", features = ["blocking", "json", "multipart"]}
 noumenon = {path = "../noumenon"}
-ironworks = {version = "0.3.1", features = ["ffxiv", "sqpack"]}
+ironworks = {git = "https://github.com/ackwell/ironworks", rev = "bd787883d324f3a150bce5f1ab348d86e770e23e", features = ["ffxiv", "sqpack"]}

@@ -21,11 +21,15 @@ public class Result : SafeHandle {
 	public bool IsError(out string err) {
 		var is_err = Marshal.PtrToStructure<byte>(handle) == 1;
 		if(is_err)
-			err = Marshal.PtrToStructure<FFI.String>(handle + 0x8)!;
+			err = Marshal.PtrToStructure<FFI.String>(handle + 0x8);
 		else
 			err = "";
 		
 		return is_err;
+	}
+	
+	public string Error() {
+		return Marshal.PtrToStructure<FFI.String>(handle + 0x8);
 	}
 	
 	// i wish the worst upon this language

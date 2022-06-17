@@ -6,11 +6,12 @@ using Dalamud.Logging;
 
 namespace Aetherment.FFI;
 
-[StructLayout(LayoutKind.Explicit)]
-public class Vec {
-	[FieldOffset(0x00)] private IntPtr ptr;
-	[FieldOffset(0x08)] private ulong capacity;
-	[FieldOffset(0x10)] public ulong length;
+[StructLayout(LayoutKind.Sequential)]
+public struct Vec {
+	private IntPtr ptr;
+	private ulong capacity;
+	private ulong length;
+	public IntPtr DataPtr => ptr;
 	
 	public static implicit operator sbyte[](Vec vec) => vec.Convert<sbyte>();
 	public static implicit operator byte[](Vec vec) => vec.Convert<byte>();

@@ -16,8 +16,11 @@ pub const SERVER: &'static str = "http://localhost:8080";
 lazy_static! {
 	pub static ref CLIENT: req::Client = req::Client::new();
 	
-	pub static ref IRONWORKS: ironworks::Ironworks = Ironworks::new()
-		.resource(SqPack::new(ffxiv::FsResource::search().unwrap()));
+	pub static ref IRONWORKS: ironworks::Ironworks = {
+		let mut i = Ironworks::new();
+		i.add_resource(SqPack::new(ffxiv::FsResource::search().unwrap()));
+		i
+	};
 }
 
 static mut LOG: fn(u8, String) = |_, _| {};
@@ -26,16 +29,22 @@ static mut LOG: fn(u8, String) = |_, _| {};
 macro_rules! log {
 	(ftl, $($e:tt)*) => { unsafe { crate::LOG(255, format!($($e)*)) } };
 	(log, $($e:tt)*) => { unsafe { crate::LOG(0,   format!($($e)*)) } };
+	(err, $($e:tt)*) => { unsafe { crate::LOG(1,   format!($($e)*)) } };
 }
 
 #[no_mangle]
 extern fn initialize(log: fn(u8, String)) {
 	unsafe { LOG = log }
 	
-	std::panic::set_backtrace_style(BacktraceStyle::Full);
+	std::panic::set_backtrace_style(BacktraceStyle::Short);
 	std::panic::set_hook(Box::new(|info| {
-		log!(ftl, "{}", info);
+		// log!(ftl, "{}", info);
+		log!(err, "{}", info);
 	}));
+	
+	std::panic::catch_unwind(|| {
+		let _ = IRONWORKS.file::<Vec<u8>>("common/graphics/texture/dummy.tex").unwrap();
+	}).ok();
 	
 	// use noumenon::formats::{game::tex::Tex, external::dds::Dds};
 	// let mut fr = std::fs::File::open("C:/ffxiv/aetherment/UI Test/files/overlay.dds").unwrap();
@@ -58,12 +67,13 @@ macro_rules! ffi {
 	(fn $name:ident ($($param_name:ident: $param_type:ty),*) -> $return_type:ty $inner:block) => {
 		#[no_mangle]
 		extern fn $name($($param_name: $param_type,)*) -> *const () {
-			match || -> anyhow::Result<$return_type> {
-				Ok($inner)
-			}() {
-				Ok(v) => Box::into_raw(Box::new(crate::FfiResult{error: false, obj: v})) as *const (),
-				// This error sucks and theres no traceback, cant manage to add it somehow
-				Err(e) => Box::into_raw(Box::new(crate::FfiResult{error: true, obj: format!("{:?}", e)})) as *const (),
+			match std::panic::catch_unwind(|| -> anyhow::Result<$return_type> {Ok($inner)}) {
+				Ok(v) => match v {
+					Ok(v) => Box::into_raw(Box::new(crate::FfiResult{error: false, obj: v})) as *const (),
+					// This error sucks and theres no traceback, cant manage to add it somehow
+					Err(e) => Box::into_raw(Box::new(crate::FfiResult{error: true, obj: format!("{:?}", e)})) as *const (),
+				},
+				Err(_) => Box::into_raw(Box::new(crate::FfiResult{error: true, obj: "I give up, look in your console it's there".to_string()})) as *const (),
 			}
 		}
 	};
@@ -90,4 +100,7 @@ mod moddev {
 mod downloader {
 	mod download;
 	mod penumbra;
+}
+mod explorer {
+	mod viewer;
 }
