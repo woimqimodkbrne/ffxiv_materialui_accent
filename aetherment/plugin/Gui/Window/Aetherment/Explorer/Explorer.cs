@@ -6,6 +6,8 @@ using ImGuiNET;
 using Main = Aetherment.Aetherment;
 using System.Runtime.InteropServices;
 using Dalamud.Interface.Colors;
+using System;
+using Dalamud.Interface.ImGuiFileDialog;
 
 namespace Aetherment.Gui.Window.Aetherment.Explorer;
 
@@ -18,6 +20,10 @@ public class Explorer {
 	
 	private bool validPath = false;
 	private string curPath = "";
+	
+	private FileDialog? dialog;
+	private Action<bool, string> dialogCallback = null!;
+	private string dialogFilters = null!;
 	
 	public Explorer() {
 		gameTree = new("Game Files", OpenFile);
@@ -39,6 +45,26 @@ public class Explorer {
 			viewer = null;
 		
 		gameTree.SelectedPath = path;
+	}
+	
+	private void OpenDialog(string id, string title, string filters, string name, Action<bool, string> callback) {
+		var ext = string.Empty;
+		if(id == "SaveFileDialog") {
+			ext = Main.Config.ExplorerExportExt.ContainsKey(filters) ? Main.Config.ExplorerExportExt[filters] : filters.Split(",")[0];
+			dialogFilters = filters;
+		} else
+			dialogFilters = null!;
+		
+		dialog = new FileDialog(id, title, filters, Main.Config.ExplorerExportPath, name, ext, 1, false, ImGuiFileDialogFlags.None);
+		dialog.Show();
+		dialogCallback = callback;
+	}
+	
+	private void Export(bool success, string path) {
+		if(!success)
+			return;
+		
+		viewer!.SaveFile(path, path.Split(".").Last());
 	}
 	
 	public void Draw() {
@@ -68,16 +94,27 @@ public class Explorer {
 		// Viewer
 		ImGui.TableNextColumn();
 		ImGui.BeginChild("viewer", new Vector2(0, -Aeth.FrameHeight - Aeth.S.ItemSpacing.Y));
-		if(viewer != null) {
+		if(viewer != null)
 			viewer.Draw();
-		}
 		ImGui.EndChild();
 		
 		// Viewer toolbar
-		ImGui.SetNextItemWidth(Aeth.WidthLeft);
+		if(viewer != null) {
+			if(ImGui.Button("Import (TODO)", new Vector2(100, Aeth.FrameHeight)))
+				{}
+			
+			ImGui.SameLine();
+			if(ImGui.Button("Export", new Vector2(100, Aeth.FrameHeight))) {
+				var name = curPath.Split("/").Last().Split(".")[0];
+				OpenDialog("SaveFileDialog", "Export " + name, string.Join(",", viewer.validExports), name, Export);
+			}
+		}
+		
 		var p = validPath;
 		if(!p)
 			ImGui.PushStyleColor(ImGuiCol.FrameBg, ImGuiColors.DPSRed);
+		ImGui.SameLine();
+		ImGui.SetNextItemWidth(Aeth.WidthLeft);
 		if(ImGui.InputText("##path", ref curPath, 128)) {
 			OpenFile(curPath);
 		}
@@ -85,6 +122,18 @@ public class Explorer {
 			ImGui.PopStyleColor();
 		
 		ImGui.EndTable();
+		
+		
+		if(dialog != null && dialog.Draw()) {
+			var result = dialog.GetResults()[0];
+			dialogCallback(dialog.GetIsOk(), result);
+			Main.Config.MarkForChanges();
+			Main.Config.ExplorerExportPath = dialog.GetCurrentPath();
+			if(dialogFilters != null)
+				Main.Config.ExplorerExportExt[dialogFilters] = "." + result.Split(".").Last();
+			Main.Config.Save();
+			dialog = null;
+		}
 	}
 	
 	[DllImport("aetherment_core.dll", EntryPoint = "explorer_path_valid")]

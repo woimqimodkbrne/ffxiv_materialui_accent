@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using Newtonsoft.Json;
@@ -10,6 +11,9 @@ public class Config {
 	public string LocalPath = "";
 	public bool FileExplorer = false;
 	public bool ModDev = false;
+	
+	public string ExplorerExportPath = ".";
+	public Dictionary<string, string> ExplorerExportExt = new();
 	
 	[JsonIgnore] private int hash;
 	

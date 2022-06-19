@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Runtime.InteropServices;
 using ImGuiNET;
 
@@ -57,6 +58,10 @@ public class Tex: Viewer {
 	private Aeth.Texture preview = null!; // assign preview in a function called in constructor 'Non-nullable fiel~' fuck off
 	
 	public unsafe Tex(string path): base(path) {
+		var ext = "." + path.Split(".").Last();
+		validImports = new string[3]{ext, ".dds", ".png"};
+		validExports = new string[3]{ext, ".dds", ".png"};
+		
 		var f = LoadFile(path);
 		if(f.IsOk(out IntPtr ptr))
 			tex = (File*)ptr;
@@ -86,6 +91,10 @@ public class Tex: Viewer {
 	protected override void DrawViewer() {
 		if(preview != null)
 			Aeth.BoxedImage(ImGui.GetContentRegionAvail(), preview);
+	}
+	
+	public unsafe override void SaveFile(string filename, string format) {
+		SaveFile(tex, filename, format);
 	}
 	
 	[DllImport("aetherment_core.dll", EntryPoint = "viewer_tex_load")]

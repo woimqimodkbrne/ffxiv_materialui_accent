@@ -7,7 +7,8 @@ ffi!(fn viewer_tex_load(path: &str) -> *mut Tex {
 });
 
 ffi!(fn viewer_tex_save(tex: *mut Tex, path: &str, format: &str) {
-	let tex = *unsafe { Box::from_raw(tex) };
+	// let tex = *unsafe { Box::from_raw(tex) };
+	let tex = unsafe { &*tex };
 	let mut file = File::create(path)?;
 	match format { // TODO: probably use enum instead
 		"tex" => Tex::write(&tex, &mut file),

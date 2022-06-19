@@ -6,11 +6,16 @@ using ImGuiNET;
 namespace Aetherment.Gui.Window.Aetherment.Explorer.Viewer;
 
 public class Viewer {
+	public string[] validImports;
+	public string[] validExports;
+	
 	private string path;
 	private string? error;
 	
 	public Viewer(string path) {
 		this.path = path;
+		validImports = new string[0];
+		validExports = new string[0];
 	}
 	
 	public void ShowError(string error) {
@@ -31,4 +36,5 @@ public class Viewer {
 	}
 	
 	protected virtual void DrawViewer() {}
+	public virtual void SaveFile(string filename, string format) {}
 }
