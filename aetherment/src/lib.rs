@@ -42,17 +42,14 @@ extern fn initialize(log: fn(u8, String)) {
 		log!(err, "{}", info);
 	}));
 	
-	std::panic::catch_unwind(|| {
-		let _ = IRONWORKS.file::<Vec<u8>>("common/graphics/texture/dummy.tex").unwrap();
-	}).ok();
-	
 	// use noumenon::formats::{game::tex::Tex, external::dds::Dds};
 	// let mut fr = std::fs::File::open("C:/ffxiv/aetherment/UI Test/files/overlay.dds").unwrap();
 	// let mut fw = std::fs::File::create("C:/ffxiv/aetherment/UI Test/files/overlay.tex").unwrap();
 	// <Tex as Dds>::read(&mut fr).write(&mut fw);
 }
 
-#[repr(C)]
+#[repr(packed)]
+#[allow(dead_code)]
 struct FfiResult<T> {
 	pub error: bool,
 	pub obj: T,
@@ -102,5 +99,6 @@ mod downloader {
 	mod penumbra;
 }
 mod explorer {
+	mod tools;
 	mod viewer;
 }

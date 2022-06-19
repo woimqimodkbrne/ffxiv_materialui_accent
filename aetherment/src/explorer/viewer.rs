@@ -1,5 +1,5 @@
 use std::fs::File;
-use noumenon::formats::{game::tex::Tex, external::{dds::Dds, png::Png}};
+use noumenon::formats::{game::{tex::Tex, mtrl::Mtrl}, external::{dds::Dds, png::Png}};
 use crate::IRONWORKS;
 
 ffi!(fn viewer_tex_load(path: &str) -> *mut Tex {
@@ -15,4 +15,8 @@ ffi!(fn viewer_tex_save(tex: *mut Tex, path: &str, format: &str) {
 		"png" => <Tex as Png>::write(&tex, &mut file),
 		_ => {},
 	}
+});
+
+ffi!(fn viewer_mtrl_load(path: &str) -> *mut Mtrl {
+	Box::into_raw(Box::new(IRONWORKS.file::<Mtrl>(path)?))
 });

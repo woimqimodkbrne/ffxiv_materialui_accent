@@ -3,10 +3,8 @@
 use std::{io::{Cursor, Read, Seek, Write, SeekFrom}, borrow::Cow};
 use binrw::{BinRead, BinReaderExt, BinWrite, binrw};
 use image::{codecs::png::PngEncoder, ImageEncoder, ColorType};
-use ironworks::{file::File, Error};
-use crate::formats::external::{dds::{Dds, Format as DFormat}, png::Png};
-
-pub type Result<T, E = Error> = std::result::Result<T, E>;
+use ironworks::file::File;
+use crate::formats::{game::Result, external::{dds::{Dds, Format as DFormat}, png::Png}};
 
 #[repr(C)]
 pub struct Pixel {

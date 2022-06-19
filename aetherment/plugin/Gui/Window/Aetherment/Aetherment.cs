@@ -51,7 +51,7 @@ public class AethermentWindow {
 		}
 		
 		if(Main.Config.FileExplorer && Aeth.TabItem("File Explorer")) {
-			ImGui.BeginChild("explorer");
+			ImGui.BeginChild("explorer", Vector2.Zero, false, ImGuiWindowFlags.NoScrollbar | ImGuiWindowFlags.NoScrollWithMouse);
 			explorer.Draw();
 			ImGui.EndChild();
 		}

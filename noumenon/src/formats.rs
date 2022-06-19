@@ -9,5 +9,8 @@ pub mod external {
 }
 
 pub mod game {
+	pub type Result<T, E = ironworks::Error> = std::result::Result<T, E>;
+	
 	pub mod tex;
+	pub mod mtrl;
 }

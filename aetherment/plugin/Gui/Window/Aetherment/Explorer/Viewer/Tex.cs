@@ -48,18 +48,18 @@ public class Tex: Viewer {
 	}
 	
 	[StructLayout(LayoutKind.Sequential)]
-	private struct TexFile {
+	private struct File {
 		public Header header;
 		public FFI.Vec data; // Vec<u8>
 	}
 	
-	private unsafe TexFile* tex;
+	private unsafe File* tex;
 	private Aeth.Texture preview = null!; // assign preview in a function called in constructor 'Non-nullable fiel~' fuck off
 	
 	public unsafe Tex(string path): base(path) {
 		var f = LoadFile(path);
 		if(f.IsOk(out IntPtr ptr))
-			tex = (TexFile*)ptr;
+			tex = (File*)ptr;
 		else {
 			ShowError(f.Error());
 			return;
@@ -91,5 +91,5 @@ public class Tex: Viewer {
 	[DllImport("aetherment_core.dll", EntryPoint = "viewer_tex_load")]
 	private static extern FFI.Result LoadFile(FFI.Str path);
 	[DllImport("aetherment_core.dll", EntryPoint = "viewer_tex_save")]
-	private static unsafe extern FFI.Result SaveFile(TexFile* tex, FFI.Str filename, FFI.Str format);
+	private static unsafe extern FFI.Result SaveFile(File* tex, FFI.Str filename, FFI.Str format);
 }

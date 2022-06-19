@@ -9,21 +9,24 @@ public class Tree {
 	private class Node {
 		public bool isFolder;
 		public Node? parent;
+		public string? path;
 		public SortedDictionary<string, Node> children;
 		
-		public Node(Node? parent = null, bool isFolder = true) {
+		public Node(Node? parent = null, string? path = null, bool isFolder = true) {
 			this.isFolder = isFolder;
 			this.parent = parent;
+			this.path = path;
 			children = new();
 		}
 	}
 	
+	public string SelectedPath;
 	private string name;
 	private Node nodes;
-	private Node? selectedNode;
 	private Action<string> callback;
 	
 	public Tree(string name, Action<string> callback) {
+		SelectedPath = "";
 		this.name = name;
 		nodes = new();
 		this.callback = callback;
@@ -42,7 +45,7 @@ public class Tree {
 				
 				curnode = node;
 			}
-			curnode.children!.Add(segs.Last(), new(curnode, false));
+			curnode.children!.Add(segs.Last(), new(curnode, path, false));
 		}
 	}
 	
@@ -53,15 +56,9 @@ public class Tree {
 	
 	private void DrawNode(string name, Node node) {
 		if(!node.isFolder) {
-			if(ImGui.Selectable(name, selectedNode == node)) {
-				var path = name;
-				var curnode = node.parent;
-				while(curnode!.parent != null) {
-					path = $"{curnode.parent.children.First(x => x.Value == curnode).Key}/{path}";
-					curnode = curnode.parent;
-				}
-				selectedNode = node;
-				callback(path);
+			if(ImGui.Selectable(name, SelectedPath == node.path)) {
+				SelectedPath = node.path!;
+				callback(SelectedPath);
 			}
 			return;
 		}

@@ -199,7 +199,10 @@ fn convert_from_compressed(format: SFormat, width: usize, height: usize, data: &
 	// let height = uncompressed_len / (width * 4);
 	let mut output = vec![0u8; width * height * 4];
 	format.decompress(data, width, height, &mut output);
-	output
+	output.chunks_exact(4)
+		.flat_map(|p| {
+			[p[2], p[1], p[0], p[3]]
+		}).collect::<Vec<u8>>()
 }
 
 fn convert_to_compressed(format: SFormat, width: usize, height: usize, data: &[u8]) -> Vec<u8> {
