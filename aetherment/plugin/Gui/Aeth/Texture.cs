@@ -1,12 +1,15 @@
 using System;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
+using Main = Aetherment.Aetherment;
 
 namespace Aetherment.Gui;
 
 public static partial class Aeth {
 	public struct TextureOptions {
 		public SharpDX.DXGI.Format Format = SharpDX.DXGI.Format.R8G8B8A8_UNorm;
+		public ResourceUsage Usage = ResourceUsage.Immutable;
+		public CpuAccessFlags CpuAccessFlags = CpuAccessFlags.None;
 		
 		public TextureOptions() {}
 	}
@@ -34,7 +37,10 @@ public static partial class Aeth {
 		public Texture(IntPtr data, uint width, uint height, TextureOptions? options = null) =>
 			CreateTexture(data, width, height, options);
 		
-		private unsafe void CreateTexture(IntPtr data, uint width, uint height, TextureOptions? options = null) {
+		public Texture(uint width, uint height, TextureOptions? options = null) =>
+			CreateTexture(null, width, height, options);
+		
+		private unsafe void CreateTexture(IntPtr? data, uint width, uint height, TextureOptions? options = null) {
 			options ??= new TextureOptions();
 			
 			Width = (int)width;
@@ -47,9 +53,9 @@ public static partial class Aeth {
 				ArraySize = 1,
 				Format = options.Value.Format,
 				SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0),
-				Usage = ResourceUsage.Immutable,
+				Usage = options.Value.Usage,
 				BindFlags = BindFlags.ShaderResource,
-				CpuAccessFlags = CpuAccessFlags.None,
+				CpuAccessFlags = options.Value.CpuAccessFlags,
 				OptionFlags = ResourceOptionFlags.None,
 			};
 			
@@ -59,7 +65,9 @@ public static partial class Aeth {
 			var pitch = Width * 4;
 			
 			unsafe {
-				var tex = new Texture2D(Aetherment.Device, desc, new SharpDX.DataRectangle(data, pitch));
+				var tex = data == null ?
+					new Texture2D(Aetherment.Device, desc) :
+					new Texture2D(Aetherment.Device, desc, new SharpDX.DataRectangle(data.Value, pitch));
 				resource = new ShaderResourceView(Aetherment.Device, tex, new ShaderResourceViewDescription {
 					Format = desc.Format,
 					Dimension = ShaderResourceViewDimension.Texture2D,
@@ -71,6 +79,15 @@ public static partial class Aeth {
 		
 		~Texture() {
 			resource?.Dispose();
+		}
+		
+		public unsafe void WriteData(IntPtr data) {
+			var box = Main.Device.ImmediateContext.MapSubresource(resource!.Resource, 0, SharpDX.Direct3D11.MapMode.WriteDiscard, SharpDX.Direct3D11.MapFlags.None);
+			var origin = (byte*)data;
+			var target = (byte*)box.DataPointer;
+			for(var i = 0; i < Width * Height * 4; i++) // This always assumes its a uncompressed texture!! TODO: fix that probably
+				target[i] = origin[i];
+			Main.Device.ImmediateContext.UnmapSubresource(resource!.Resource, 0);
 		}
 		
 		public static implicit operator IntPtr(Texture tex) => tex.resource == null ? IntPtr.Zero : tex.resource.NativePointer;

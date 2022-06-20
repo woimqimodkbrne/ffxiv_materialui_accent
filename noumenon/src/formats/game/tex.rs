@@ -92,14 +92,14 @@ impl From<DFormat> for Format {
 #[brw(little)]
 #[repr(C)]
 pub struct Header {
-	flags: u32,
-	format: Format,
-	width: u16,
-	height: u16,
-	depths: u16,
-	mip_levels: u16,
-	lod_offsets: [u32; 3],
-	mip_offsets: [u32; 13],
+	pub flags: u32,
+	pub format: Format,
+	pub width: u16,
+	pub height: u16,
+	pub depths: u16,
+	pub mip_levels: u16,
+	pub lod_offsets: [u32; 3],
+	pub mip_offsets: [u32; 13],
 }
 
 #[repr(C)]

@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using ImGuiNET;
 
@@ -54,8 +55,16 @@ public class Tex: Viewer {
 		public FFI.Vec data; // Vec<u8>
 	}
 	
+	private static Aeth.Texture preview;
+	static Tex() {
+		preview = new(2048, 2048, new Aeth.TextureOptions{
+			Format = SharpDX.DXGI.Format.B8G8R8A8_UNorm,
+			Usage = SharpDX.Direct3D11.ResourceUsage.Dynamic,
+			CpuAccessFlags = SharpDX.Direct3D11.CpuAccessFlags.Write,
+		});
+	}
+	
 	private unsafe File* tex;
-	private Aeth.Texture preview = null!; // assign preview in a function called in constructor 'Non-nullable fiel~' fuck off
 	
 	public unsafe Tex(string path): base(path) {
 		var ext = "." + path.Split(".").Last();
@@ -70,9 +79,7 @@ public class Tex: Viewer {
 			return;
 		}
 		
-		PluginLog.Log($"{tex->header.format} {tex->header.width} {tex->header.height} {((byte[])tex->data).Length}");
-		
-		LoadPreview();
+		preview.WriteData(GetPreview(tex, 2048, 2048).Unwrap<FFI.Vec>().DataPtr);
 	}
 	
 	unsafe ~Tex() {
@@ -82,15 +89,28 @@ public class Tex: Viewer {
 		FFI.Extern.FreeObject((IntPtr)tex);
 	}
 	
-	private unsafe void LoadPreview() {
-		preview = new(tex->data.DataPtr, tex->header.width, tex->header.height, new Aeth.TextureOptions{
-			Format = SharpDX.DXGI.Format.B8G8R8A8_UNorm,
-		});
-	}
-	
-	protected override void DrawViewer() {
-		if(preview != null)
-			Aeth.BoxedImage(ImGui.GetContentRegionAvail(), preview);
+	protected override unsafe void DrawViewer() {
+		if(preview != null) {
+			var rounding = Aeth.S.FrameRounding;
+			var pos = ImGui.GetCursorScreenPos();
+			var size = ImGui.GetContentRegionAvail();
+			
+			// This is dumb, TODO: use a shader or smth
+			Aeth.Draw.AddRectFilled(pos, pos + size, 0xFF303030);
+			for(int x = 0; x < Math.Ceiling(size.X / 32f); x += 2)
+				for(int y = 0; y < Math.Ceiling(size.Y / 32f); y++) {
+					var p = new Vector2(pos.X + x * 32 + (y % 2 == 0 ? 0 : 32), pos.Y + y * 32);
+					Aeth.Draw.AddRectFilled(p, p + new Vector2(32, 32), 0xFFCFCFCF);
+				}
+			
+			var scale = Math.Min(size.X / tex->header.width, size.Y / tex->header.height);
+			var w = tex->header.width * scale;
+			var h = tex->header.height * scale;
+			pos.X += (size.X - w) / 2;
+			pos.Y += (size.Y - h) / 2;
+			rounding -= Math.Min(rounding, Math.Max(size.X - w, size.Y - h) / 2);
+			Aeth.Draw.AddImageRounded(preview, pos, pos + new Vector2(w, h), Vector2.Zero, Vector2.One, 0xFFFFFFFF, rounding);
+		}
 	}
 	
 	public unsafe override void SaveFile(string filename, string format) {
@@ -99,6 +119,8 @@ public class Tex: Viewer {
 	
 	[DllImport("aetherment_core.dll", EntryPoint = "viewer_tex_load")]
 	private static extern FFI.Result LoadFile(FFI.Str path);
+	[DllImport("aetherment_core.dll", EntryPoint = "viewer_tex_preview")]
+	private static unsafe extern FFI.Result GetPreview(File* tex, ushort width, ushort height);
 	[DllImport("aetherment_core.dll", EntryPoint = "viewer_tex_save")]
 	private static unsafe extern FFI.Result SaveFile(File* tex, FFI.Str filename, FFI.Str format);
 }
