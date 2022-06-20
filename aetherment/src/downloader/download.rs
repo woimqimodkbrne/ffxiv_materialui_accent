@@ -21,7 +21,7 @@ pub struct NameId {
 
 #[derive(Deserialize)]
 pub struct Config {
-	penumbra: penumbra::Config,
+	pub penumbra: penumbra::Config,
 }
 
 #[derive(Deserialize)]

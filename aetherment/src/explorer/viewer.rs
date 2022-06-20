@@ -3,7 +3,10 @@ use noumenon::formats::{game::{tex::Tex, mtrl::Mtrl}, external::{dds::Dds, png::
 use crate::IRONWORKS;
 
 ffi!(fn viewer_tex_load(path: &str) -> *mut Tex {
-	Box::into_raw(Box::new(IRONWORKS.file::<Tex>(path)?))
+	Box::into_raw(Box::new(match IRONWORKS.file::<Tex>(path) {
+		Ok(v) => v,
+		Err(_) => Tex::read(&mut File::open(path)?)
+	}))
 });
 
 ffi!(fn viewer_tex_save(tex: *mut Tex, path: &str, format: &str) {

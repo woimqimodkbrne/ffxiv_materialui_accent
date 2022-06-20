@@ -95,10 +95,11 @@ mod moddev {
 	mod upload;
 }
 mod downloader {
-	mod download;
-	mod penumbra;
+	pub mod download;
+	pub mod penumbra;
 }
 mod explorer {
 	mod tools;
 	mod viewer;
+	mod datas;
 }
