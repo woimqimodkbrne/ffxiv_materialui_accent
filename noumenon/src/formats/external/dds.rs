@@ -81,6 +81,56 @@ impl Format {
 			_                                    => Format::Unknown,
 		}
 	}
+	
+	pub fn flags(&self) -> u32 {
+		match self {
+			Format::Dxt1 | Format::Dxt3 | Format::Dxt5 | Format::A16B16G16R16 => 0x00081007,
+			_ => 0x0000100F,
+		}
+	}
+	
+	pub fn flags2(&self) -> u32 {
+		match self {
+			Format::Dxt1 | Format::Dxt3 | Format::Dxt5 | Format::A16B16G16R16 => 0x4,
+			Format::A8R8G8B8 | Format::A4R4G4B4 | Format::A1R5G5B5 => 0x41,
+			Format::X8R8G8B8 => 0x40,
+			Format::L8 => 0x20000,
+			Format::A8 => 0x2,
+			_ => 0,
+		}
+	}
+	
+	pub fn fourcc(&self) -> u32 {
+		match self {
+			Format::Dxt1 => 0x31545844,
+			Format::Dxt3 => 0x33545844,
+			Format::Dxt5 => 0x35545844,
+			Format::A16B16G16R16 => 113,
+			_ => 0,
+		}
+	}
+	
+	pub fn masks(&self) -> (u32, u32, u32, u32) {
+		match self {
+			Format::A8R8G8B8 => (0x000000FF, 0x0000FF00, 0x00FF0000, 0xFF000000),
+			Format::X8R8G8B8 => (0x000000FF, 0x0000FF00, 0x00FF0000, 0         ),
+			Format::A4R4G4B4 => (0x000F,     0x00F0,     0x0F00,     0xF000    ),
+			Format::A1R5G5B5 => (0x001F,     0x03E0,     0x7C00,     0x8000    ),
+			Format::L8       => (0,          0,          0xFF,       0         ),
+			Format::A8       => (0,          0,          0,          0xFF      ),
+			_ => (0, 0, 0, 0),
+		}
+	}
+	
+	pub fn bitcount(&self) -> u32 {
+		match self {
+			Format::Dxt1 | Format::L8 | Format::A8 => 8,
+			Format::Dxt3 | Format::Dxt5 | Format::A4R4G4B4 | Format::A1R5G5B5 => 16,
+			Format::A8R8G8B8 | Format::X8R8G8B8 => 32,
+			Format::A16B16G16R16 => 64,
+			_ => 0,
+		}
+	}
 }
 
 // ---------------------------------------- //

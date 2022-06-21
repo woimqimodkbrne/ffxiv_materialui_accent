@@ -204,8 +204,32 @@ impl Dds for Tex {
 		}
 	}
 	
-	fn write<T>(&self, _writer: &mut T) where T: Write + Seek {
-		todo!();
+	// TODO: gotta use those results...
+	fn write<T>(&self, writer: &mut T) where T: Write + Seek {
+		let format = DFormat::from(self.header.format);
+		
+		"DDS ".as_bytes().write_to(writer).unwrap();
+		124u32.write_to(writer).unwrap();
+		(format.flags() | if self.header.mip_levels > 1 {0x2000} else {0}).write_to(writer).unwrap();
+		(self.header.height as u32).write_to(writer).unwrap();
+		(self.header.width as u32).write_to(writer).unwrap();
+		0u32.write_to(writer).unwrap(); // most software calculate the pitch itself, so eh fuck it
+		0u32.write_to(writer).unwrap();
+		(self.header.mip_levels as u32).write_to(writer).unwrap();
+		"Noumenon v1".as_bytes().write_to(writer).unwrap(); // combines with the one below should total 44 bytes (reserved)
+		[0u8; 33].write_to(writer).unwrap();
+		32u32.write_to(writer).unwrap();
+		format.flags2().write_to(writer).unwrap();
+		format.fourcc().write_to(writer).unwrap();
+		format.bitcount().write_to(writer).unwrap();
+		let (b, g, r, a) = format.masks();
+		r.write_to(writer).unwrap();
+		g.write_to(writer).unwrap();
+		b.write_to(writer).unwrap();
+		a.write_to(writer).unwrap();
+		0x1000u32.write_to(writer).unwrap(); // TODO: the 2 other flags
+		[0u32; 4].write_to(writer).unwrap();
+		format.convert_to(self.header.width as usize, self.header.height as usize, &self.data).unwrap().write_to(writer).unwrap();
 	}
 }
 

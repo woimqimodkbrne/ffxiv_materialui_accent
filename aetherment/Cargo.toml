@@ -21,7 +21,7 @@ crate-type = ["dylib"]
 # ]
 
 [dependencies]
-anyhow = {version = "1.0.57"}
+anyhow = "1.0.57"
 rayon = "1.5.3"
 walkdir = "2.3.2"
 path-slash = "0.1.4"
