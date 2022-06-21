@@ -124,6 +124,20 @@ impl Tex {
 		unsafe { ::std::slice::from_raw_parts_mut(self.data.as_mut_ptr() as *mut _, self.data.len() / 4) }
 	}
 	
+	pub fn overlay_onto(&self, target: &mut Tex) {
+		let pixels = self.as_pixels();
+		target.as_pixels_mut().iter_mut().enumerate().for_each(|(i, pixel)| {
+			let ar = pixel.a as f32 / 255.0;
+			let ao = pixels[i].a as f32 / 255.0;
+			let a = ao + ar * (1.0 - ao);
+			
+			pixel.b = ((pixels[i].b as f32 * ao + pixel.b as f32 * ar * (1.0 - ao)) / a) as u8;
+			pixel.g = ((pixels[i].g as f32 * ao + pixel.g as f32 * ar * (1.0 - ao)) / a) as u8;
+			pixel.r = ((pixels[i].r as f32 * ao + pixel.r as f32 * ar * (1.0 - ao)) / a) as u8;
+			pixel.a = (a * 255.0) as u8;
+		});
+	}
+	
 	pub fn read<T>(reader: &mut T) -> Self where T: Read + Seek {
 		// unwrap cuz ? doesn't seem to like it and cba figuring out why or using match
 		let header = <Header as BinRead>::read(reader).unwrap();

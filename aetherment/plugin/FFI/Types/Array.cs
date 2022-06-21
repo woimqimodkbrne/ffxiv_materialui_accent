@@ -36,7 +36,7 @@ public class Array {
 		return Create<Str>(rarray);
 	}
 	
-	private static Array Create<T>(T[] array) {
+	public static Array Create<T>(T[] array) {
 		var length = array.Length;
 		var element_size = Marshal.SizeOf<T>();
 		var ptr = Marshal.AllocHGlobal(length * element_size);

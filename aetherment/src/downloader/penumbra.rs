@@ -27,8 +27,47 @@ pub enum ConfOption {
 	Multi(TypPenumbra),
 }
 
+impl<'a> ConfOption {
+	pub fn name(&'a self) -> &'a str {
+		match self {
+			ConfOption::Rgb(v) => &v.name,
+			ConfOption::Rgba(v) => &v.name,
+			ConfOption::Grayscale(v) => &v.name,
+			ConfOption::Opacity(v) => &v.name,
+			ConfOption::Mask(v) => &v.name,
+			ConfOption::Single(v) => &v.name,
+			ConfOption::Multi(v) => &v.name,
+		}
+	}
+	
+	pub fn id(&'a self) -> Option<&'a str> {
+		match self {
+			ConfOption::Rgb(v) => Some(&v.id),
+			ConfOption::Rgba(v) => Some(&v.id),
+			ConfOption::Grayscale(v) => Some(&v.id),
+			ConfOption::Opacity(v) => Some(&v.id),
+			ConfOption::Mask(v) => Some(&v.id),
+			_ => None,
+		}
+	}
+}
+
+impl std::fmt::Display for ConfOption {
+	fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
+		match self {
+			ConfOption::Rgb(_) => fmt.write_str("rgb"),
+			ConfOption::Rgba(_) => fmt.write_str("rgba"),
+			ConfOption::Grayscale(_) => fmt.write_str("grayscale"),
+			ConfOption::Opacity(_) => fmt.write_str("opacity"),
+			ConfOption::Mask(_) => fmt.write_str("mask"),
+			ConfOption::Single(_) => fmt.write_str("single"),
+			ConfOption::Multi(_) => fmt.write_str("multi"),
+		}
+	}
+}
+
 #[derive(Deserialize)]
-#[serde(rename_all = "lowercase")]
+#[serde(rename_all = "lowercase", untagged)]
 pub enum ConfSettings {
 	Rgb([f32; 3]),
 	Rgba([f32; 4]),
@@ -205,8 +244,7 @@ pub fn download<'a>(settings: &'a Settings, meta: &'a Meta, config: &'a Config, 
 
 fn resolve_customizability<'a>(mod_path: &Path, file_hashes: &HashMap<&str, &str>, settings: &HashMap<String, ConfSettings>, gamepath: &str, path: &'a Vec<Vec<Option<String>>>) -> PathBuf {
 	let files_path = mod_path.join("files");
-	
-	let load_file = |path: &str| -> Vec<u8> {
+	let load_file = |path: &str| -> Option<Vec<u8>> {
 		if let Some(hash) = file_hashes.get(path) {
 			let mut f = File::open(files_path.join(format!("{}.{}", hash, path.split(".").last().unwrap())))
 				.unwrap();
@@ -214,99 +252,85 @@ fn resolve_customizability<'a>(mod_path: &Path, file_hashes: &HashMap<&str, &str
 			let mut buf = Vec::with_capacity(f.stream_len().unwrap() as usize);
 			f.read_to_end(&mut buf).unwrap();
 			
-			buf
+			Some(buf)
 		} else {
 			// TODO: allow reading from mods with lower priority
-			// TODO: handle cases where the file doesnt exist, probably
-			IRONWORKS.file::<Vec<u8>>(path).unwrap()
+			IRONWORKS.file::<Vec<u8>>(path).ok()
 		}
-	};
-	
-	let resolve_layer = |layer: &'a Vec<Option<String>>| -> Vec<u8> {
-		// let layer = layers.next().unwrap();
-		let mut data = load_file(layer[1].as_ref().unwrap().as_ref());
-		log!(log, "data len {}", data.len());
-		if let Some(id) = &layer[0] {
-			match settings[id] {
-				ConfSettings::Rgb(val) => {
-					let mut tex = Tex::read(&mut Cursor::new(&data));
-					tex.as_pixels_mut().iter_mut().for_each(|pixel| {
-						pixel.b = (pixel.b as f32 * val[2]) as u8;
-						pixel.g = (pixel.g as f32 * val[1]) as u8;
-						pixel.r = (pixel.r as f32 * val[0]) as u8;
-					});
-					tex.write(&mut Cursor::new(&mut data));
-				},
-				ConfSettings::Rgba(val) => {
-					let mut tex = Tex::read(&mut Cursor::new(&data));
-					tex.as_pixels_mut().iter_mut().for_each(|pixel| {
-						pixel.b = (pixel.b as f32 * val[2]) as u8;
-						pixel.g = (pixel.g as f32 * val[1]) as u8;
-						pixel.r = (pixel.r as f32 * val[0]) as u8;
-						pixel.a = (pixel.r as f32 * val[3]) as u8;
-					});
-					tex.write(&mut Cursor::new(&mut data));
-				},
-				ConfSettings::Grayscale(val) => {
-					let mut tex = Tex::read(&mut Cursor::new(&data));
-					tex.as_pixels_mut().iter_mut().for_each(|pixel| {
-						pixel.b = (pixel.b as f32 * val) as u8;
-						pixel.g = (pixel.g as f32 * val) as u8;
-						pixel.r = (pixel.r as f32 * val) as u8;
-					});
-					tex.write(&mut Cursor::new(&mut data));
-				},
-				ConfSettings::Opacity(val) => {
-					let mut tex = Tex::read(&mut Cursor::new(&data));
-					tex.as_pixels_mut().iter_mut().for_each(|pixel| {
-						pixel.a = (pixel.a as f32 * val) as u8;
-					});
-					tex.write(&mut Cursor::new(&mut data));
-				},
-				ConfSettings::Mask(val) => {
-					let val = (val * 255f32) as u8;
-					let mask = Tex::read(&mut Cursor::new(&load_file(&layer[2].as_ref().unwrap())));
-					let mask_pixels = mask.as_pixels();
-					let mut tex = Tex::read(&mut Cursor::new(&data));
-					tex.as_pixels_mut().iter_mut().enumerate().for_each(|(i, pixel)| {
-						pixel.a = if val >= mask_pixels[i].r {pixel.a} else {0};
-					});
-					tex.write(&mut Cursor::new(&mut data));
-				},
-			}
-		}
-		
-		data
 	};
 	
 	let mut layers = path.iter();
-	let mut result = resolve_layer(layers.next().as_ref().unwrap());
+	let mut result = resolve_layer(layers.next().unwrap(), settings, load_file).unwrap();
 	while let Some(layer) = layers.next() {
 		// TODO: This assumes additional layers are always texture based, mby not a good idea for the future?
-		// constantly reconverting the result and the layer for a 2nd time is dumb, TODO: fix that
-		let layer = Tex::read(&mut Cursor::new(&resolve_layer(layer)));
-		let overlay = layer.as_pixels();
-		let mut res = Tex::read(&mut Cursor::new(&result));
-		res.as_pixels_mut().iter_mut().enumerate().for_each(|(i, pixel)| {
-			let ar = pixel.a as f32 / 255.0;
-			let ao = overlay[i].a as f32 / 255.0;
-			let a = ao + ar * (1.0 - ao);
-			
-			pixel.b = ((overlay[i].b as f32 * ao + pixel.b as f32 * ar * (1.0 - ao)) / a) as u8;
-			pixel.g = ((overlay[i].g as f32 * ao + pixel.g as f32 * ar * (1.0 - ao)) / a) as u8;
-			pixel.r = ((overlay[i].r as f32 * ao + pixel.r as f32 * ar * (1.0 - ao)) / a) as u8;
-			pixel.a = (a * 255.0) as u8;
-		});
-		res.write(&mut Cursor::new(&mut result));
+		resolve_layer(layer, settings, load_file).unwrap().overlay_onto(&mut result);
 	}
 	
+	let mut res = Vec::new();
+	result.write(&mut Cursor::new(&mut res));
+	
 	fs::create_dir_all(&mod_path.join("files2")).unwrap();
-	let path = mod_path.join("files2").join(format!("{}.{}", blake3::hash(&result).to_hex().as_str()[..24].to_string(), gamepath.split(".").last().unwrap()));
+	let path = mod_path.join("files2").join(format!("{}.{}", blake3::hash(&res).to_hex().as_str()[..24].to_string(), gamepath.split(".").last().unwrap()));
 	
 	File::create(&path)
 		.unwrap()
-		.write_all(&result)
+		.write_all(&res)
 		.unwrap();
 	
 	path
+}
+
+pub fn resolve_layer<T>(layer: &[Option<T>], settings: &HashMap<String, ConfSettings>, load_file: impl Fn(&str) -> Option<Vec<u8>>) -> Option<Tex>
+where T: AsRef<str> {
+	Some(if let Some(id) = &layer[0] {
+		match settings[id.as_ref()] {
+			ConfSettings::Rgb(val) => {
+				let mut tex = Tex::read(&mut Cursor::new(&load_file(layer[1].as_ref().unwrap().as_ref())?));
+				tex.as_pixels_mut().iter_mut().for_each(|pixel| {
+					pixel.b = (pixel.b as f32 * val[2]) as u8;
+					pixel.g = (pixel.g as f32 * val[1]) as u8;
+					pixel.r = (pixel.r as f32 * val[0]) as u8;
+				});
+				tex
+			},
+			ConfSettings::Rgba(val) => {
+				let mut tex = Tex::read(&mut Cursor::new(&load_file(layer[1].as_ref().unwrap().as_ref())?));
+				tex.as_pixels_mut().iter_mut().for_each(|pixel| {
+					pixel.b = (pixel.b as f32 * val[2]) as u8;
+					pixel.g = (pixel.g as f32 * val[1]) as u8;
+					pixel.r = (pixel.r as f32 * val[0]) as u8;
+					pixel.a = (pixel.r as f32 * val[3]) as u8;
+				});
+				tex
+			},
+			ConfSettings::Grayscale(val) => {
+				let mut tex = Tex::read(&mut Cursor::new(&load_file(layer[1].as_ref().unwrap().as_ref())?));
+				tex.as_pixels_mut().iter_mut().for_each(|pixel| {
+					pixel.b = (pixel.b as f32 * val) as u8;
+					pixel.g = (pixel.g as f32 * val) as u8;
+					pixel.r = (pixel.r as f32 * val) as u8;
+				});
+				tex
+			},
+			ConfSettings::Opacity(val) => {
+				let mut tex = Tex::read(&mut Cursor::new(&load_file(layer[1].as_ref().unwrap().as_ref())?));
+				tex.as_pixels_mut().iter_mut().for_each(|pixel| {
+					pixel.a = (pixel.a as f32 * val) as u8;
+				});
+				tex
+			},
+			ConfSettings::Mask(val) => {
+				let val = (val * 255f32) as u8;
+				let mut tex = Tex::read(&mut Cursor::new(&load_file(layer[1].as_ref().unwrap().as_ref())?));
+				let mask = Tex::read(&mut Cursor::new(&load_file(layer[2].as_ref().unwrap().as_ref())?));
+				let mask_pixels = mask.as_pixels();
+				tex.as_pixels_mut().iter_mut().enumerate().for_each(|(i, pixel)| {
+					pixel.a = if val >= mask_pixels[i].r {pixel.a} else {0};
+				});
+				tex
+			},
+		}
+	} else {
+		Tex::read(&mut Cursor::new(&load_file(layer[1].as_ref().unwrap().as_ref())?))
+	})
 }

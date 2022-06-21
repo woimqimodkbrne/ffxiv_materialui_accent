@@ -1,12 +1,31 @@
-use std::fs::File;
+use std::{fs::File, collections::HashMap, io::{Seek, Read}};
+use anyhow::Context;
 use noumenon::formats::{game::{tex::Tex, mtrl::Mtrl}, external::{dds::Dds, png::Png}};
-use crate::IRONWORKS;
+use crate::{IRONWORKS, downloader::penumbra::{resolve_layer, ConfSettings}};
 
-ffi!(fn viewer_tex_load(path: &str) -> *mut Tex {
-	Box::into_raw(Box::new(match IRONWORKS.file::<Tex>(path) {
-		Ok(v) => v,
-		Err(_) => Tex::read(&mut File::open(path)?)
-	}))
+ffi!(fn viewer_tex_load(paths: &[&[&str]], settings: &str) -> *mut Tex {
+	let load_file = |path: &str| -> Option<Vec<u8>> {
+		// TODO: allow reading from mods with lower priority
+		match File::open(path) {
+			Ok(mut f) => {
+				let mut buf = Vec::with_capacity(f.stream_len().unwrap() as usize);
+				f.read_to_end(&mut buf).unwrap();
+				Some(buf)
+			},
+			Err(_) => IRONWORKS.file::<Vec<u8>>(path).ok(),
+		}
+	};
+	
+	// cba figuring out how to ffi enums, dont @ me
+	let settings: HashMap<String, ConfSettings> = serde_json::from_str(&settings)?;
+	
+	let mut layers = paths.iter().map(|l| l.iter().map(|p| if *p == "" {None} else {Some(p)}).collect::<Vec<Option<&&str>>>());
+	let mut result = resolve_layer(&layers.next().context("There were no layers")?, &settings, load_file).context("Failed resolving layer")?;
+	while let Some(layer) = layers.next() {
+		resolve_layer(&layer, &settings, load_file).context("Failed resolving layer")?.overlay_onto(&mut result);
+	}
+	
+	Box::into_raw(Box::new(result))
 });
 
 // Nearest neighbour scaling

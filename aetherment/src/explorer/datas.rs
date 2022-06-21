@@ -23,6 +23,14 @@ ffi!(fn explorer_datas_gamepaths(datas: *mut Config) -> Vec<String> {
 	Vec::from_iter(gamepaths)
 });
 
+ffi!(fn explorer_datas_option_name(datas: *mut Config, id: &str) -> String {
+	unsafe { &*datas }.penumbra.options.iter().find(|v| v.id().unwrap() == id).unwrap().name().to_string()
+});
+
+ffi!(fn explorer_datas_option_type(datas: *mut Config, id: &str) -> String {
+	unsafe { &*datas }.penumbra.options.iter().find(|v| v.id().unwrap() == id).unwrap().to_string()
+});
+
 ffi!(fn explorer_datas_option_gamepaths(datas: *mut Config, option: &str, suboption: &str) -> Vec<String> {
 	let datas = unsafe { &*datas };
 	
@@ -48,7 +56,7 @@ ffi!(fn explorer_datas_paths(datas: *mut Config, gamepath: &str, option: &str, s
 	
 	let solve_file = |f: &PenumbraFile| -> Vec<Vec<String>> {
 		match f {
-			PenumbraFile::Simple(path) => vec![vec![path.to_string()]],
+			PenumbraFile::Simple(path) => vec![vec!["".to_string(), path.to_string()]],
 			PenumbraFile::Complex(paths) => paths.iter()
 				.map(|o|
 					o.iter()

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
@@ -57,21 +58,55 @@ public class Tex: Viewer {
 	
 	private static Aeth.Texture preview;
 	static Tex() {
-		preview = new(2048, 2048, new Aeth.TextureOptions{
+		preview = new(1024, 1024, new Aeth.TextureOptions{
 			Format = SharpDX.DXGI.Format.B8G8R8A8_UNorm,
 			Usage = SharpDX.Direct3D11.ResourceUsage.Dynamic,
 			CpuAccessFlags = SharpDX.Direct3D11.CpuAccessFlags.Write,
 		});
 	}
 	
+	private static bool rChannel = true;
+	private static bool gChannel = true;
+	private static bool bChannel = true;
+	private static bool aChannel = true;
+	
 	private unsafe File* tex;
+	private FFI.Vec previewData;
+	public string[][] paths;
+	public Dictionary<string, object> settings;
+	public Dictionary<string, (string, string)> infos;
 	
 	public unsafe Tex(string path): base(path) {
 		var ext = "." + path.Split(".").Last();
 		validImports = new string[3]{ext, ".dds", ".png"};
 		validExports = new string[3]{ext, ".dds", ".png"};
 		
-		var f = LoadFile(path);
+		paths = new string[1][]{new string[2]{"", path}};
+		
+		settings = new();
+		infos = new();
+		
+		ReloadPreview();
+	}
+	
+	unsafe ~Tex() {
+		FFI.Extern.FreeObject((IntPtr)tex);
+	}
+	
+	public unsafe void ReloadPreview() {
+		var layers = new FFI.Array[paths.Length];
+		for(var i = 0; i < paths.Length; i++) {
+			var l = new FFI.Str[paths[i].Length];
+			for(var j = 0; j < paths[i].Length; j++)
+				l[j] = paths[i][j];
+			layers[i] = FFI.Array.Create(l);
+		}
+		
+		var v = new List<string>();
+		foreach(var s in settings)
+			v.Add($"\"{s.Key}\":{Util.Settings.ByType(infos[s.Key].Item2, s.Value)}");
+		
+		var f = LoadFile(FFI.Array.Create(layers), $"{{{(string.Join(',', v))}}}");
 		if(f.IsOk(out IntPtr ptr))
 			tex = (File*)ptr;
 		else {
@@ -79,19 +114,73 @@ public class Tex: Viewer {
 			return;
 		}
 		
-		preview.WriteData(GetPreview(tex, 2048, 2048).Unwrap<FFI.Vec>().DataPtr);
-	}
-	
-	unsafe ~Tex() {
-		if(tex == null)
-			return;
+		if(tex->header.format == Format.A8 || tex->header.format == Format.L8) {
+			rChannel = true;
+			gChannel = true;
+			bChannel = true;
+			aChannel = true;
+		}
 		
-		FFI.Extern.FreeObject((IntPtr)tex);
+		previewData = GetPreview(tex, (ushort)preview.Width, (ushort)preview.Height).Unwrap<FFI.Vec>();
+		preview.WriteData(previewData.DataPtr);
 	}
 	
 	protected override unsafe void DrawViewer() {
-		if(preview != null) {
-			var rounding = Aeth.S.FrameRounding;
+		{
+			var changed = false;
+			
+			var h = tex->header;
+			if(h.format != Format.A8 && h.format != Format.L8) {
+				changed |= ImGui.Checkbox("R", ref rChannel);
+				ImGui.SameLine();
+				changed |= ImGui.Checkbox("G", ref gChannel);
+				ImGui.SameLine();
+				changed |= ImGui.Checkbox("B", ref bChannel);
+				ImGui.SameLine();
+				changed |= ImGui.Checkbox("A", ref aChannel);
+				ImGui.SameLine();
+				
+				if(changed) {
+					var data = (byte*)previewData.DataPtr;
+					var target = preview.PinData();
+					if(!rChannel && !gChannel && !bChannel && aChannel)
+						for(int i = 0; i < preview.Width * preview.Height * 4; i += 4) {
+							var a = data[i + 3];
+							target[i    ] = a;
+							target[i + 1] = a;
+							target[i + 2] = a;
+							target[i + 3] = (byte)255;
+						}
+					else
+						for(int i = 0; i < preview.Width * preview.Height * 4; i += 4) {
+							target[i    ] = bChannel ? data[i    ] : (byte)0;
+							target[i + 1] = gChannel ? data[i + 1] : (byte)0;
+							target[i + 2] = rChannel ? data[i + 2] : (byte)0;
+							target[i + 3] = aChannel ? data[i + 3] : (byte)255;
+						}
+					preview.FreeData();
+				}
+				
+				changed = false;
+			}
+			
+			ImGui.SetNextItemWidth(200);
+			if(ImGui.BeginCombo("##layers", "Layers", ImGuiComboFlags.HeightRegular)) {
+				foreach(var s in settings) {
+					var val = s.Value;
+					changed |= Aeth.Option.ByType(infos[s.Key].Item1, infos[s.Key].Item2, ref val);
+					settings[s.Key] = val;
+				}
+				
+				ImGui.EndCombo();
+			}
+			
+			if(changed)
+				ReloadPreview();
+		}
+		
+		if(tex != null) {
+			// var rounding = Aeth.S.FrameRounding;
 			var pos = ImGui.GetCursorScreenPos();
 			var size = ImGui.GetContentRegionAvail();
 			
@@ -108,17 +197,19 @@ public class Tex: Viewer {
 			var h = tex->header.height * scale;
 			pos.X += (size.X - w) / 2;
 			pos.Y += (size.Y - h) / 2;
-			rounding -= Math.Min(rounding, Math.Max(size.X - w, size.Y - h) / 2);
-			Aeth.Draw.AddImageRounded(preview, pos, pos + new Vector2(w, h), Vector2.Zero, Vector2.One, 0xFFFFFFFF, rounding);
+			// rounding -= Math.Min(rounding, Math.Max(size.X - w, size.Y - h) / 2);
+			Aeth.Draw.AddImage(preview, pos, pos + new Vector2(w, h), Vector2.Zero, Vector2.One, 0xFFFFFFFF);
+			// Aeth.Draw.AddImageRounded(preview, pos, pos + new Vector2(w, h), Vector2.Zero, Vector2.One, 0xFFFFFFFF, rounding);
 		}
 	}
 	
 	public unsafe override void SaveFile(string filename, string format) {
+		// This saves it with all layers, TODO: change that? idk
 		SaveFile(tex, filename, format);
 	}
 	
 	[DllImport("aetherment_core.dll", EntryPoint = "viewer_tex_load")]
-	private static extern FFI.Result LoadFile(FFI.Str path);
+	private static extern FFI.Result LoadFile(FFI.Array path, FFI.Str settings);
 	[DllImport("aetherment_core.dll", EntryPoint = "viewer_tex_preview")]
 	private static unsafe extern FFI.Result GetPreview(File* tex, ushort width, ushort height);
 	[DllImport("aetherment_core.dll", EntryPoint = "viewer_tex_save")]

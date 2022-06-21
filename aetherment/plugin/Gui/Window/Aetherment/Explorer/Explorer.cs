@@ -85,12 +85,39 @@ public class Explorer {
 		validPath = true;
 		
 		var paths = new string[p.Length][];
-		for(var i = 0; i < p.Length; i++)
-			paths[i] = (string[])p[i];
+		for(var i = 0; i < p.Length; i++) {
+			var l = (string[])p[i];
+			paths[i] = new string[l.Length];
+			paths[i][0] = l[0];
+			for(var j = 1; j < l.Length; j++) {
+				var pa = $"{Main.Config.LocalPath}/{selectedMod}/{l[j]}";
+				paths[i][j] = File.Exists(pa) ? pa : l[j];
+			}
+		}
 		
-		var simplePath = $"{Main.Config.LocalPath}/{selectedMod}/{(paths.Length == 1 && paths[0].Length == 1 ? paths[0][0] : paths[0][1])}";
+		// var simplePath = $"{Main.Config.LocalPath}/{selectedMod}/{(paths.Length == 1 && paths[0].Length == 1 ? paths[0][0] : paths[0][1])}";
 		// TODO: tex viewer multi layer support
-		OpenViewer(simplePath, curPath.Split(".").Last());
+		OpenViewer(paths[0][1], curPath.Split(".").Last());
+		if(viewer is Viewer.Tex v) {
+			v.paths = paths;
+			foreach(var i in paths) {
+				var id = i[0];
+				if(id != "") {
+					// Use default once i add that
+					var typ = GetOptionType(modDatas, id).Unwrap();
+					switch(typ) {
+						case "rgb": 
+							v.settings[id] = Vector3.One;
+							break;
+						case "rgba":
+							v.settings[id] = Vector4.One;
+							break;
+					}
+					v.infos[id] = (GetOptionName(modDatas, id).Unwrap(), typ);
+				}
+			}
+			v.ReloadPreview();
+		}
 		
 		return true;
 	}
@@ -251,6 +278,10 @@ public class Explorer {
 	private static extern FFI.Result GetModDatas(FFI.Str path);
 	[DllImport("aetherment_core.dll", EntryPoint = "explorer_datas_gamepaths")]
 	private static extern FFI.Result GetDatasGamepaths(IntPtr datas);
+	[DllImport("aetherment_core.dll", EntryPoint = "explorer_datas_option_name")]
+	private static extern FFI.Result GetOptionName(IntPtr datas, FFI.Str id);
+	[DllImport("aetherment_core.dll", EntryPoint = "explorer_datas_option_type")]
+	private static extern FFI.Result GetOptionType(IntPtr datas, FFI.Str id);
 	[DllImport("aetherment_core.dll", EntryPoint = "explorer_datas_option_gamepaths")]
 	private static extern FFI.Result GetDatasGamepaths(IntPtr datas, FFI.Str option, FFI.Str suboption);
 	[DllImport("aetherment_core.dll", EntryPoint = "explorer_datas_paths")]

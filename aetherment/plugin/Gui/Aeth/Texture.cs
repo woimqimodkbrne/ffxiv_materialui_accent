@@ -90,6 +90,15 @@ public static partial class Aeth {
 			Main.Device.ImmediateContext.UnmapSubresource(resource!.Resource, 0);
 		}
 		
+		public unsafe byte* PinData() {
+			var box = Main.Device.ImmediateContext.MapSubresource(resource!.Resource, 0, SharpDX.Direct3D11.MapMode.WriteDiscard, SharpDX.Direct3D11.MapFlags.None);
+			return (byte*)box.DataPointer;
+		}
+		
+		public unsafe void FreeData() {
+			Main.Device.ImmediateContext.UnmapSubresource(resource!.Resource, 0);
+		}
+		
 		public static implicit operator IntPtr(Texture tex) => tex.resource == null ? IntPtr.Zero : tex.resource.NativePointer;
 	}
 }
