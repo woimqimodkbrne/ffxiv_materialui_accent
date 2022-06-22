@@ -116,7 +116,7 @@ public class Explorer {
 					v.infos[id] = (GetOptionName(modDatas, id).Unwrap(), typ);
 				}
 			}
-			v.ReloadPreview();
+			v.ReloadTex();
 		}
 		
 		return true;

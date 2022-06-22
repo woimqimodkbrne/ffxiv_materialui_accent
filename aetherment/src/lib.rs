@@ -76,9 +76,12 @@ macro_rules! ffi {
 	};
 }
 
-ffi!(fn free_object(s: *mut ()) {
+// this doesn't work, im stupid
+// TODO: fix it or fuck c# and go fully rust (figure out how to get device here)
+#[no_mangle]
+fn free_object(s: *mut ()) {
 	unsafe { Box::from_raw(s); }
-});
+}
 
 pub fn serialize_json(json: serde_json::Value) -> String {
 	let buf = Vec::new();

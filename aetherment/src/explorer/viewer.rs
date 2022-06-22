@@ -29,19 +29,20 @@ ffi!(fn viewer_tex_load(paths: &[&[&str]], settings: &str) -> *mut Tex {
 });
 
 // Nearest neighbour scaling
-ffi!(fn viewer_tex_preview(tex: *mut Tex, width: u16, height: u16) -> Vec<u8> {
+ffi!(fn viewer_tex_preview(tex: *mut Tex, target_width: u16, target_height: u16, miplevel: u16, depth: u16) -> Vec<u8> {
 	let tex = unsafe { &*tex };
 	
-	let bx = width as f32 / tex.header.width as f32;
-	let by = height as f32 / tex.header.height as f32;
-	let mut data = Vec::with_capacity(width as usize * height as usize * 4);
-	for y in 0..height as usize {
-		for x in 0..width as usize {
-			let i = (y as f32 / by) as usize * 4 * tex.header.width as usize + (x as f32 / bx) as usize * 4;
-			data.push(tex.data[i    ]);
-			data.push(tex.data[i + 1]);
-			data.push(tex.data[i + 2]);
-			data.push(tex.data[i + 3]);
+	let (w, h, slice) = tex.slice(miplevel, depth);
+	let bx = target_width as f32 / w as f32;
+	let by = target_height as f32 / h as f32;
+	let mut data = Vec::with_capacity(target_width as usize * target_height as usize * 4);
+	for y in 0..target_height as usize {
+		for x in 0..target_width as usize {
+			let i = (y as f32 / by).floor() as usize * 4 * w as usize + (x as f32 / bx).floor() as usize * 4;
+			data.push(slice[i    ]);
+			data.push(slice[i + 1]);
+			data.push(slice[i + 2]);
+			data.push(slice[i + 3]);
 		}
 	}
 	

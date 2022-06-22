@@ -138,6 +138,17 @@ impl Tex {
 		});
 	}
 	
+	// this wont work properloy with compressed textures since those are only decompressed for a single slice
+	// TODO: fix that
+	pub fn slice(&self, miplevel: u16, depth: u16) -> (u16, u16, &[u8]) {
+		let factor = 0.5f32.powi(miplevel as i32);
+		let (w, h) = (self.header.width as f32 * factor, self.header.height as f32 * factor);
+		let slicesize = (w * h * 4.0) as usize;
+		let offset = ((self.header.mip_offsets[miplevel as usize] - 80) * 4 / (DFormat::from(self.header.format).bitcount() / 8))
+			as usize + slicesize * depth as usize;
+		(w as u16, h as u16, &self.data[offset..(offset + slicesize)])
+	}
+	
 	pub fn read<T>(reader: &mut T) -> Self where T: Read + Seek {
 		// unwrap cuz ? doesn't seem to like it and cba figuring out why or using match
 		let header = <Header as BinRead>::read(reader).unwrap();
