@@ -4,7 +4,7 @@
 #![feature(seek_stream_len)]
 #![feature(let_chains)]
 
-use std::panic::BacktraceStyle;
+use std::{panic::BacktraceStyle, collections::HashMap};
 use ironworks::{Ironworks, sqpack::SqPack, ffxiv};
 use serde::Serialize;
 use reqwest::blocking as req;
@@ -32,6 +32,18 @@ macro_rules! log {
 	(err, $($e:tt)*) => { unsafe { crate::LOG(1,   format!($($e)*)) } };
 }
 
+mod gui {
+	pub mod imgui;
+}
+
+pub fn serialize_json(json: serde_json::Value) -> String {
+	let buf = Vec::new();
+	let formatter = serde_json::ser::PrettyFormatter::with_indent(b"\t");
+	let mut ser = serde_json::Serializer::with_formatter(buf, formatter);
+	json.serialize(&mut ser).unwrap();
+	String::from_utf8(ser.into_inner()).unwrap()
+}
+
 #[no_mangle]
 extern fn initialize(log: fn(u8, String)) {
 	unsafe { LOG = log }
@@ -41,11 +53,22 @@ extern fn initialize(log: fn(u8, String)) {
 		// log!(ftl, "{}", info);
 		log!(err, "{}", info);
 	}));
+}
+
+lazy_static! {
+	pub static ref BOXES: HashMap<u64, std::any::TypeId> = HashMap::new();
+}
+
+#[no_mangle]
+extern fn draw() {
+	// Somehow this works without setting the allocators and stuff, idk why but i'll take it
+	use gui::imgui;
 	
-	// use noumenon::formats::{game::tex::Tex, external::dds::Dds};
-	// let mut fr = std::fs::File::open("C:/ffxiv/aetherment/UI Test/files/overlay.dds").unwrap();
-	// let mut fw = std::fs::File::create("C:/ffxiv/aetherment/UI Test/files/overlay.tex").unwrap();
-	// <Tex as Dds>::read(&mut fr).write(&mut fw);
+	let mut open = true;
+	imgui::set_next_window_size([200.0, 200.0], imgui::ImGuiCond::Always);
+	imgui::begin("aetherment", &mut open, imgui::ImGuiWindowFlags::None);
+	imgui::text("hello there");
+	imgui::end();
 }
 
 #[repr(packed)]
@@ -81,14 +104,6 @@ macro_rules! ffi {
 #[no_mangle]
 fn free_object(s: *mut ()) {
 	unsafe { Box::from_raw(s); }
-}
-
-pub fn serialize_json(json: serde_json::Value) -> String {
-	let buf = Vec::new();
-	let formatter = serde_json::ser::PrettyFormatter::with_indent(b"\t");
-	let mut ser = serde_json::Serializer::with_formatter(buf, formatter);
-	json.serialize(&mut ser).unwrap();
-	String::from_utf8(ser.into_inner()).unwrap()
 }
 
 mod server;

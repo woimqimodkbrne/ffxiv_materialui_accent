@@ -12,6 +12,7 @@ using Dalamud.Game.Command;
 using Dalamud.Interface.Internal.Notifications;
 using Dalamud.IoC;
 using Dalamud.Plugin;
+using ImGuiScene;
 
 namespace Aetherment;
 
@@ -39,7 +40,7 @@ public class Aetherment : IDalamudPlugin {
 		
 		Config = Config.Load();
 		
-		aethermentGui = new();
+		// aethermentGui = new();
 		
 		Interface.UiBuilder.Draw += Draw;
 		Commands.AddHandler(command, new CommandInfo(OnCommand) {
@@ -70,7 +71,8 @@ public class Aetherment : IDalamudPlugin {
 	
 	private void Draw() {
 		if(aethermentGuiVisible)
-			aethermentGui.Draw(ref aethermentGuiVisible);
+			draw();
+			// aethermentGui.Draw(ref aethermentGuiVisible);
 	}
 	
 	private void OnCommand(string cmd, string args) {
@@ -149,4 +151,5 @@ public class Aetherment : IDalamudPlugin {
 	}
 	
 	[DllImport("aetherment_core.dll")] private static extern void initialize(IntPtr log);
+	[DllImport("aetherment_core.dll")] private static extern void draw();
 }
