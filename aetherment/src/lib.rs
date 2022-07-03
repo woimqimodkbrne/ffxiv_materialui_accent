@@ -4,37 +4,12 @@
 #![feature(seek_stream_len)]
 #![feature(let_chains)]
 
-use std::{panic::BacktraceStyle, collections::HashMap};
+use std::{panic::BacktraceStyle, path::PathBuf};
 use ironworks::{Ironworks, sqpack::SqPack, ffxiv};
 use serde::Serialize;
 use reqwest::blocking as req;
 
-#[macro_use]
-extern crate lazy_static;
-
-pub const SERVER: &'static str = "http://localhost:8080";
-lazy_static! {
-	pub static ref CLIENT: req::Client = req::Client::new();
-	
-	pub static ref IRONWORKS: ironworks::Ironworks = {
-		let mut i = Ironworks::new();
-		i.add_resource(SqPack::new(ffxiv::FsResource::search().unwrap()));
-		i
-	};
-}
-
-static mut LOG: fn(u8, String) = |_, _| {};
-
-#[macro_export]
-macro_rules! log {
-	(ftl, $($e:tt)*) => { unsafe { crate::LOG(255, format!($($e)*)) } };
-	(log, $($e:tt)*) => { unsafe { crate::LOG(0,   format!($($e)*)) } };
-	(err, $($e:tt)*) => { unsafe { crate::LOG(1,   format!($($e)*)) } };
-}
-
-mod gui {
-	pub mod imgui;
-}
+// ---------------------------------------- //
 
 pub fn serialize_json(json: serde_json::Value) -> String {
 	let buf = Vec::new();
@@ -44,80 +19,125 @@ pub fn serialize_json(json: serde_json::Value) -> String {
 	String::from_utf8(ser.into_inner()).unwrap()
 }
 
-#[no_mangle]
-extern fn initialize(log: fn(u8, String)) {
-	unsafe { LOG = log }
-	
-	std::panic::set_backtrace_style(BacktraceStyle::Short);
-	std::panic::set_hook(Box::new(|info| {
-		// log!(ftl, "{}", info);
-		log!(err, "{}", info);
-	}));
+static mut LOG: fn(u8, String) = |_, _| {};
+#[macro_export]
+macro_rules! log {
+	(ftl, $($e:tt)*) => { unsafe { crate::LOG(255, format!($($e)*)) } };
+	(log, $($e:tt)*) => { unsafe { crate::LOG(0,   format!($($e)*)) } };
+	(err, $($e:tt)*) => { unsafe { crate::LOG(1,   format!($($e)*)) } };
+	($($e:tt)*) => { unsafe { crate::LOG(0,   format!($($e)*)) } };
 }
 
+// ---------------------------------------- //
+
+#[macro_use]
+extern crate lazy_static;
+
+pub const SERVER: &'static str = "http://localhost:8080";
 lazy_static! {
-	pub static ref BOXES: HashMap<u64, std::any::TypeId> = HashMap::new();
+	pub static ref CLIENT: req::Client = req::Client::new();
+	pub static ref GAME: ironworks::Ironworks = Ironworks::new()
+		.with_resource(SqPack::new(ffxiv::FsResource::search().unwrap()));
 }
 
-#[no_mangle]
-extern fn draw() {
-	// Somehow this works without setting the allocators and stuff, idk why but i'll take it
-	use gui::imgui;
+// ---------------------------------------- //
+
+pub mod server;
+pub mod config;
+pub mod apply;
+pub mod gui {
+	pub mod imgui;
+	pub mod aeth;
+	pub mod window {
+		pub mod aetherment;
+	}
+}
+
+// ---------------------------------------- //
+
+struct State {
+	data: Data,
 	
-	let mut open = true;
-	imgui::set_next_window_size([200.0, 200.0], imgui::ImGuiCond::Always);
-	imgui::begin("aetherment", &mut open, imgui::ImGuiWindowFlags::None);
-	imgui::text("hello there");
-	imgui::end();
+	win_aetherment: gui::window::aetherment::Window,
+}
+
+pub struct Data {
+	binary_path: PathBuf,
+	config_path: PathBuf,
+	
+	config: config::Config,
 }
 
 #[repr(packed)]
-#[allow(dead_code)]
-struct FfiResult<T> {
-	pub error: bool,
-	pub obj: T,
+struct Initializers<'a> {
+	binary_path: &'a str,
+	config_path: &'a str,
+	log: fn(u8, String),
+	create_texture: fn(gui::aeth::TextureOptions) -> usize,
+	create_texture_data: fn(gui::aeth::TextureOptions, Vec<u8>) -> usize,
+	drop_texture: fn(usize),
+	pin_texture: fn(usize) -> *mut u8,
+	unpin_texture: fn(usize),
 }
 
-#[macro_export]
-macro_rules! ffi {
-	(fn $name:ident ($($param_name:ident: $param_type:ty),*) $inner:block) => {
-		ffi!(fn $name ($($param_name: $param_type),*) -> () $inner);
+#[no_mangle]
+extern fn initialize(init: Initializers) -> *mut State {
+	use gui::aeth::texture;
+	
+	unsafe {
+		LOG = init.log;
+		texture::CREATE = init.create_texture;
+		texture::CREATEDATA = init.create_texture_data;
+		texture::DROP = init.drop_texture;
+		texture::PIN = init.pin_texture;
+		texture::UNPIN = init.unpin_texture;
+	}
+	
+	std::panic::set_backtrace_style(BacktraceStyle::Short);
+	std::panic::set_hook(Box::new(|info| {
+		log!(ftl, "{}", info);
+		// log!(err, "{}", info);
+	}));
+	
+	let config_path: PathBuf = init.config_path.into();
+	
+	let mut data = Data {
+		config: config::Config::load(config_path.join("config.json")),
+		
+		binary_path: init.binary_path.into(),
+		config_path: config_path,
 	};
 	
-	(fn $name:ident ($($param_name:ident: $param_type:ty),*) -> $return_type:ty $inner:block) => {
-		#[no_mangle]
-		extern fn $name($($param_name: $param_type,)*) -> *const () {
-			match std::panic::catch_unwind(|| -> anyhow::Result<$return_type> {Ok($inner)}) {
-				Ok(v) => match v {
-					Ok(v) => Box::into_raw(Box::new(crate::FfiResult{error: false, obj: v})) as *const (),
-					// This error sucks and theres no traceback, cant manage to add it somehow
-					Err(e) => Box::into_raw(Box::new(crate::FfiResult{error: true, obj: format!("{:?}", e)})) as *const (),
-				},
-				Err(_) => Box::into_raw(Box::new(crate::FfiResult{error: true, obj: "I give up, look in your console it's there".to_string()})) as *const (),
-			}
-		}
-	};
+	Box::into_raw(Box::new(State {
+		win_aetherment: gui::window::aetherment::Window::new(&mut data),
+		data: data,
+	}))
 }
 
-// this doesn't work, im stupid
-// TODO: fix it or fuck c# and go fully rust (figure out how to get device here)
 #[no_mangle]
-fn free_object(s: *mut ()) {
-	unsafe { Box::from_raw(s); }
+extern fn destroy(state: *mut State) {
+	let _state = unsafe{&mut *state};
 }
 
-mod server;
-mod moddev {
-	mod import;
-	mod index;
-	mod upload;
+#[no_mangle]
+extern fn draw(state: *mut State) {
+	let state = unsafe{&mut *state};
+	
+	use gui::imgui;
+	
+	if state.win_aetherment.visible {
+		imgui::set_next_window_size([1100.0, 600.0], imgui::Cond::FirstUseEver);
+		imgui::begin("Aetherment", &mut state.win_aetherment.visible, imgui::WindowFlags::None);
+		if let Err(e) = state.win_aetherment.draw(&mut state.data) {log!(err, "{:?}", e);}
+		imgui::end();
+	}
 }
-mod downloader {
-	pub mod download;
-	pub mod penumbra;
-}
-mod explorer {
-	mod tools;
-	mod viewer;
-	mod datas;
+
+#[no_mangle]
+extern fn command(state: *mut State, args: &str) {
+	let state = unsafe{&mut *state};
+	
+	match args {
+		_ => state.win_aetherment.visible = !state.win_aetherment.visible,
+	}
 }

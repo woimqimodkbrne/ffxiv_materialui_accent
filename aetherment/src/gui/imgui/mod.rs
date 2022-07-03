@@ -10,7 +10,8 @@ use std::ffi::CString;
 pub mod sys;
 
 #[repr(i32)]
-pub enum ImGuiCol {
+#[derive(Debug, Copy, Clone)]
+pub enum Col {
 	Text = 0,
 	TextDisabled = 1,
 	WindowBg = 2,
@@ -68,7 +69,8 @@ pub enum ImGuiCol {
 }
 
 #[repr(i32)]
-pub enum ImGuiCond {
+#[derive(Debug, Copy, Clone)]
+pub enum Cond {
 	None = 0,
 	Always = 1,
 	Once = 2,
@@ -77,14 +79,16 @@ pub enum ImGuiCond {
 }
 
 #[repr(i32)]
-pub enum ImGuiDataType {
+#[derive(Debug, Copy, Clone)]
+pub enum DataType {
 	Float = 8,
 	Double = 9,
 	COUNT = 10,
 }
 
 #[repr(i32)]
-pub enum ImGuiDir {
+#[derive(Debug, Copy, Clone)]
+pub enum Dir {
 	Left = 0,
 	Right = 1,
 	Up = 2,
@@ -93,7 +97,8 @@ pub enum ImGuiDir {
 }
 
 #[repr(i32)]
-pub enum ImGuiKey {
+#[derive(Debug, Copy, Clone)]
+pub enum Key {
 	Tab = 0,
 	LeftArrow = 1,
 	RightArrow = 2,
@@ -120,7 +125,8 @@ pub enum ImGuiKey {
 }
 
 #[repr(i32)]
-pub enum ImGuiNavInput {
+#[derive(Debug, Copy, Clone)]
+pub enum NavInput {
 	Activate = 0,
 	Cancel = 1,
 	Input = 2,
@@ -141,7 +147,8 @@ pub enum ImGuiNavInput {
 }
 
 #[repr(i32)]
-pub enum ImGuiMouseButton {
+#[derive(Debug, Copy, Clone)]
+pub enum MouseButton {
 	Left = 0,
 	Right = 1,
 	Middle = 2,
@@ -149,7 +156,8 @@ pub enum ImGuiMouseButton {
 }
 
 #[repr(i32)]
-pub enum ImGuiMouseCursor {
+#[derive(Debug, Copy, Clone)]
+pub enum MouseCursor {
 	Arrow = 0,
 	TextInput = 1,
 	ResizeAll = 2,
@@ -163,14 +171,16 @@ pub enum ImGuiMouseCursor {
 }
 
 #[repr(i32)]
-pub enum ImGuiSortDirection {
+#[derive(Debug, Copy, Clone)]
+pub enum SortDirection {
 	None = 0,
 	Ascending = 1,
 	Descending = 2,
 }
 
 #[repr(i32)]
-pub enum ImGuiStyleVar {
+#[derive(Debug, Copy, Clone)]
+pub enum StyleVar {
 	Alpha = 0,
 	DisabledAlpha = 1,
 	WindowPadding = 2,
@@ -200,13 +210,15 @@ pub enum ImGuiStyleVar {
 }
 
 #[repr(i32)]
-pub enum ImGuiTableBgTarget {
+#[derive(Debug, Copy, Clone)]
+pub enum TableBgTarget {
 	None = 0,
 	CellBg = 3,
 }
 
 #[repr(i32)]
-pub enum ImDrawFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum DrawFlags {
 	None = 0,
 	Closed = 1,
 	RoundCornersTopLeft = 16,
@@ -222,7 +234,8 @@ pub enum ImDrawFlags {
 }
 
 #[repr(i32)]
-pub enum ImDrawListFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum DrawListFlags {
 	None = 0,
 	AntiAliasedLines = 1,
 	AntiAliasedLinesUseTex = 2,
@@ -231,6 +244,7 @@ pub enum ImDrawListFlags {
 }
 
 #[repr(i32)]
+#[derive(Debug, Copy, Clone)]
 pub enum ImFontAtlasFlags {
 	None = 0,
 	NoPowerOfTwoHeight = 1,
@@ -239,7 +253,8 @@ pub enum ImFontAtlasFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiBackendFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum BackendFlags {
 	None = 0,
 	HasGamepad = 1,
 	HasMouseCursors = 2,
@@ -248,42 +263,43 @@ pub enum ImGuiBackendFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiButtonFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum ButtonFlags {
 	None = 0,
 	MouseButtonLeft = 1,
 	MouseButtonRight = 2,
 	MouseButtonMiddle = 4,
 }
 
-#[repr(i32)]
-pub enum ImGuiColorEditFlags {
-	None = 0,
-	NoAlpha = 2,
-	NoPicker = 4,
-	NoOptions = 8,
-	NoSmallPreview = 16,
-	NoInputs = 32,
-	NoTooltip = 64,
-	NoLabel = 128,
-	NoSidePreview = 256,
-	NoDragDrop = 512,
-	NoBorder = 1024,
-	AlphaBar = 65536,
-	AlphaPreview = 131072,
-	AlphaPreviewHalf = 262144,
-	HDR = 524288,
-	DisplayRGB = 1048576,
-	DisplayHSV = 2097152,
-	DisplayHex = 4194304,
-	Float = 16777216,
-	PickerHueBar = 33554432,
-	PickerHueWheel = 67108864,
-	InputRGB = 134217728,
-	InputHSV = 268435456,
-}
+bitflags::bitflags!{pub struct ColorEditFlags: i32 {
+	const None = 0;
+	const NoAlpha = 2;
+	const NoPicker = 4;
+	const NoOptions = 8;
+	const NoSmallPreview = 16;
+	const NoInputs = 32;
+	const NoTooltip = 64;
+	const NoLabel = 128;
+	const NoSidePreview = 256;
+	const NoDragDrop = 512;
+	const NoBorder = 1024;
+	const AlphaBar = 65536;
+	const AlphaPreview = 131072;
+	const AlphaPreviewHalf = 262144;
+	const HDR = 524288;
+	const DisplayRGB = 1048576;
+	const DisplayHSV = 2097152;
+	const DisplayHex = 4194304;
+	const Float = 16777216;
+	const PickerHueBar = 33554432;
+	const PickerHueWheel = 67108864;
+	const InputRGB = 134217728;
+	const InputHSV = 268435456;
+}}
 
 #[repr(i32)]
-pub enum ImGuiConfigFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum ConfigFlags {
 	None = 0,
 	NavEnableKeyboard = 1,
 	NavEnableGamepad = 2,
@@ -296,7 +312,8 @@ pub enum ImGuiConfigFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiComboFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum ComboFlags {
 	None = 0,
 	PopupAlignLeft = 1,
 	HeightSmall = 2,
@@ -308,7 +325,8 @@ pub enum ImGuiComboFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiDragDropFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum DragDropFlags {
 	None = 0,
 	SourceNoPreviewTooltip = 1,
 	SourceNoDisableHover = 2,
@@ -323,7 +341,8 @@ pub enum ImGuiDragDropFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiFocusedFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum FocusedFlags {
 	None = 0,
 	ChildWindows = 1,
 	RootWindow = 2,
@@ -332,7 +351,8 @@ pub enum ImGuiFocusedFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiHoveredFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum HoveredFlags {
 	None = 0,
 	ChildWindows = 1,
 	RootWindow = 2,
@@ -346,7 +366,8 @@ pub enum ImGuiHoveredFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiInputTextFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum InputTextFlags {
 	None = 0,
 	CharsDecimal = 1,
 	CharsHexadecimal = 2,
@@ -371,7 +392,8 @@ pub enum ImGuiInputTextFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiKeyModFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum KeyModFlags {
 	None = 0,
 	Ctrl = 1,
 	Shift = 2,
@@ -380,7 +402,8 @@ pub enum ImGuiKeyModFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiPopupFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum PopupFlags {
 	MouseButtonLeft = 0,
 	MouseButtonRight = 1,
 	MouseButtonMiddle = 2,
@@ -392,7 +415,8 @@ pub enum ImGuiPopupFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiSelectableFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum SelectableFlags {
 	None = 0,
 	DontClosePopups = 1,
 	SpanAllColumns = 2,
@@ -402,7 +426,8 @@ pub enum ImGuiSelectableFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiSliderFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum SliderFlags {
 	None = 0,
 	AlwaysClamp = 16,
 	Logarithmic = 32,
@@ -411,7 +436,8 @@ pub enum ImGuiSliderFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiTabBarFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum TabBarFlags {
 	None = 0,
 	Reorderable = 1,
 	AutoSelectNewTabs = 2,
@@ -424,7 +450,8 @@ pub enum ImGuiTabBarFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiTabItemFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum TabItemFlags {
 	None = 0,
 	UnsavedDocument = 1,
 	SetSelected = 2,
@@ -436,80 +463,80 @@ pub enum ImGuiTabItemFlags {
 	Trailing = 128,
 }
 
-#[repr(i32)]
-pub enum ImGuiTableFlags {
-	None = 0,
-	Resizable = 1,
-	Reorderable = 2,
-	Hideable = 4,
-	Sortable = 8,
-	NoSavedSettings = 16,
-	ContextMenuInBody = 32,
-	RowBg = 64,
-	BordersInnerH = 128,
-	BordersOuterH = 256,
-	BordersInnerV = 512,
-	BordersOuterV = 1024,
-	BordersH = 384,
-	BordersV = 1536,
-	BordersInner = 640,
-	BordersOuter = 1280,
-	Borders = 1920,
-	NoBordersInBody = 2048,
-	NoBordersInBodyUntilResize = 4096,
-	SizingFixedFit = 8192,
-	SizingFixedSame = 16384,
-	SizingStretchProp = 24576,
-	SizingStretchSame = 32768,
-	NoHostExtendX = 65536,
-	NoHostExtendY = 131072,
-	NoKeepColumnsVisible = 262144,
-	PreciseWidths = 524288,
-	NoClip = 1048576,
-	PadOuterX = 2097152,
-	NoPadOuterX = 4194304,
-	NoPadInnerX = 8388608,
-	ScrollX = 16777216,
-	ScrollY = 33554432,
-	SortMulti = 67108864,
-	SortTristate = 134217728,
-}
+bitflags::bitflags!{pub struct TableFlags: i32 {
+	const None = 0;
+	const Resizable = 1;
+	const Reorderable = 2;
+	const Hideable = 4;
+	const Sortable = 8;
+	const NoSavedSettings = 16;
+	const ContextMenuInBody = 32;
+	const RowBg = 64;
+	const BordersInnerH = 128;
+	const BordersOuterH = 256;
+	const BordersInnerV = 512;
+	const BordersOuterV = 1024;
+	const BordersH = 384;
+	const BordersV = 1536;
+	const BordersInner = 640;
+	const BordersOuter = 1280;
+	const Borders = 1920;
+	const NoBordersInBody = 2048;
+	const NoBordersInBodyUntilResize = 4096;
+	const SizingFixedFit = 8192;
+	const SizingFixedSame = 16384;
+	const SizingStretchProp = 24576;
+	const SizingStretchSame = 32768;
+	const NoHostExtendX = 65536;
+	const NoHostExtendY = 131072;
+	const NoKeepColumnsVisible = 262144;
+	const PreciseWidths = 524288;
+	const NoClip = 1048576;
+	const PadOuterX = 2097152;
+	const NoPadOuterX = 4194304;
+	const NoPadInnerX = 8388608;
+	const ScrollX = 16777216;
+	const ScrollY = 33554432;
+	const SortMulti = 67108864;
+	const SortTristate = 134217728;
+}}
+
+bitflags::bitflags!{pub struct TableColumnFlags: i32 {
+	const None = 0;
+	const Disabled = 1;
+	const DefaultHide = 2;
+	const DefaultSort = 4;
+	const WidthStretch = 8;
+	const WidthFixed = 16;
+	const NoResize = 32;
+	const NoReorder = 64;
+	const NoHide = 128;
+	const NoClip = 256;
+	const NoSort = 512;
+	const NoSortAscending = 1024;
+	const NoSortDescending = 2048;
+	const NoHeaderLabel = 4096;
+	const NoHeaderWidth = 8192;
+	const PreferSortAscending = 16384;
+	const PreferSortDescending = 32768;
+	const IndentEnable = 65536;
+	const IndentDisable = 131072;
+	const IsEnabled = 16777216;
+	const IsVisible = 33554432;
+	const IsSorted = 67108864;
+	const IsHovered = 134217728;
+}}
 
 #[repr(i32)]
-pub enum ImGuiTableColumnFlags {
-	None = 0,
-	Disabled = 1,
-	DefaultHide = 2,
-	DefaultSort = 4,
-	WidthStretch = 8,
-	WidthFixed = 16,
-	NoResize = 32,
-	NoReorder = 64,
-	NoHide = 128,
-	NoClip = 256,
-	NoSort = 512,
-	NoSortAscending = 1024,
-	NoSortDescending = 2048,
-	NoHeaderLabel = 4096,
-	NoHeaderWidth = 8192,
-	PreferSortAscending = 16384,
-	PreferSortDescending = 32768,
-	IndentEnable = 65536,
-	IndentDisable = 131072,
-	IsEnabled = 16777216,
-	IsVisible = 33554432,
-	IsSorted = 67108864,
-	IsHovered = 134217728,
-}
-
-#[repr(i32)]
-pub enum ImGuiTableRowFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum TableRowFlags {
 	None = 0,
 	Headers = 1,
 }
 
 #[repr(i32)]
-pub enum ImGuiTreeNodeFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum TreeNodeFlags {
 	None = 0,
 	Selected = 1,
 	Framed = 2,
@@ -529,55 +556,57 @@ pub enum ImGuiTreeNodeFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiViewportFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum ViewportFlags {
 	None = 0,
 	IsPlatformWindow = 1,
 	IsPlatformMonitor = 2,
 	OwnedByApp = 4,
 }
 
-#[repr(i32)]
-pub enum ImGuiWindowFlags {
-	None = 0,
-	NoTitleBar = 1,
-	NoResize = 2,
-	NoMove = 4,
-	NoScrollbar = 8,
-	NoScrollWithMouse = 16,
-	NoCollapse = 32,
-	AlwaysAutoResize = 64,
-	NoBackground = 128,
-	NoSavedSettings = 256,
-	NoMouseInputs = 512,
-	MenuBar = 1024,
-	HorizontalScrollbar = 2048,
-	NoFocusOnAppearing = 4096,
-	NoBringToFrontOnFocus = 8192,
-	AlwaysVerticalScrollbar = 16384,
-	AlwaysHorizontalScrollbar = 32768,
-	AlwaysUseWindowPadding = 65536,
-	NoNavInputs = 262144,
-	NoNavFocus = 524288,
-	UnsavedDocument = 1048576,
-	NoNav = 786432,
-	NoDecoration = 43,
-	NoInputs = 786944,
-	NavFlattened = 8388608,
-	ChildWindow = 16777216,
-	Tooltip = 33554432,
-	Popup = 67108864,
-	Modal = 134217728,
-	ChildMenu = 268435456,
-}
+bitflags::bitflags!{pub struct WindowFlags: i32 {
+	const None = 0;
+	const NoTitleBar = 1;
+	const NoResize = 2;
+	const NoMove = 4;
+	const NoScrollbar = 8;
+	const NoScrollWithMouse = 16;
+	const NoCollapse = 32;
+	const AlwaysAutoResize = 64;
+	const NoBackground = 128;
+	const NoSavedSettings = 256;
+	const NoMouseInputs = 512;
+	const MenuBar = 1024;
+	const HorizontalScrollbar = 2048;
+	const NoFocusOnAppearing = 4096;
+	const NoBringToFrontOnFocus = 8192;
+	const AlwaysVerticalScrollbar = 16384;
+	const AlwaysHorizontalScrollbar = 32768;
+	const AlwaysUseWindowPadding = 65536;
+	const NoNavInputs = 262144;
+	const NoNavFocus = 524288;
+	const UnsavedDocument = 1048576;
+	const NoNav = 786432;
+	const NoDecoration = 43;
+	const NoInputs = 786944;
+	const NavFlattened = 8388608;
+	const ChildWindow = 16777216;
+	const Tooltip = 33554432;
+	const Popup = 67108864;
+	const Modal = 134217728;
+	const ChildMenu = 268435456;
+}}
 
 #[repr(i32)]
-pub enum ImGuiLayoutType {
+#[derive(Debug, Copy, Clone)]
+pub enum LayoutType {
 	Horizontal = 0,
 	Vertical = 1,
 }
 
 #[repr(i32)]
-pub enum ImGuiItemFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum ItemFlags {
 	None = 0,
 	NoTabStop = 1,
 	ButtonRepeat = 2,
@@ -590,13 +619,15 @@ pub enum ImGuiItemFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiItemAddFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum ItemAddFlags {
 	None = 0,
 	Focusable = 1,
 }
 
 #[repr(i32)]
-pub enum ImGuiItemStatusFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum ItemStatusFlags {
 	None = 0,
 	HoveredRect = 1,
 	HasDisplayRect = 2,
@@ -612,7 +643,8 @@ pub enum ImGuiItemStatusFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiOldColumnFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum OldColumnFlags {
 	None = 0,
 	NoBorder = 1,
 	NoResize = 2,
@@ -622,7 +654,8 @@ pub enum ImGuiOldColumnFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiNavHighlightFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum NavHighlightFlags {
 	None = 0,
 	TypeDefault = 1,
 	TypeThin = 2,
@@ -631,7 +664,8 @@ pub enum ImGuiNavHighlightFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiNavDirSourceFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum NavDirSourceFlags {
 	None = 0,
 	Keyboard = 1,
 	PadDPad = 2,
@@ -639,7 +673,8 @@ pub enum ImGuiNavDirSourceFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiNavMoveFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum NavMoveFlags {
 	None = 0,
 	LoopX = 1,
 	LoopY = 2,
@@ -651,14 +686,16 @@ pub enum ImGuiNavMoveFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiNextItemDataFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum NextItemDataFlags {
 	None = 0,
 	HasWidth = 1,
 	HasOpen = 2,
 }
 
 #[repr(i32)]
-pub enum ImGuiNextWindowDataFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum NextWindowDataFlags {
 	None = 0,
 	HasPos = 1,
 	HasSize = 2,
@@ -671,7 +708,8 @@ pub enum ImGuiNextWindowDataFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiSeparatorFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum SeparatorFlags {
 	None = 0,
 	Horizontal = 1,
 	Vertical = 2,
@@ -679,26 +717,30 @@ pub enum ImGuiSeparatorFlags {
 }
 
 #[repr(i32)]
-pub enum ImGuiTextFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum TextFlags {
 	None = 0,
 	NoWidthForLargeClippedText = 1,
 }
 
 #[repr(i32)]
-pub enum ImGuiTooltipFlags {
+#[derive(Debug, Copy, Clone)]
+pub enum TooltipFlags {
 	None = 0,
 	OverridePreviousTooltip = 1,
 }
 
 #[repr(i32)]
-pub enum ImGuiInputTextFlagsPrivate {
+#[derive(Debug, Copy, Clone)]
+pub enum InputTextFlagsPrivate {
 	Multiline = 67108864,
 	NoMarkEdited = 134217728,
 	MergedItem = 268435456,
 }
 
 #[repr(i32)]
-pub enum ImGuiButtonFlagsPrivate {
+#[derive(Debug, Copy, Clone)]
+pub enum ButtonFlagsPrivate {
 	PressedOnClick = 16,
 	PressedOnClickRelease = 32,
 	PressedOnClickReleaseAnywhere = 64,
@@ -717,18 +759,21 @@ pub enum ImGuiButtonFlagsPrivate {
 }
 
 #[repr(i32)]
-pub enum ImGuiComboFlagsPrivate {
+#[derive(Debug, Copy, Clone)]
+pub enum ComboFlagsPrivate {
 	CustomPreview = 1048576,
 }
 
 #[repr(i32)]
-pub enum ImGuiSliderFlagsPrivate {
+#[derive(Debug, Copy, Clone)]
+pub enum SliderFlagsPrivate {
 	Vertical = 1048576,
 	ReadOnly = 2097152,
 }
 
 #[repr(i32)]
-pub enum ImGuiSelectableFlagsPrivate {
+#[derive(Debug, Copy, Clone)]
+pub enum SelectableFlagsPrivate {
 	NoHoldingActiveID = 1048576,
 	SelectOnNav = 2097152,
 	SelectOnClick = 4194304,
@@ -740,26 +785,30 @@ pub enum ImGuiSelectableFlagsPrivate {
 }
 
 #[repr(i32)]
-pub enum ImGuiTreeNodeFlagsPrivate {
+#[derive(Debug, Copy, Clone)]
+pub enum TreeNodeFlagsPrivate {
 	ClipLabelForTrailingButton = 1048576,
 }
 
 #[repr(i32)]
-pub enum ImGuiDataTypePrivate {
+#[derive(Debug, Copy, Clone)]
+pub enum DataTypePrivate {
 	String = 11,
 	Pointer = 12,
 	ID = 13,
 }
 
 #[repr(i32)]
-pub enum ImGuiTabBarFlagsPrivate {
+#[derive(Debug, Copy, Clone)]
+pub enum TabBarFlagsPrivate {
 	DockNode = 1048576,
 	IsFocused = 2097152,
 	SaveSettings = 4194304,
 }
 
 #[repr(i32)]
-pub enum ImGuiTabItemFlagsPrivate {
+#[derive(Debug, Copy, Clone)]
+pub enum TabItemFlagsPrivate {
 	NoCloseButton = 1048576,
 	Button = 2097152,
 }
@@ -784,8 +833,8 @@ pub fn get_io() -> *mut sys::ImGuiIO {
 	unsafe{sys::igGetIO()}
 }
 
-pub fn get_style() -> *mut sys::ImGuiStyle {
-	unsafe{sys::igGetStyle()}
+pub fn get_style() -> sys::ImGuiStyle {
+	unsafe{*sys::igGetStyle()}
 }
 
 pub fn new_frame() {
@@ -850,22 +899,22 @@ pub fn style_colors_classic(dst: &mut sys::ImGuiStyle) {
 	unsafe{sys::igStyleColorsClassic(dst)}
 }
 
-pub fn begin(name: &str, p_open: &mut bool, flags: ImGuiWindowFlags) -> bool {
+pub fn begin(name: &str, p_open: &mut bool, flags: WindowFlags) -> bool {
 	let name_ = CString::new(name).unwrap();
-	unsafe{sys::igBegin(name_.as_ptr(), p_open, flags as i32)}
+	unsafe{sys::igBegin(name_.as_ptr(), p_open, flags.bits)}
 }
 
 pub fn end() {
 	unsafe{sys::igEnd()}
 }
 
-pub fn begin_child__str(str_id: &str, size: [f32; 2], border: bool, flags: ImGuiWindowFlags) -> bool {
+pub fn begin_child(str_id: &str, size: [f32; 2], border: bool, flags: WindowFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
-	unsafe{sys::igBeginChild_Str(str_id_.as_ptr(), size, border, flags as i32)}
+	unsafe{sys::igBeginChild_Str(str_id_.as_ptr(), size, border, flags.bits)}
 }
 
-pub fn begin_child__id(id: sys::ImGuiID, size: [f32; 2], border: bool, flags: ImGuiWindowFlags) -> bool {
-	unsafe{sys::igBeginChild_ID(id, size, border, flags as i32)}
+pub fn begin_child2(id: sys::ImGuiID, size: [f32; 2], border: bool, flags: WindowFlags) -> bool {
+	unsafe{sys::igBeginChild_ID(id, size, border, flags.bits)}
 }
 
 pub fn end_child() {
@@ -880,24 +929,30 @@ pub fn is_window_collapsed() -> bool {
 	unsafe{sys::igIsWindowCollapsed()}
 }
 
-pub fn is_window_focused(flags: ImGuiFocusedFlags) -> bool {
+pub fn is_window_focused(flags: FocusedFlags) -> bool {
 	unsafe{sys::igIsWindowFocused(flags as i32)}
 }
 
-pub fn is_window_hovered(flags: ImGuiHoveredFlags) -> bool {
+pub fn is_window_hovered(flags: HoveredFlags) -> bool {
 	unsafe{sys::igIsWindowHovered(flags as i32)}
 }
 
-pub fn get_window_draw_list() -> *mut sys::ImDrawList {
-	unsafe{sys::igGetWindowDrawList()}
+pub fn get_window_draw_list() -> DrawList {
+	DrawList {
+		drawlist: unsafe{sys::igGetWindowDrawList()}
+	}
 }
 
-pub fn get_window_pos(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetWindowPos(pOut)}
+pub fn get_window_pos() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetWindowPos(&mut r)}
+	r
 }
 
-pub fn get_window_size(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetWindowSize(pOut)}
+pub fn get_window_size() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetWindowSize(&mut r)}
+	r
 }
 
 pub fn get_window_width() -> f32 {
@@ -908,11 +963,11 @@ pub fn get_window_height() -> f32 {
 	unsafe{sys::igGetWindowHeight()}
 }
 
-pub fn set_next_window_pos(pos: [f32; 2], cond: ImGuiCond, pivot: [f32; 2]) {
+pub fn set_next_window_pos(pos: [f32; 2], cond: Cond, pivot: [f32; 2]) {
 	unsafe{sys::igSetNextWindowPos(pos, cond as i32, pivot)}
 }
 
-pub fn set_next_window_size(size: [f32; 2], cond: ImGuiCond) {
+pub fn set_next_window_size(size: [f32; 2], cond: Cond) {
 	unsafe{sys::igSetNextWindowSize(size, cond as i32)}
 }
 
@@ -924,7 +979,7 @@ pub fn set_next_window_content_size(size: [f32; 2]) {
 	unsafe{sys::igSetNextWindowContentSize(size)}
 }
 
-pub fn set_next_window_collapsed(collapsed: bool, cond: ImGuiCond) {
+pub fn set_next_window_collapsed(collapsed: bool, cond: Cond) {
 	unsafe{sys::igSetNextWindowCollapsed(collapsed, cond as i32)}
 }
 
@@ -936,15 +991,15 @@ pub fn set_next_window_bg_alpha(alpha: f32) {
 	unsafe{sys::igSetNextWindowBgAlpha(alpha)}
 }
 
-pub fn set_window_pos__vec2(pos: [f32; 2], cond: ImGuiCond) {
+pub fn set_window_pos__vec2(pos: [f32; 2], cond: Cond) {
 	unsafe{sys::igSetWindowPos_Vec2(pos, cond as i32)}
 }
 
-pub fn set_window_size__vec2(size: [f32; 2], cond: ImGuiCond) {
+pub fn set_window_size__vec2(size: [f32; 2], cond: Cond) {
 	unsafe{sys::igSetWindowSize_Vec2(size, cond as i32)}
 }
 
-pub fn set_window_collapsed__bool(collapsed: bool, cond: ImGuiCond) {
+pub fn set_window_collapsed__bool(collapsed: bool, cond: Cond) {
 	unsafe{sys::igSetWindowCollapsed_Bool(collapsed, cond as i32)}
 }
 
@@ -956,17 +1011,17 @@ pub fn set_window_font_scale(scale: f32) {
 	unsafe{sys::igSetWindowFontScale(scale)}
 }
 
-pub fn set_window_pos__str(name: &str, pos: [f32; 2], cond: ImGuiCond) {
+pub fn set_window_pos__str(name: &str, pos: [f32; 2], cond: Cond) {
 	let name_ = CString::new(name).unwrap();
 	unsafe{sys::igSetWindowPos_Str(name_.as_ptr(), pos, cond as i32)}
 }
 
-pub fn set_window_size__str(name: &str, size: [f32; 2], cond: ImGuiCond) {
+pub fn set_window_size__str(name: &str, size: [f32; 2], cond: Cond) {
 	let name_ = CString::new(name).unwrap();
 	unsafe{sys::igSetWindowSize_Str(name_.as_ptr(), size, cond as i32)}
 }
 
-pub fn set_window_collapsed__str(name: &str, collapsed: bool, cond: ImGuiCond) {
+pub fn set_window_collapsed__str(name: &str, collapsed: bool, cond: Cond) {
 	let name_ = CString::new(name).unwrap();
 	unsafe{sys::igSetWindowCollapsed_Str(name_.as_ptr(), collapsed, cond as i32)}
 }
@@ -976,20 +1031,28 @@ pub fn set_window_focus__str(name: &str) {
 	unsafe{sys::igSetWindowFocus_Str(name_.as_ptr())}
 }
 
-pub fn get_content_region_avail(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetContentRegionAvail(pOut)}
+pub fn get_content_region_avail() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetContentRegionAvail(&mut r)}
+	r
 }
 
-pub fn get_content_region_max(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetContentRegionMax(pOut)}
+pub fn get_content_region_max() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetContentRegionMax(&mut r)}
+	r
 }
 
-pub fn get_window_content_region_min(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetWindowContentRegionMin(pOut)}
+pub fn get_window_content_region_min() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetWindowContentRegionMin(&mut r)}
+	r
 }
 
-pub fn get_window_content_region_max(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetWindowContentRegionMax(pOut)}
+pub fn get_window_content_region_max() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetWindowContentRegionMax(&mut r)}
+	r
 }
 
 pub fn get_window_content_region_width() -> f32 {
@@ -1044,11 +1107,11 @@ pub fn pop_font() {
 	unsafe{sys::igPopFont()}
 }
 
-pub fn push_style_color__u32(idx: ImGuiCol, col: u32) {
+pub fn push_style_color(idx: Col, col: u32) {
 	unsafe{sys::igPushStyleColor_U32(idx as i32, col)}
 }
 
-pub fn push_style_color__vec4(idx: ImGuiCol, col: [f32; 4]) {
+pub fn push_style_color2(idx: Col, col: [f32; 4]) {
 	unsafe{sys::igPushStyleColor_Vec4(idx as i32, col)}
 }
 
@@ -1056,11 +1119,11 @@ pub fn pop_style_color(count: i32) {
 	unsafe{sys::igPopStyleColor(count)}
 }
 
-pub fn push_style_var__float(idx: ImGuiStyleVar, val: f32) {
+pub fn push_style_var(idx: StyleVar, val: f32) {
 	unsafe{sys::igPushStyleVar_Float(idx as i32, val)}
 }
 
-pub fn push_style_var__vec2(idx: ImGuiStyleVar, val: [f32; 2]) {
+pub fn push_style_var2(idx: StyleVar, val: [f32; 2]) {
 	unsafe{sys::igPushStyleVar_Vec2(idx as i32, val)}
 }
 
@@ -1120,7 +1183,11 @@ pub fn get_font_tex_uv_white_pixel(pOut: &mut [f32; 2]) {
 	unsafe{sys::igGetFontTexUvWhitePixel(pOut)}
 }
 
-pub fn get_color_u32__col(idx: ImGuiCol, alpha_mul: f32) -> u32 {
+pub fn get_color(idx: Col) -> u32 {
+	unsafe{sys::igGetColorU32_Col(idx as i32, 1.0)}
+}
+
+pub fn get_color_u32__col(idx: Col, alpha_mul: f32) -> u32 {
 	unsafe{sys::igGetColorU32_Col(idx as i32, alpha_mul)}
 }
 
@@ -1132,7 +1199,7 @@ pub fn get_color_u32__u32(col: u32) -> u32 {
 	unsafe{sys::igGetColorU32_U32(col)}
 }
 
-pub fn get_style_color_vec4(idx: ImGuiCol) -> *const [f32; 4] {
+pub fn get_style_color_vec4(idx: Col) -> *const [f32; 4] {
 	unsafe{sys::igGetStyleColorVec4(idx as i32)}
 }
 
@@ -1140,7 +1207,11 @@ pub fn separator() {
 	unsafe{sys::igSeparator()}
 }
 
-pub fn same_line(offset_from_start_x: f32, spacing: f32) {
+pub fn same_line() {
+	unsafe{sys::igSameLine(0.0, -1.0)}
+}
+
+pub fn same_line2(offset_from_start_x: f32, spacing: f32) {
 	unsafe{sys::igSameLine(offset_from_start_x, spacing)}
 }
 
@@ -1172,8 +1243,10 @@ pub fn end_group() {
 	unsafe{sys::igEndGroup()}
 }
 
-pub fn get_cursor_pos(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetCursorPos(pOut)}
+pub fn get_cursor_pos() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetCursorPos(&mut r)}
+	r
 }
 
 pub fn get_cursor_pos_x() -> f32 {
@@ -1196,12 +1269,16 @@ pub fn set_cursor_pos_y(local_y: f32) {
 	unsafe{sys::igSetCursorPosY(local_y)}
 }
 
-pub fn get_cursor_start_pos(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetCursorStartPos(pOut)}
+pub fn get_cursor_start_pos() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetCursorStartPos(&mut r)}
+	r
 }
 
-pub fn get_cursor_screen_pos(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetCursorScreenPos(pOut)}
+pub fn get_cursor_screen_pos() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetCursorScreenPos(&mut r)}
+	r
 }
 
 pub fn set_cursor_screen_pos(pos: [f32; 2]) {
@@ -1251,7 +1328,7 @@ pub fn pop_id() {
 	unsafe{sys::igPopID()}
 }
 
-pub fn get_id__str(str_id: &str) -> sys::ImGuiID {
+pub fn get_id(str_id: &str) -> sys::ImGuiID {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igGetID_Str(str_id_.as_ptr())}
 }
@@ -1266,10 +1343,9 @@ pub fn get_id__ptr(ptr_id: *const ::std::os::raw::c_void) -> sys::ImGuiID {
 	unsafe{sys::igGetID_Ptr(ptr_id)}
 }
 
-pub fn text_unformatted(text: &str, text_end: &str) {
+pub fn text_unformatted(text: &str) {
 	let text_ = CString::new(text).unwrap();
-	let text_end_ = CString::new(text_end).unwrap();
-	unsafe{sys::igTextUnformatted(text_.as_ptr(), text_end_.as_ptr())}
+	unsafe{sys::igTextUnformatted(text_.as_ptr(), std::ptr::null::<*mut i8>() as *mut _)}
 }
 
 pub fn text(fmt: &str) {
@@ -1344,22 +1420,22 @@ pub fn small_button(label: &str) -> bool {
 	unsafe{sys::igSmallButton(label_.as_ptr())}
 }
 
-pub fn invisible_button(str_id: &str, size: [f32; 2], flags: ImGuiButtonFlags) -> bool {
+pub fn invisible_button(str_id: &str, size: [f32; 2], flags: ButtonFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igInvisibleButton(str_id_.as_ptr(), size, flags as i32)}
 }
 
-pub fn arrow_button(str_id: &str, dir: ImGuiDir) -> bool {
+pub fn arrow_button(str_id: &str, dir: Dir) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igArrowButton(str_id_.as_ptr(), dir as i32)}
 }
 
-pub fn image(user_texture_id: sys::ImTextureID, size: [f32; 2], uv0: [f32; 2], uv1: [f32; 2], tint_col: [f32; 4], border_col: [f32; 4]) {
-	unsafe{sys::igImage(user_texture_id, size, uv0, uv1, tint_col, border_col)}
+pub fn image(user_texture_id: usize, size: [f32; 2], uv0: [f32; 2], uv1: [f32; 2], tint_col: [f32; 4], border_col: [f32; 4]) {
+	unsafe{sys::igImage(user_texture_id as *mut _, size, uv0, uv1, tint_col, border_col)}
 }
 
-pub fn image_button(user_texture_id: sys::ImTextureID, size: [f32; 2], uv0: [f32; 2], uv1: [f32; 2], frame_padding: i32, bg_col: [f32; 4], tint_col: [f32; 4]) -> bool {
-	unsafe{sys::igImageButton(user_texture_id, size, uv0, uv1, frame_padding, bg_col, tint_col)}
+pub fn image_button(user_texture_id: usize, size: [f32; 2], uv0: [f32; 2], uv1: [f32; 2], frame_padding: i32, bg_col: [f32; 4], tint_col: [f32; 4]) -> bool {
+	unsafe{sys::igImageButton(user_texture_id as *mut _, size, uv0, uv1, frame_padding, bg_col, tint_col)}
 }
 
 pub fn checkbox(label: &str, v: &mut bool) -> bool {
@@ -1396,7 +1472,7 @@ pub fn bullet() {
 	unsafe{sys::igBullet()}
 }
 
-pub fn begin_combo(label: &str, preview_value: &str, flags: ImGuiComboFlags) -> bool {
+pub fn begin_combo(label: &str, preview_value: &str, flags: ComboFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let preview_value_ = CString::new(preview_value).unwrap();
 	unsafe{sys::igBeginCombo(label_.as_ptr(), preview_value_.as_ptr(), flags as i32)}
@@ -1417,272 +1493,281 @@ pub fn combo__str(label: &str, current_item: &mut i32, items_separated_by_zeros:
 	unsafe{sys::igCombo_Str(label_.as_ptr(), current_item, items_separated_by_zeros_.as_ptr(), popup_max_height_in_items)}
 }
 
-pub fn drag_float(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn drag_float(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igDragFloat(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn drag_float2(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn drag_float2(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igDragFloat2(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn drag_float3(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn drag_float3(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igDragFloat3(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn drag_float4(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn drag_float4(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igDragFloat4(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn drag_float_range2(label: &str, v_current_min: &mut f32, v_current_max: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, format_max: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn drag_float_range2(label: &str, v_current_min: &mut f32, v_current_max: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, format_max: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	let format_max_ = CString::new(format_max).unwrap();
 	unsafe{sys::igDragFloatRange2(label_.as_ptr(), v_current_min, v_current_max, v_speed, v_min, v_max, format_.as_ptr(), format_max_.as_ptr(), flags as i32)}
 }
 
-pub fn drag_int(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn drag_int(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igDragInt(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn drag_int2(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn drag_int2(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igDragInt2(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn drag_int3(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn drag_int3(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igDragInt3(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn drag_int4(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn drag_int4(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igDragInt4(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn drag_int_range2(label: &str, v_current_min: &mut i32, v_current_max: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, format_max: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn drag_int_range2(label: &str, v_current_min: &mut i32, v_current_max: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, format_max: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	let format_max_ = CString::new(format_max).unwrap();
 	unsafe{sys::igDragIntRange2(label_.as_ptr(), v_current_min, v_current_max, v_speed, v_min, v_max, format_.as_ptr(), format_max_.as_ptr(), flags as i32)}
 }
 
-pub fn drag_scalar(label: &str, data_type: ImGuiDataType, p_data: &mut ::std::os::raw::c_void, v_speed: f32, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn drag_scalar(label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, v_speed: f32, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igDragScalar(label_.as_ptr(), data_type as i32, p_data, v_speed, p_min, p_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn drag_scalar_n(label: &str, data_type: ImGuiDataType, p_data: &mut ::std::os::raw::c_void, components: i32, v_speed: f32, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn drag_scalar_n(label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, components: i32, v_speed: f32, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igDragScalarN(label_.as_ptr(), data_type as i32, p_data, components, v_speed, p_min, p_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn slider_float(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn slider_float(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igSliderFloat(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn slider_float2(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn slider_float2(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igSliderFloat2(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn slider_float3(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn slider_float3(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igSliderFloat3(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn slider_float4(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn slider_float4(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igSliderFloat4(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn slider_angle(label: &str, v_rad: &mut f32, v_degrees_min: f32, v_degrees_max: f32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn slider_angle(label: &str, v_rad: &mut f32, v_degrees_min: f32, v_degrees_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igSliderAngle(label_.as_ptr(), v_rad, v_degrees_min, v_degrees_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn slider_int(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn slider_int(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igSliderInt(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn slider_int2(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn slider_int2(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igSliderInt2(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn slider_int3(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn slider_int3(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igSliderInt3(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn slider_int4(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn slider_int4(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igSliderInt4(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn slider_scalar(label: &str, data_type: ImGuiDataType, p_data: &mut ::std::os::raw::c_void, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn slider_scalar(label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igSliderScalar(label_.as_ptr(), data_type as i32, p_data, p_min, p_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn slider_scalar_n(label: &str, data_type: ImGuiDataType, p_data: &mut ::std::os::raw::c_void, components: i32, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn slider_scalar_n(label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, components: i32, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igSliderScalarN(label_.as_ptr(), data_type as i32, p_data, components, p_min, p_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn v_slider_float(label: &str, size: [f32; 2], v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn v_slider_float(label: &str, size: [f32; 2], v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igVSliderFloat(label_.as_ptr(), size, v, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn v_slider_int(label: &str, size: [f32; 2], v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn v_slider_int(label: &str, size: [f32; 2], v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igVSliderInt(label_.as_ptr(), size, v, v_min, v_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn v_slider_scalar(label: &str, size: [f32; 2], data_type: ImGuiDataType, p_data: &mut ::std::os::raw::c_void, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn v_slider_scalar(label: &str, size: [f32; 2], data_type: DataType, p_data: &mut ::std::os::raw::c_void, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igVSliderScalar(label_.as_ptr(), size, data_type as i32, p_data, p_min, p_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn input_text(label: &str, buf: &mut ::std::os::raw::c_char, buf_size: sys::size_t, flags: ImGuiInputTextFlags, callback: sys::ImGuiInputTextCallback, user_data: &mut ::std::os::raw::c_void) -> bool {
+pub fn input_text(label: &str, entry: &mut String, flags: InputTextFlags) -> bool {
+	entry.push('\0');
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igInputText(label_.as_ptr(), buf, buf_size, flags as i32, callback, user_data)}
+	let r = unsafe{sys::igInputText(label_.as_ptr(), entry.as_mut_ptr() as *mut _, entry.capacity() as u64, flags as i32, None, std::ptr::null::<*mut i8>() as *mut _)};
+	if let Some(p) = entry.find('\0') {entry.truncate(p);}
+	r
 }
 
-pub fn input_text_multiline(label: &str, buf: &mut ::std::os::raw::c_char, buf_size: sys::size_t, size: [f32; 2], flags: ImGuiInputTextFlags, callback: sys::ImGuiInputTextCallback, user_data: &mut ::std::os::raw::c_void) -> bool {
+pub fn input_text_multiline(label: &str, entry: &mut String, size: [f32; 2], flags: InputTextFlags) -> bool {
+	entry.push('\0');
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igInputTextMultiline(label_.as_ptr(), buf, buf_size, size, flags as i32, callback, user_data)}
+	let r = unsafe{sys::igInputTextMultiline(label_.as_ptr(), entry.as_mut_ptr() as *mut _, entry.capacity() as u64, size, flags as i32, None, std::ptr::null::<*mut i8>() as *mut _)};
+	if let Some(p) = entry.find('\0') {entry.truncate(p);}
+	r
 }
 
-pub fn input_text_with_hint(label: &str, hint: &str, buf: &mut ::std::os::raw::c_char, buf_size: sys::size_t, flags: ImGuiInputTextFlags, callback: sys::ImGuiInputTextCallback, user_data: &mut ::std::os::raw::c_void) -> bool {
+pub fn input_text_with_hint(label: &str, hint: &str, entry: &mut String, flags: InputTextFlags) -> bool {
+	entry.push('\0');
 	let label_ = CString::new(label).unwrap();
 	let hint_ = CString::new(hint).unwrap();
-	unsafe{sys::igInputTextWithHint(label_.as_ptr(), hint_.as_ptr(), buf, buf_size, flags as i32, callback, user_data)}
+	let r = unsafe{sys::igInputTextWithHint(label_.as_ptr(), hint_.as_ptr(), entry.as_mut_ptr() as *mut _, entry.capacity() as u64, flags as i32, None, std::ptr::null::<*mut i8>() as *mut _)};
+	if let Some(p) = entry.find('\0') {entry.truncate(p);}
+	r
 }
 
-pub fn input_float(label: &str, v: &mut f32, step: f32, step_fast: f32, format: &str, flags: ImGuiInputTextFlags) -> bool {
+pub fn input_float(label: &str, v: &mut f32, step: f32, step_fast: f32, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igInputFloat(label_.as_ptr(), v, step, step_fast, format_.as_ptr(), flags as i32)}
 }
 
-pub fn input_float2(label: &str, v: &mut f32, format: &str, flags: ImGuiInputTextFlags) -> bool {
+pub fn input_float2(label: &str, v: &mut f32, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igInputFloat2(label_.as_ptr(), v, format_.as_ptr(), flags as i32)}
 }
 
-pub fn input_float3(label: &str, v: &mut f32, format: &str, flags: ImGuiInputTextFlags) -> bool {
+pub fn input_float3(label: &str, v: &mut f32, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igInputFloat3(label_.as_ptr(), v, format_.as_ptr(), flags as i32)}
 }
 
-pub fn input_float4(label: &str, v: &mut f32, format: &str, flags: ImGuiInputTextFlags) -> bool {
+pub fn input_float4(label: &str, v: &mut f32, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igInputFloat4(label_.as_ptr(), v, format_.as_ptr(), flags as i32)}
 }
 
-pub fn input_int(label: &str, v: &mut i32, step: i32, step_fast: i32, flags: ImGuiInputTextFlags) -> bool {
+pub fn input_int(label: &str, v: &mut i32, step: i32, step_fast: i32, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igInputInt(label_.as_ptr(), v, step, step_fast, flags as i32)}
 }
 
-pub fn input_int2(label: &str, v: &mut i32, flags: ImGuiInputTextFlags) -> bool {
+pub fn input_int2(label: &str, v: &mut i32, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igInputInt2(label_.as_ptr(), v, flags as i32)}
 }
 
-pub fn input_int3(label: &str, v: &mut i32, flags: ImGuiInputTextFlags) -> bool {
+pub fn input_int3(label: &str, v: &mut i32, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igInputInt3(label_.as_ptr(), v, flags as i32)}
 }
 
-pub fn input_int4(label: &str, v: &mut i32, flags: ImGuiInputTextFlags) -> bool {
+pub fn input_int4(label: &str, v: &mut i32, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igInputInt4(label_.as_ptr(), v, flags as i32)}
 }
 
-pub fn input_double(label: &str, v: &mut f64, step: f64, step_fast: f64, format: &str, flags: ImGuiInputTextFlags) -> bool {
+pub fn input_double(label: &str, v: &mut f64, step: f64, step_fast: f64, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igInputDouble(label_.as_ptr(), v, step, step_fast, format_.as_ptr(), flags as i32)}
 }
 
-pub fn input_scalar(label: &str, data_type: ImGuiDataType, p_data: &mut ::std::os::raw::c_void, p_step: *const ::std::os::raw::c_void, p_step_fast: *const ::std::os::raw::c_void, format: &str, flags: ImGuiInputTextFlags) -> bool {
+pub fn input_scalar(label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, p_step: *const ::std::os::raw::c_void, p_step_fast: *const ::std::os::raw::c_void, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igInputScalar(label_.as_ptr(), data_type as i32, p_data, p_step, p_step_fast, format_.as_ptr(), flags as i32)}
 }
 
-pub fn input_scalar_n(label: &str, data_type: ImGuiDataType, p_data: &mut ::std::os::raw::c_void, components: i32, p_step: *const ::std::os::raw::c_void, p_step_fast: *const ::std::os::raw::c_void, format: &str, flags: ImGuiInputTextFlags) -> bool {
+pub fn input_scalar_n(label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, components: i32, p_step: *const ::std::os::raw::c_void, p_step_fast: *const ::std::os::raw::c_void, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igInputScalarN(label_.as_ptr(), data_type as i32, p_data, components, p_step, p_step_fast, format_.as_ptr(), flags as i32)}
 }
 
-pub fn color_edit3(label: &str, col: &mut f32, flags: ImGuiColorEditFlags) -> bool {
+pub fn color_edit3(label: &str, col: &mut [f32; 3], flags: ColorEditFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igColorEdit3(label_.as_ptr(), col, flags as i32)}
+	unsafe{sys::igColorEdit3(label_.as_ptr(), col.as_ptr() as *mut _, flags.bits)}
 }
 
-pub fn color_edit4(label: &str, col: &mut f32, flags: ImGuiColorEditFlags) -> bool {
+pub fn color_edit4(label: &str, col: &mut [f32; 4], flags: ColorEditFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igColorEdit4(label_.as_ptr(), col, flags as i32)}
+	unsafe{sys::igColorEdit4(label_.as_ptr(), col.as_ptr() as *mut _, flags.bits)}
 }
 
-pub fn color_picker3(label: &str, col: &mut f32, flags: ImGuiColorEditFlags) -> bool {
+pub fn color_picker3(label: &str, col: &mut [f32; 3], flags: ColorEditFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igColorPicker3(label_.as_ptr(), col, flags as i32)}
+	unsafe{sys::igColorPicker3(label_.as_ptr(), col.as_ptr() as *mut _, flags.bits)}
 }
 
-pub fn color_picker4(label: &str, col: &mut f32, flags: ImGuiColorEditFlags, ref_col: *const f32) -> bool {
+pub fn color_picker4(label: &str, col: &mut [f32; 4], flags: ColorEditFlags, ref_col: *const f32) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igColorPicker4(label_.as_ptr(), col, flags as i32, ref_col)}
+	unsafe{sys::igColorPicker4(label_.as_ptr(), col.as_ptr() as *mut _, flags.bits, ref_col)}
 }
 
-pub fn color_button(desc_id: &str, col: [f32; 4], flags: ImGuiColorEditFlags, size: [f32; 2]) -> bool {
+pub fn color_button(desc_id: &str, col: [f32; 4], flags: ColorEditFlags, size: [f32; 2]) -> bool {
 	let desc_id_ = CString::new(desc_id).unwrap();
-	unsafe{sys::igColorButton(desc_id_.as_ptr(), col, flags as i32, size)}
+	unsafe{sys::igColorButton(desc_id_.as_ptr(), col, flags.bits, size)}
 }
 
-pub fn set_color_edit_options(flags: ImGuiColorEditFlags) {
-	unsafe{sys::igSetColorEditOptions(flags as i32)}
+pub fn set_color_edit_options(flags: ColorEditFlags) {
+	unsafe{sys::igSetColorEditOptions(flags.bits)}
 }
 
-pub fn tree_node__str(label: &str) -> bool {
+pub fn tree_node(label: &str) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igTreeNode_Str(label_.as_ptr())}
 }
@@ -1709,29 +1794,29 @@ pub fn tree_node_v__ptr(ptr_id: *const ::std::os::raw::c_void, fmt: &str, args: 
 	unsafe{sys::igTreeNodeV_Ptr(ptr_id, fmt_.as_ptr(), args)}
 }
 
-pub fn tree_node_ex__str(label: &str, flags: ImGuiTreeNodeFlags) -> bool {
+pub fn tree_node_ex__str(label: &str, flags: TreeNodeFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igTreeNodeEx_Str(label_.as_ptr(), flags as i32)}
 }
 
-pub fn tree_node_ex__str_str(str_id: &str, flags: ImGuiTreeNodeFlags, fmt: &str) -> bool {
+pub fn tree_node_ex__str_str(str_id: &str, flags: TreeNodeFlags, fmt: &str) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
 	let fmt_ = CString::new(fmt).unwrap();
 	unsafe{sys::igTreeNodeEx_StrStr(str_id_.as_ptr(), flags as i32, fmt_.as_ptr())}
 }
 
-pub fn tree_node_ex__ptr(ptr_id: *const ::std::os::raw::c_void, flags: ImGuiTreeNodeFlags, fmt: &str) -> bool {
+pub fn tree_node_ex__ptr(ptr_id: *const ::std::os::raw::c_void, flags: TreeNodeFlags, fmt: &str) -> bool {
 	let fmt_ = CString::new(fmt).unwrap();
 	unsafe{sys::igTreeNodeEx_Ptr(ptr_id, flags as i32, fmt_.as_ptr())}
 }
 
-pub fn tree_node_ex_v__str(str_id: &str, flags: ImGuiTreeNodeFlags, fmt: &str, args: sys::va_list) -> bool {
+pub fn tree_node_ex_v__str(str_id: &str, flags: TreeNodeFlags, fmt: &str, args: sys::va_list) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
 	let fmt_ = CString::new(fmt).unwrap();
 	unsafe{sys::igTreeNodeExV_Str(str_id_.as_ptr(), flags as i32, fmt_.as_ptr(), args)}
 }
 
-pub fn tree_node_ex_v__ptr(ptr_id: *const ::std::os::raw::c_void, flags: ImGuiTreeNodeFlags, fmt: &str, args: sys::va_list) -> bool {
+pub fn tree_node_ex_v__ptr(ptr_id: *const ::std::os::raw::c_void, flags: TreeNodeFlags, fmt: &str, args: sys::va_list) -> bool {
 	let fmt_ = CString::new(fmt).unwrap();
 	unsafe{sys::igTreeNodeExV_Ptr(ptr_id, flags as i32, fmt_.as_ptr(), args)}
 }
@@ -1753,26 +1838,26 @@ pub fn get_tree_node_to_label_spacing() -> f32 {
 	unsafe{sys::igGetTreeNodeToLabelSpacing()}
 }
 
-pub fn collapsing_header__tree_node_flags(label: &str, flags: ImGuiTreeNodeFlags) -> bool {
+pub fn collapsing_header__tree_node_flags(label: &str, flags: TreeNodeFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igCollapsingHeader_TreeNodeFlags(label_.as_ptr(), flags as i32)}
 }
 
-pub fn collapsing_header__bool_ptr(label: &str, p_visible: &mut bool, flags: ImGuiTreeNodeFlags) -> bool {
+pub fn collapsing_header__bool_ptr(label: &str, p_visible: &mut bool, flags: TreeNodeFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igCollapsingHeader_BoolPtr(label_.as_ptr(), p_visible, flags as i32)}
 }
 
-pub fn set_next_item_open(is_open: bool, cond: ImGuiCond) {
+pub fn set_next_item_open(is_open: bool, cond: Cond) {
 	unsafe{sys::igSetNextItemOpen(is_open, cond as i32)}
 }
 
-pub fn selectable__bool(label: &str, selected: bool, flags: ImGuiSelectableFlags, size: [f32; 2]) -> bool {
+pub fn selectable(label: &str, selected: bool, flags: SelectableFlags, size: [f32; 2]) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igSelectable_Bool(label_.as_ptr(), selected, flags as i32, size)}
 }
 
-pub fn selectable__bool_ptr(label: &str, p_selected: &mut bool, flags: ImGuiSelectableFlags, size: [f32; 2]) -> bool {
+pub fn selectable__bool_ptr(label: &str, p_selected: &mut bool, flags: SelectableFlags, size: [f32; 2]) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igSelectable_BoolPtr(label_.as_ptr(), p_selected, flags as i32, size)}
 }
@@ -1879,30 +1964,30 @@ pub fn set_tooltip_v(fmt: &str, args: sys::va_list) {
 	unsafe{sys::igSetTooltipV(fmt_.as_ptr(), args)}
 }
 
-pub fn begin_popup(str_id: &str, flags: ImGuiWindowFlags) -> bool {
+pub fn begin_popup(str_id: &str, flags: WindowFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
-	unsafe{sys::igBeginPopup(str_id_.as_ptr(), flags as i32)}
+	unsafe{sys::igBeginPopup(str_id_.as_ptr(), flags.bits)}
 }
 
-pub fn begin_popup_modal(name: &str, p_open: &mut bool, flags: ImGuiWindowFlags) -> bool {
+pub fn begin_popup_modal(name: &str, p_open: &mut bool, flags: WindowFlags) -> bool {
 	let name_ = CString::new(name).unwrap();
-	unsafe{sys::igBeginPopupModal(name_.as_ptr(), p_open, flags as i32)}
+	unsafe{sys::igBeginPopupModal(name_.as_ptr(), p_open, flags.bits)}
 }
 
 pub fn end_popup() {
 	unsafe{sys::igEndPopup()}
 }
 
-pub fn open_popup__str(str_id: &str, popup_flags: ImGuiPopupFlags) {
+pub fn open_popup__str(str_id: &str, popup_flags: PopupFlags) {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igOpenPopup_Str(str_id_.as_ptr(), popup_flags as i32)}
 }
 
-pub fn open_popup__id(id: sys::ImGuiID, popup_flags: ImGuiPopupFlags) {
+pub fn open_popup__id(id: sys::ImGuiID, popup_flags: PopupFlags) {
 	unsafe{sys::igOpenPopup_ID(id, popup_flags as i32)}
 }
 
-pub fn open_popup_on_item_click(str_id: &str, popup_flags: ImGuiPopupFlags) {
+pub fn open_popup_on_item_click(str_id: &str, popup_flags: PopupFlags) {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igOpenPopupOnItemClick(str_id_.as_ptr(), popup_flags as i32)}
 }
@@ -1911,36 +1996,36 @@ pub fn close_current_popup() {
 	unsafe{sys::igCloseCurrentPopup()}
 }
 
-pub fn begin_popup_context_item(str_id: &str, popup_flags: ImGuiPopupFlags) -> bool {
+pub fn begin_popup_context_item(str_id: &str, popup_flags: PopupFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igBeginPopupContextItem(str_id_.as_ptr(), popup_flags as i32)}
 }
 
-pub fn begin_popup_context_window(str_id: &str, popup_flags: ImGuiPopupFlags) -> bool {
+pub fn begin_popup_context_window(str_id: &str, popup_flags: PopupFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igBeginPopupContextWindow(str_id_.as_ptr(), popup_flags as i32)}
 }
 
-pub fn begin_popup_context_void(str_id: &str, popup_flags: ImGuiPopupFlags) -> bool {
+pub fn begin_popup_context_void(str_id: &str, popup_flags: PopupFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igBeginPopupContextVoid(str_id_.as_ptr(), popup_flags as i32)}
 }
 
-pub fn is_popup_open__str(str_id: &str, flags: ImGuiPopupFlags) -> bool {
+pub fn is_popup_open__str(str_id: &str, flags: PopupFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igIsPopupOpen_Str(str_id_.as_ptr(), flags as i32)}
 }
 
-pub fn begin_table(str_id: &str, column: i32, flags: ImGuiTableFlags, outer_size: [f32; 2], inner_width: f32) -> bool {
+pub fn begin_table(str_id: &str, column: i32, flags: TableFlags, outer_size: [f32; 2], inner_width: f32) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
-	unsafe{sys::igBeginTable(str_id_.as_ptr(), column, flags as i32, outer_size, inner_width)}
+	unsafe{sys::igBeginTable(str_id_.as_ptr(), column, flags.bits, outer_size, inner_width)}
 }
 
 pub fn end_table() {
 	unsafe{sys::igEndTable()}
 }
 
-pub fn table_next_row(row_flags: ImGuiTableRowFlags, min_row_height: f32) {
+pub fn table_next_row(row_flags: TableRowFlags, min_row_height: f32) {
 	unsafe{sys::igTableNextRow(row_flags as i32, min_row_height)}
 }
 
@@ -1952,9 +2037,9 @@ pub fn table_set_column_index(column_n: i32) -> bool {
 	unsafe{sys::igTableSetColumnIndex(column_n)}
 }
 
-pub fn table_setup_column(label: &str, flags: ImGuiTableColumnFlags, init_width_or_weight: f32, user_id: sys::ImGuiID) {
+pub fn table_setup_column(label: &str, flags: TableColumnFlags, init_width_or_weight: f32, user_id: sys::ImGuiID) {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igTableSetupColumn(label_.as_ptr(), flags as i32, init_width_or_weight, user_id)}
+	unsafe{sys::igTableSetupColumn(label_.as_ptr(), flags.bits, init_width_or_weight, user_id)}
 }
 
 pub fn table_setup_scroll_freeze(cols: i32, rows: i32) {
@@ -1998,7 +2083,7 @@ pub fn table_set_column_enabled(column_n: i32, v: bool) {
 	unsafe{sys::igTableSetColumnEnabled(column_n, v)}
 }
 
-pub fn table_set_bg_color(target: ImGuiTableBgTarget, color: u32, column_n: i32) {
+pub fn table_set_bg_color(target: TableBgTarget, color: u32, column_n: i32) {
 	unsafe{sys::igTableSetBgColor(target as i32, color, column_n)}
 }
 
@@ -2035,7 +2120,7 @@ pub fn get_columns_count() -> i32 {
 	unsafe{sys::igGetColumnsCount()}
 }
 
-pub fn begin_tab_bar(str_id: &str, flags: ImGuiTabBarFlags) -> bool {
+pub fn begin_tab_bar(str_id: &str, flags: TabBarFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igBeginTabBar(str_id_.as_ptr(), flags as i32)}
 }
@@ -2044,7 +2129,7 @@ pub fn end_tab_bar() {
 	unsafe{sys::igEndTabBar()}
 }
 
-pub fn begin_tab_item(label: &str, p_open: &mut bool, flags: ImGuiTabItemFlags) -> bool {
+pub fn begin_tab_item(label: &str, p_open: &mut bool, flags: TabItemFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igBeginTabItem(label_.as_ptr(), p_open, flags as i32)}
 }
@@ -2053,7 +2138,7 @@ pub fn end_tab_item() {
 	unsafe{sys::igEndTabItem()}
 }
 
-pub fn tab_item_button(label: &str, flags: ImGuiTabItemFlags) -> bool {
+pub fn tab_item_button(label: &str, flags: TabItemFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igTabItemButton(label_.as_ptr(), flags as i32)}
 }
@@ -2089,11 +2174,11 @@ pub fn log_text_v(fmt: &str, args: sys::va_list) {
 	unsafe{sys::igLogTextV(fmt_.as_ptr(), args)}
 }
 
-pub fn begin_drag_drop_source(flags: ImGuiDragDropFlags) -> bool {
+pub fn begin_drag_drop_source(flags: DragDropFlags) -> bool {
 	unsafe{sys::igBeginDragDropSource(flags as i32)}
 }
 
-pub fn set_drag_drop_payload(type_: &str, data: *const ::std::os::raw::c_void, sz: sys::size_t, cond: ImGuiCond) -> bool {
+pub fn set_drag_drop_payload(type_: &str, data: *const ::std::os::raw::c_void, sz: sys::size_t, cond: Cond) -> bool {
 	let type__ = CString::new(type_).unwrap();
 	unsafe{sys::igSetDragDropPayload(type__.as_ptr(), data, sz, cond as i32)}
 }
@@ -2106,7 +2191,7 @@ pub fn begin_drag_drop_target() -> bool {
 	unsafe{sys::igBeginDragDropTarget()}
 }
 
-pub fn accept_drag_drop_payload(type_: &str, flags: ImGuiDragDropFlags) -> *const sys::ImGuiPayload {
+pub fn accept_drag_drop_payload(type_: &str, flags: DragDropFlags) -> *const sys::ImGuiPayload {
 	let type__ = CString::new(type_).unwrap();
 	unsafe{sys::igAcceptDragDropPayload(type__.as_ptr(), flags as i32)}
 }
@@ -2143,7 +2228,11 @@ pub fn set_keyboard_focus_here(offset: i32) {
 	unsafe{sys::igSetKeyboardFocusHere(offset)}
 }
 
-pub fn is_item_hovered(flags: ImGuiHoveredFlags) -> bool {
+pub fn is_item_hovered() -> bool {
+	unsafe{sys::igIsItemHovered(0)}
+}
+
+pub fn is_item_hovered2(flags: HoveredFlags) -> bool {
 	unsafe{sys::igIsItemHovered(flags as i32)}
 }
 
@@ -2155,7 +2244,7 @@ pub fn is_item_focused() -> bool {
 	unsafe{sys::igIsItemFocused()}
 }
 
-pub fn is_item_clicked(mouse_button: ImGuiMouseButton) -> bool {
+pub fn is_item_clicked(mouse_button: MouseButton) -> bool {
 	unsafe{sys::igIsItemClicked(mouse_button as i32)}
 }
 
@@ -2195,16 +2284,22 @@ pub fn is_any_item_focused() -> bool {
 	unsafe{sys::igIsAnyItemFocused()}
 }
 
-pub fn get_item_rect_min(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetItemRectMin(pOut)}
+pub fn get_item_rect_min() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetItemRectMin(&mut r)}
+	r
 }
 
-pub fn get_item_rect_max(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetItemRectMax(pOut)}
+pub fn get_item_rect_max() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetItemRectMax(&mut r)}
+	r
 }
 
-pub fn get_item_rect_size(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetItemRectSize(pOut)}
+pub fn get_item_rect_size() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetItemRectSize(&mut r)}
+	r
 }
 
 pub fn set_item_allow_overlap() {
@@ -2243,7 +2338,7 @@ pub fn get_draw_list_shared_data() -> *mut sys::ImDrawListSharedData {
 	unsafe{sys::igGetDrawListSharedData()}
 }
 
-pub fn get_style_color_name(idx: ImGuiCol) -> *const ::std::os::raw::c_char {
+pub fn get_style_color_name(idx: Col) -> *const ::std::os::raw::c_char {
 	unsafe{sys::igGetStyleColorName(idx as i32)}
 }
 
@@ -2259,37 +2354,45 @@ pub fn calc_list_clipping(items_count: i32, items_height: f32, out_items_display
 	unsafe{sys::igCalcListClipping(items_count, items_height, out_items_display_start, out_items_display_end)}
 }
 
-pub fn begin_child_frame(id: sys::ImGuiID, size: [f32; 2], flags: ImGuiWindowFlags) -> bool {
-	unsafe{sys::igBeginChildFrame(id, size, flags as i32)}
+pub fn begin_child_frame(id: sys::ImGuiID, size: [f32; 2], flags: WindowFlags) -> bool {
+	unsafe{sys::igBeginChildFrame(id, size, flags.bits)}
 }
 
 pub fn end_child_frame() {
 	unsafe{sys::igEndChildFrame()}
 }
 
-pub fn calc_text_size(pOut: &mut [f32; 2], text: &str, text_end: &str, hide_text_after_double_hash: bool, wrap_width: f32) {
+pub fn calc_text_size(text: &str, text_end: &str, hide_text_after_double_hash: bool, wrap_width: f32) -> [f32; 2] {
+	let mut r = [0f32; 2];
 	let text_ = CString::new(text).unwrap();
 	let text_end_ = CString::new(text_end).unwrap();
-	unsafe{sys::igCalcTextSize(pOut, text_.as_ptr(), text_end_.as_ptr(), hide_text_after_double_hash, wrap_width)}
+	unsafe{sys::igCalcTextSize(&mut r, text_.as_ptr(), text_end_.as_ptr(), hide_text_after_double_hash, wrap_width)}
+	r
 }
 
-pub fn color_convert_u32_to_float4(pOut: &mut [f32; 4], in_: u32) {
-	unsafe{sys::igColorConvertU32ToFloat4(pOut, in_)}
+pub fn color_convert_u32_to_float4(in_: u32) -> [f32; 4] {
+	let mut r = [0f32; 4];
+	unsafe{sys::igColorConvertU32ToFloat4(&mut r, in_)}
+	r
 }
 
 pub fn color_convert_float4_to_u32(in_: [f32; 4]) -> u32 {
 	unsafe{sys::igColorConvertFloat4ToU32(in_)}
 }
 
-pub fn color_convert_rgbto_hsv(r: f32, g: f32, b: f32, out_h: &mut f32, out_s: &mut f32, out_v: &mut f32) {
-	unsafe{sys::igColorConvertRGBtoHSV(r, g, b, out_h, out_s, out_v)}
+pub fn color_convert_rgbto_hsv(r: f32, g: f32, b: f32) -> (f32, f32, f32) {
+	let (mut x, mut y, mut z) = (0.0, 0.0, 0.0);
+	unsafe{sys::igColorConvertRGBtoHSV(r, g, b, &mut x, &mut y, &mut z)}
+	(x, y, z)
 }
 
-pub fn color_convert_hsvto_rgb(h: f32, s: f32, v: f32, out_r: &mut f32, out_g: &mut f32, out_b: &mut f32) {
-	unsafe{sys::igColorConvertHSVtoRGB(h, s, v, out_r, out_g, out_b)}
+pub fn color_convert_hsvto_rgb(h: f32, s: f32, v: f32) -> (f32, f32, f32) {
+	let (mut x, mut y, mut z) = (0.0, 0.0, 0.0);
+	unsafe{sys::igColorConvertHSVtoRGB(h, s, v, &mut x, &mut y, &mut z)}
+	(x, y, z)
 }
 
-pub fn get_key_index(imgui_key: ImGuiKey) -> i32 {
+pub fn get_key_index(imgui_key: Key) -> i32 {
 	unsafe{sys::igGetKeyIndex(imgui_key as i32)}
 }
 
@@ -2313,19 +2416,19 @@ pub fn capture_keyboard_from_app(want_capture_keyboard_value: bool) {
 	unsafe{sys::igCaptureKeyboardFromApp(want_capture_keyboard_value)}
 }
 
-pub fn is_mouse_down(button: ImGuiMouseButton) -> bool {
+pub fn is_mouse_down(button: MouseButton) -> bool {
 	unsafe{sys::igIsMouseDown(button as i32)}
 }
 
-pub fn is_mouse_clicked(button: ImGuiMouseButton, repeat: bool) -> bool {
+pub fn is_mouse_clicked(button: MouseButton, repeat: bool) -> bool {
 	unsafe{sys::igIsMouseClicked(button as i32, repeat)}
 }
 
-pub fn is_mouse_released(button: ImGuiMouseButton) -> bool {
+pub fn is_mouse_released(button: MouseButton) -> bool {
 	unsafe{sys::igIsMouseReleased(button as i32)}
 }
 
-pub fn is_mouse_double_clicked(button: ImGuiMouseButton) -> bool {
+pub fn is_mouse_double_clicked(button: MouseButton) -> bool {
 	unsafe{sys::igIsMouseDoubleClicked(button as i32)}
 }
 
@@ -2341,23 +2444,29 @@ pub fn is_any_mouse_down() -> bool {
 	unsafe{sys::igIsAnyMouseDown()}
 }
 
-pub fn get_mouse_pos(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetMousePos(pOut)}
+pub fn get_mouse_pos() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetMousePos(&mut r)}
+	r
 }
 
-pub fn get_mouse_pos_on_opening_current_popup(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetMousePosOnOpeningCurrentPopup(pOut)}
+pub fn get_mouse_pos_on_opening_current_popup() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetMousePosOnOpeningCurrentPopup(&mut r)}
+	r
 }
 
-pub fn is_mouse_dragging(button: ImGuiMouseButton, lock_threshold: f32) -> bool {
+pub fn is_mouse_dragging(button: MouseButton, lock_threshold: f32) -> bool {
 	unsafe{sys::igIsMouseDragging(button as i32, lock_threshold)}
 }
 
-pub fn get_mouse_drag_delta(pOut: &mut [f32; 2], button: ImGuiMouseButton, lock_threshold: f32) {
-	unsafe{sys::igGetMouseDragDelta(pOut, button as i32, lock_threshold)}
+pub fn get_mouse_drag_delta(button: MouseButton, lock_threshold: f32) -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetMouseDragDelta(&mut r, button as i32, lock_threshold)}
+	r
 }
 
-pub fn reset_mouse_drag_delta(button: ImGuiMouseButton) {
+pub fn reset_mouse_drag_delta(button: MouseButton) {
 	unsafe{sys::igResetMouseDragDelta(button as i32)}
 }
 
@@ -2365,7 +2474,7 @@ pub fn get_mouse_cursor() -> i32 {
 	unsafe{sys::igGetMouseCursor()}
 }
 
-pub fn set_mouse_cursor(cursor_type: ImGuiMouseCursor) {
+pub fn set_mouse_cursor(cursor_type: MouseCursor) {
 	unsafe{sys::igSetMouseCursor(cursor_type as i32)}
 }
 
@@ -2458,216 +2567,231 @@ pub fn im_draw_list_destroy(self_: &mut sys::ImDrawList) {
 	unsafe{sys::ImDrawList_destroy(self_)}
 }
 
-pub fn im_draw_list__push_clip_rect(self_: &mut sys::ImDrawList, clip_rect_min: [f32; 2], clip_rect_max: [f32; 2], intersect_with_current_clip_rect: bool) {
-	unsafe{sys::ImDrawList_PushClipRect(self_, clip_rect_min, clip_rect_max, intersect_with_current_clip_rect)}
+pub struct DrawList {
+	pub drawlist: *mut sys::ImDrawList,
 }
 
-pub fn im_draw_list__push_clip_rect_full_screen(self_: &mut sys::ImDrawList) {
-	unsafe{sys::ImDrawList_PushClipRectFullScreen(self_)}
-}
+impl DrawList {
+	pub fn push_clip_rect(&self, clip_rect_min: [f32; 2], clip_rect_max: [f32; 2], intersect_with_current_clip_rect: bool) {
+		unsafe{sys::ImDrawList_PushClipRect(self.drawlist, clip_rect_min, clip_rect_max, intersect_with_current_clip_rect)}
+	}
+	
+	pub fn push_clip_rect_full_screen(&self) {
+		unsafe{sys::ImDrawList_PushClipRectFullScreen(self.drawlist)}
+	}
+	
+	pub fn pop_clip_rect(&self) {
+		unsafe{sys::ImDrawList_PopClipRect(self.drawlist)}
+	}
 
-pub fn im_draw_list__pop_clip_rect(self_: &mut sys::ImDrawList) {
-	unsafe{sys::ImDrawList_PopClipRect(self_)}
-}
-
-pub fn im_draw_list__push_texture_id(self_: &mut sys::ImDrawList, texture_id: sys::ImTextureID) {
-	unsafe{sys::ImDrawList_PushTextureID(self_, texture_id)}
-}
-
-pub fn im_draw_list__pop_texture_id(self_: &mut sys::ImDrawList) {
-	unsafe{sys::ImDrawList_PopTextureID(self_)}
-}
-
-pub fn im_draw_list__get_clip_rect_min(pOut: &mut [f32; 2], self_: &mut sys::ImDrawList) {
-	unsafe{sys::ImDrawList_GetClipRectMin(pOut, self_)}
-}
-
-pub fn im_draw_list__get_clip_rect_max(pOut: &mut [f32; 2], self_: &mut sys::ImDrawList) {
-	unsafe{sys::ImDrawList_GetClipRectMax(pOut, self_)}
-}
-
-pub fn im_draw_list__add_line(self_: &mut sys::ImDrawList, p1: [f32; 2], p2: [f32; 2], col: u32, thickness: f32) {
-	unsafe{sys::ImDrawList_AddLine(self_, p1, p2, col, thickness)}
-}
-
-pub fn im_draw_list__add_rect(self_: &mut sys::ImDrawList, p_min: [f32; 2], p_max: [f32; 2], col: u32, rounding: f32, flags: ImDrawFlags, thickness: f32) {
-	unsafe{sys::ImDrawList_AddRect(self_, p_min, p_max, col, rounding, flags as i32, thickness)}
-}
-
-pub fn im_draw_list__add_rect_filled(self_: &mut sys::ImDrawList, p_min: [f32; 2], p_max: [f32; 2], col: u32, rounding: f32, flags: ImDrawFlags) {
-	unsafe{sys::ImDrawList_AddRectFilled(self_, p_min, p_max, col, rounding, flags as i32)}
-}
-
-pub fn im_draw_list__add_rect_filled_multi_color(self_: &mut sys::ImDrawList, p_min: [f32; 2], p_max: [f32; 2], col_upr_left: u32, col_upr_right: u32, col_bot_right: u32, col_bot_left: u32) {
-	unsafe{sys::ImDrawList_AddRectFilledMultiColor(self_, p_min, p_max, col_upr_left, col_upr_right, col_bot_right, col_bot_left)}
-}
-
-pub fn im_draw_list__add_quad(self_: &mut sys::ImDrawList, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], p4: [f32; 2], col: u32, thickness: f32) {
-	unsafe{sys::ImDrawList_AddQuad(self_, p1, p2, p3, p4, col, thickness)}
-}
-
-pub fn im_draw_list__add_quad_filled(self_: &mut sys::ImDrawList, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], p4: [f32; 2], col: u32) {
-	unsafe{sys::ImDrawList_AddQuadFilled(self_, p1, p2, p3, p4, col)}
-}
-
-pub fn im_draw_list__add_triangle(self_: &mut sys::ImDrawList, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], col: u32, thickness: f32) {
-	unsafe{sys::ImDrawList_AddTriangle(self_, p1, p2, p3, col, thickness)}
-}
-
-pub fn im_draw_list__add_triangle_filled(self_: &mut sys::ImDrawList, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], col: u32) {
-	unsafe{sys::ImDrawList_AddTriangleFilled(self_, p1, p2, p3, col)}
-}
-
-pub fn im_draw_list__add_circle(self_: &mut sys::ImDrawList, center: [f32; 2], radius: f32, col: u32, num_segments: i32, thickness: f32) {
-	unsafe{sys::ImDrawList_AddCircle(self_, center, radius, col, num_segments, thickness)}
-}
-
-pub fn im_draw_list__add_circle_filled(self_: &mut sys::ImDrawList, center: [f32; 2], radius: f32, col: u32, num_segments: i32) {
-	unsafe{sys::ImDrawList_AddCircleFilled(self_, center, radius, col, num_segments)}
-}
-
-pub fn im_draw_list__add_ngon(self_: &mut sys::ImDrawList, center: [f32; 2], radius: f32, col: u32, num_segments: i32, thickness: f32) {
-	unsafe{sys::ImDrawList_AddNgon(self_, center, radius, col, num_segments, thickness)}
-}
-
-pub fn im_draw_list__add_ngon_filled(self_: &mut sys::ImDrawList, center: [f32; 2], radius: f32, col: u32, num_segments: i32) {
-	unsafe{sys::ImDrawList_AddNgonFilled(self_, center, radius, col, num_segments)}
-}
-
-pub fn im_draw_list__add_text__vec2(self_: &mut sys::ImDrawList, pos: [f32; 2], col: u32, text_begin: &str, text_end: &str) {
-	let text_begin_ = CString::new(text_begin).unwrap();
-	let text_end_ = CString::new(text_end).unwrap();
-	unsafe{sys::ImDrawList_AddText_Vec2(self_, pos, col, text_begin_.as_ptr(), text_end_.as_ptr())}
-}
-
-pub fn im_draw_list__add_text__font_ptr(self_: &mut sys::ImDrawList, font: *const sys::ImFont, font_size: f32, pos: [f32; 2], col: u32, text_begin: &str, text_end: &str, wrap_width: f32, cpu_fine_clip_rect: *const [f32; 4]) {
-	let text_begin_ = CString::new(text_begin).unwrap();
-	let text_end_ = CString::new(text_end).unwrap();
-	unsafe{sys::ImDrawList_AddText_FontPtr(self_, font, font_size, pos, col, text_begin_.as_ptr(), text_end_.as_ptr(), wrap_width, cpu_fine_clip_rect)}
-}
-
-pub fn im_draw_list__add_polyline(self_: &mut sys::ImDrawList, points: *const [f32; 2], num_points: i32, col: u32, flags: ImDrawFlags, thickness: f32) {
-	unsafe{sys::ImDrawList_AddPolyline(self_, points, num_points, col, flags as i32, thickness)}
-}
-
-pub fn im_draw_list__add_convex_poly_filled(self_: &mut sys::ImDrawList, points: *const [f32; 2], num_points: i32, col: u32) {
-	unsafe{sys::ImDrawList_AddConvexPolyFilled(self_, points, num_points, col)}
-}
-
-pub fn im_draw_list__add_bezier_cubic(self_: &mut sys::ImDrawList, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], p4: [f32; 2], col: u32, thickness: f32, num_segments: i32) {
-	unsafe{sys::ImDrawList_AddBezierCubic(self_, p1, p2, p3, p4, col, thickness, num_segments)}
-}
-
-pub fn im_draw_list__add_bezier_quadratic(self_: &mut sys::ImDrawList, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], col: u32, thickness: f32, num_segments: i32) {
-	unsafe{sys::ImDrawList_AddBezierQuadratic(self_, p1, p2, p3, col, thickness, num_segments)}
-}
-
-pub fn im_draw_list__add_image(self_: &mut sys::ImDrawList, user_texture_id: sys::ImTextureID, p_min: [f32; 2], p_max: [f32; 2], uv_min: [f32; 2], uv_max: [f32; 2], col: u32) {
-	unsafe{sys::ImDrawList_AddImage(self_, user_texture_id, p_min, p_max, uv_min, uv_max, col)}
-}
-
-pub fn im_draw_list__add_image_quad(self_: &mut sys::ImDrawList, user_texture_id: sys::ImTextureID, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], p4: [f32; 2], uv1: [f32; 2], uv2: [f32; 2], uv3: [f32; 2], uv4: [f32; 2], col: u32) {
-	unsafe{sys::ImDrawList_AddImageQuad(self_, user_texture_id, p1, p2, p3, p4, uv1, uv2, uv3, uv4, col)}
-}
-
-pub fn im_draw_list__add_image_rounded(self_: &mut sys::ImDrawList, user_texture_id: sys::ImTextureID, p_min: [f32; 2], p_max: [f32; 2], uv_min: [f32; 2], uv_max: [f32; 2], col: u32, rounding: f32, flags: ImDrawFlags) {
-	unsafe{sys::ImDrawList_AddImageRounded(self_, user_texture_id, p_min, p_max, uv_min, uv_max, col, rounding, flags as i32)}
-}
-
-pub fn im_draw_list__path_clear(self_: &mut sys::ImDrawList) {
-	unsafe{sys::ImDrawList_PathClear(self_)}
-}
-
-pub fn im_draw_list__path_line_to(self_: &mut sys::ImDrawList, pos: [f32; 2]) {
-	unsafe{sys::ImDrawList_PathLineTo(self_, pos)}
-}
-
-pub fn im_draw_list__path_line_to_merge_duplicate(self_: &mut sys::ImDrawList, pos: [f32; 2]) {
-	unsafe{sys::ImDrawList_PathLineToMergeDuplicate(self_, pos)}
-}
-
-pub fn im_draw_list__path_fill_convex(self_: &mut sys::ImDrawList, col: u32) {
-	unsafe{sys::ImDrawList_PathFillConvex(self_, col)}
-}
-
-pub fn im_draw_list__path_stroke(self_: &mut sys::ImDrawList, col: u32, flags: ImDrawFlags, thickness: f32) {
-	unsafe{sys::ImDrawList_PathStroke(self_, col, flags as i32, thickness)}
-}
-
-pub fn im_draw_list__path_arc_to(self_: &mut sys::ImDrawList, center: [f32; 2], radius: f32, a_min: f32, a_max: f32, num_segments: i32) {
-	unsafe{sys::ImDrawList_PathArcTo(self_, center, radius, a_min, a_max, num_segments)}
-}
-
-pub fn im_draw_list__path_arc_to_fast(self_: &mut sys::ImDrawList, center: [f32; 2], radius: f32, a_min_of_12: i32, a_max_of_12: i32) {
-	unsafe{sys::ImDrawList_PathArcToFast(self_, center, radius, a_min_of_12, a_max_of_12)}
-}
-
-pub fn im_draw_list__path_bezier_cubic_curve_to(self_: &mut sys::ImDrawList, p2: [f32; 2], p3: [f32; 2], p4: [f32; 2], num_segments: i32) {
-	unsafe{sys::ImDrawList_PathBezierCubicCurveTo(self_, p2, p3, p4, num_segments)}
-}
-
-pub fn im_draw_list__path_bezier_quadratic_curve_to(self_: &mut sys::ImDrawList, p2: [f32; 2], p3: [f32; 2], num_segments: i32) {
-	unsafe{sys::ImDrawList_PathBezierQuadraticCurveTo(self_, p2, p3, num_segments)}
-}
-
-pub fn im_draw_list__path_rect(self_: &mut sys::ImDrawList, rect_min: [f32; 2], rect_max: [f32; 2], rounding: f32, flags: ImDrawFlags) {
-	unsafe{sys::ImDrawList_PathRect(self_, rect_min, rect_max, rounding, flags as i32)}
-}
-
-pub fn im_draw_list__add_callback(self_: &mut sys::ImDrawList, callback: sys::ImDrawCallback, callback_data: &mut ::std::os::raw::c_void) {
-	unsafe{sys::ImDrawList_AddCallback(self_, callback, callback_data)}
-}
-
-pub fn im_draw_list__add_draw_cmd(self_: &mut sys::ImDrawList) {
-	unsafe{sys::ImDrawList_AddDrawCmd(self_)}
-}
-
-pub fn im_draw_list__clone_output(self_: &mut sys::ImDrawList) -> *mut sys::ImDrawList {
-	unsafe{sys::ImDrawList_CloneOutput(self_)}
-}
-
-pub fn im_draw_list__channels_split(self_: &mut sys::ImDrawList, count: i32) {
-	unsafe{sys::ImDrawList_ChannelsSplit(self_, count)}
-}
-
-pub fn im_draw_list__channels_merge(self_: &mut sys::ImDrawList) {
-	unsafe{sys::ImDrawList_ChannelsMerge(self_)}
-}
-
-pub fn im_draw_list__channels_set_current(self_: &mut sys::ImDrawList, n: i32) {
-	unsafe{sys::ImDrawList_ChannelsSetCurrent(self_, n)}
-}
-
-pub fn im_draw_list__prim_reserve(self_: &mut sys::ImDrawList, idx_count: i32, vtx_count: i32) {
-	unsafe{sys::ImDrawList_PrimReserve(self_, idx_count, vtx_count)}
-}
-
-pub fn im_draw_list__prim_unreserve(self_: &mut sys::ImDrawList, idx_count: i32, vtx_count: i32) {
-	unsafe{sys::ImDrawList_PrimUnreserve(self_, idx_count, vtx_count)}
-}
-
-pub fn im_draw_list__prim_rect(self_: &mut sys::ImDrawList, a: [f32; 2], b: [f32; 2], col: u32) {
-	unsafe{sys::ImDrawList_PrimRect(self_, a, b, col)}
-}
-
-pub fn im_draw_list__prim_rect_uv(self_: &mut sys::ImDrawList, a: [f32; 2], b: [f32; 2], uv_a: [f32; 2], uv_b: [f32; 2], col: u32) {
-	unsafe{sys::ImDrawList_PrimRectUV(self_, a, b, uv_a, uv_b, col)}
-}
-
-pub fn im_draw_list__prim_quad_uv(self_: &mut sys::ImDrawList, a: [f32; 2], b: [f32; 2], c: [f32; 2], d: [f32; 2], uv_a: [f32; 2], uv_b: [f32; 2], uv_c: [f32; 2], uv_d: [f32; 2], col: u32) {
-	unsafe{sys::ImDrawList_PrimQuadUV(self_, a, b, c, d, uv_a, uv_b, uv_c, uv_d, col)}
-}
-
-pub fn im_draw_list__prim_write_vtx(self_: &mut sys::ImDrawList, pos: [f32; 2], uv: [f32; 2], col: u32) {
-	unsafe{sys::ImDrawList_PrimWriteVtx(self_, pos, uv, col)}
-}
-
-pub fn im_draw_list__prim_write_idx(self_: &mut sys::ImDrawList, idx: sys::ImDrawIdx) {
-	unsafe{sys::ImDrawList_PrimWriteIdx(self_, idx)}
-}
-
-pub fn im_draw_list__prim_vtx(self_: &mut sys::ImDrawList, pos: [f32; 2], uv: [f32; 2], col: u32) {
-	unsafe{sys::ImDrawList_PrimVtx(self_, pos, uv, col)}
+	pub fn push_texture_id(&self, texture_id: usize) {
+		unsafe{sys::ImDrawList_PushTextureID(self.drawlist, texture_id as *mut _)}
+	}
+	
+	pub fn pop_texture_id(&self) {
+		unsafe{sys::ImDrawList_PopTextureID(self.drawlist)}
+	}
+	
+	pub fn get_clip_rect_min(&self) -> [f32; 2] {
+		let mut r = [0f32; 2];
+		unsafe{sys::ImDrawList_GetClipRectMin(&mut r, self.drawlist)}
+		r
+	}
+	
+	pub fn get_clip_rect_max(&self) -> [f32; 2] {
+		let mut r = [0f32; 2];
+		unsafe{sys::ImDrawList_GetClipRectMax(&mut r, self.drawlist)}
+		r
+	}
+	
+	pub fn add_line(&self, p1: [f32; 2], p2: [f32; 2], col: u32, thickness: f32) {
+		unsafe{sys::ImDrawList_AddLine(self.drawlist, p1, p2, col, thickness)}
+	}
+	
+	pub fn add_rect(&self, p_min: [f32; 2], p_max: [f32; 2], col: u32, rounding: f32, flags: DrawFlags, thickness: f32) {
+		unsafe{sys::ImDrawList_AddRect(self.drawlist, p_min, p_max, col, rounding, flags as i32, thickness)}
+	}
+	
+	pub fn add_rect_filled(&self, p_min: [f32; 2], p_max: [f32; 2], col: u32, rounding: f32, flags: DrawFlags) {
+		unsafe{sys::ImDrawList_AddRectFilled(self.drawlist, p_min, p_max, col, rounding, flags as i32)}
+	}
+	
+	pub fn add_rect_filled_multi_color(&self, p_min: [f32; 2], p_max: [f32; 2], col_upr_left: u32, col_upr_right: u32, col_bot_right: u32, col_bot_left: u32) {
+		unsafe{sys::ImDrawList_AddRectFilledMultiColor(self.drawlist, p_min, p_max, col_upr_left, col_upr_right, col_bot_right, col_bot_left)}
+	}
+	
+	pub fn add_quad(&self, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], p4: [f32; 2], col: u32, thickness: f32) {
+		unsafe{sys::ImDrawList_AddQuad(self.drawlist, p1, p2, p3, p4, col, thickness)}
+	}
+	
+	pub fn add_quad_filled(&self, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], p4: [f32; 2], col: u32) {
+		unsafe{sys::ImDrawList_AddQuadFilled(self.drawlist, p1, p2, p3, p4, col)}
+	}
+	
+	pub fn add_triangle(&self, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], col: u32, thickness: f32) {
+		unsafe{sys::ImDrawList_AddTriangle(self.drawlist, p1, p2, p3, col, thickness)}
+	}
+	
+	pub fn add_triangle_filled(&self, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], col: u32) {
+		unsafe{sys::ImDrawList_AddTriangleFilled(self.drawlist, p1, p2, p3, col)}
+	}
+	
+	pub fn add_circle(&self, center: [f32; 2], radius: f32, col: u32, num_segments: i32, thickness: f32) {
+		unsafe{sys::ImDrawList_AddCircle(self.drawlist, center, radius, col, num_segments, thickness)}
+	}
+	
+	pub fn add_circle_filled(&self, center: [f32; 2], radius: f32, col: u32, num_segments: i32) {
+		unsafe{sys::ImDrawList_AddCircleFilled(self.drawlist, center, radius, col, num_segments)}
+	}
+	
+	pub fn add_ngon(&self, center: [f32; 2], radius: f32, col: u32, num_segments: i32, thickness: f32) {
+		unsafe{sys::ImDrawList_AddNgon(self.drawlist, center, radius, col, num_segments, thickness)}
+	}
+	
+	pub fn add_ngon_filled(&self, center: [f32; 2], radius: f32, col: u32, num_segments: i32) {
+		unsafe{sys::ImDrawList_AddNgonFilled(self.drawlist, center, radius, col, num_segments)}
+	}
+	
+	pub fn add_text(&self, pos: [f32; 2], col: u32, text_begin: &str) {
+		let text_begin_ = CString::new(text_begin).unwrap();
+		unsafe{sys::ImDrawList_AddText_Vec2(self.drawlist, pos, col, text_begin_.as_ptr(), std::ptr::null())}
+	}
+	
+	pub fn add_text__vec2(&self, pos: [f32; 2], col: u32, text_begin: &str, text_end: &str) {
+		let text_begin_ = CString::new(text_begin).unwrap();
+		let text_end_ = CString::new(text_end).unwrap();
+		unsafe{sys::ImDrawList_AddText_Vec2(self.drawlist, pos, col, text_begin_.as_ptr(), text_end_.as_ptr())}
+	}
+	
+	pub fn add_text__font_ptr(&self, font: *const sys::ImFont, font_size: f32, pos: [f32; 2], col: u32, text_begin: &str, text_end: &str, wrap_width: f32, cpu_fine_clip_rect: *const [f32; 4]) {
+		let text_begin_ = CString::new(text_begin).unwrap();
+		let text_end_ = CString::new(text_end).unwrap();
+		unsafe{sys::ImDrawList_AddText_FontPtr(self.drawlist, font, font_size, pos, col, text_begin_.as_ptr(), text_end_.as_ptr(), wrap_width, cpu_fine_clip_rect)}
+	}
+	
+	pub fn add_polyline(&self, points: *const [f32; 2], num_points: i32, col: u32, flags: DrawFlags, thickness: f32) {
+		unsafe{sys::ImDrawList_AddPolyline(self.drawlist, points, num_points, col, flags as i32, thickness)}
+	}
+	
+	pub fn add_convex_poly_filled(&self, points: *const [f32; 2], num_points: i32, col: u32) {
+		unsafe{sys::ImDrawList_AddConvexPolyFilled(self.drawlist, points, num_points, col)}
+	}
+	
+	pub fn add_bezier_cubic(&self, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], p4: [f32; 2], col: u32, thickness: f32, num_segments: i32) {
+		unsafe{sys::ImDrawList_AddBezierCubic(self.drawlist, p1, p2, p3, p4, col, thickness, num_segments)}
+	}
+	
+	pub fn add_bezier_quadratic(&self, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], col: u32, thickness: f32, num_segments: i32) {
+		unsafe{sys::ImDrawList_AddBezierQuadratic(self.drawlist, p1, p2, p3, col, thickness, num_segments)}
+	}
+	
+	pub fn add_image(&self, user_texture_id: usize, p_min: [f32; 2], p_max: [f32; 2], uv_min: [f32; 2], uv_max: [f32; 2], col: u32) {
+		unsafe{sys::ImDrawList_AddImage(self.drawlist, user_texture_id as *mut _, p_min, p_max, uv_min, uv_max, col)}
+	}
+	
+	pub fn add_image_quad(&self, user_texture_id: usize, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], p4: [f32; 2], uv1: [f32; 2], uv2: [f32; 2], uv3: [f32; 2], uv4: [f32; 2], col: u32) {
+		unsafe{sys::ImDrawList_AddImageQuad(self.drawlist, user_texture_id as *mut _, p1, p2, p3, p4, uv1, uv2, uv3, uv4, col)}
+	}
+	
+	pub fn add_image_rounded(&self, user_texture_id: usize, p_min: [f32; 2], p_max: [f32; 2], uv_min: [f32; 2], uv_max: [f32; 2], col: u32, rounding: f32, flags: DrawFlags) {
+		unsafe{sys::ImDrawList_AddImageRounded(self.drawlist, user_texture_id as *mut _, p_min, p_max, uv_min, uv_max, col, rounding, flags as i32)}
+	}
+	
+	pub fn path_clear(&self) {
+		unsafe{sys::ImDrawList_PathClear(self.drawlist)}
+	}
+	
+	pub fn path_line_to(&self, pos: [f32; 2]) {
+		unsafe{sys::ImDrawList_PathLineTo(self.drawlist, pos)}
+	}
+	
+	pub fn path_line_to_merge_duplicate(&self, pos: [f32; 2]) {
+		unsafe{sys::ImDrawList_PathLineToMergeDuplicate(self.drawlist, pos)}
+	}
+	
+	pub fn path_fill_convex(&self, col: u32) {
+		unsafe{sys::ImDrawList_PathFillConvex(self.drawlist, col)}
+	}
+	
+	pub fn path_stroke(&self, col: u32, flags: DrawFlags, thickness: f32) {
+		unsafe{sys::ImDrawList_PathStroke(self.drawlist, col, flags as i32, thickness)}
+	}
+	
+	pub fn path_arc_to(&self, center: [f32; 2], radius: f32, a_min: f32, a_max: f32, num_segments: i32) {
+		unsafe{sys::ImDrawList_PathArcTo(self.drawlist, center, radius, a_min, a_max, num_segments)}
+	}
+	
+	pub fn path_arc_to_fast(&self, center: [f32; 2], radius: f32, a_min_of_12: i32, a_max_of_12: i32) {
+		unsafe{sys::ImDrawList_PathArcToFast(self.drawlist, center, radius, a_min_of_12, a_max_of_12)}
+	}
+	
+	pub fn path_bezier_cubic_curve_to(&self, p2: [f32; 2], p3: [f32; 2], p4: [f32; 2], num_segments: i32) {
+		unsafe{sys::ImDrawList_PathBezierCubicCurveTo(self.drawlist, p2, p3, p4, num_segments)}
+	}
+	
+	pub fn path_bezier_quadratic_curve_to(&self, p2: [f32; 2], p3: [f32; 2], num_segments: i32) {
+		unsafe{sys::ImDrawList_PathBezierQuadraticCurveTo(self.drawlist, p2, p3, num_segments)}
+	}
+	
+	pub fn path_rect(&self, rect_min: [f32; 2], rect_max: [f32; 2], rounding: f32, flags: DrawFlags) {
+		unsafe{sys::ImDrawList_PathRect(self.drawlist, rect_min, rect_max, rounding, flags as i32)}
+	}
+	
+	pub fn add_callback(&self, callback: sys::ImDrawCallback, callback_data: &mut ::std::os::raw::c_void) {
+		unsafe{sys::ImDrawList_AddCallback(self.drawlist, callback, callback_data)}
+	}
+	
+	pub fn add_draw_cmd(&self) {
+		unsafe{sys::ImDrawList_AddDrawCmd(self.drawlist)}
+	}
+	
+	pub fn clone_output(&self) -> *mut sys::ImDrawList {
+		unsafe{sys::ImDrawList_CloneOutput(self.drawlist)}
+	}
+	
+	pub fn channels_split(&self, count: i32) {
+		unsafe{sys::ImDrawList_ChannelsSplit(self.drawlist, count)}
+	}
+	
+	pub fn channels_merge(&self) {
+		unsafe{sys::ImDrawList_ChannelsMerge(self.drawlist)}
+	}
+	
+	pub fn channels_set_current(&self, n: i32) {
+		unsafe{sys::ImDrawList_ChannelsSetCurrent(self.drawlist, n)}
+	}
+	
+	pub fn prim_reserve(&self, idx_count: i32, vtx_count: i32) {
+		unsafe{sys::ImDrawList_PrimReserve(self.drawlist, idx_count, vtx_count)}
+	}
+	
+	pub fn prim_unreserve(&self, idx_count: i32, vtx_count: i32) {
+		unsafe{sys::ImDrawList_PrimUnreserve(self.drawlist, idx_count, vtx_count)}
+	}
+	
+	pub fn prim_rect(&self, a: [f32; 2], b: [f32; 2], col: u32) {
+		unsafe{sys::ImDrawList_PrimRect(self.drawlist, a, b, col)}
+	}
+	
+	pub fn prim_rect_uv(&self, a: [f32; 2], b: [f32; 2], uv_a: [f32; 2], uv_b: [f32; 2], col: u32) {
+		unsafe{sys::ImDrawList_PrimRectUV(self.drawlist, a, b, uv_a, uv_b, col)}
+	}
+	
+	pub fn prim_quad_uv(&self, a: [f32; 2], b: [f32; 2], c: [f32; 2], d: [f32; 2], uv_a: [f32; 2], uv_b: [f32; 2], uv_c: [f32; 2], uv_d: [f32; 2], col: u32) {
+		unsafe{sys::ImDrawList_PrimQuadUV(self.drawlist, a, b, c, d, uv_a, uv_b, uv_c, uv_d, col)}
+	}
+	
+	pub fn prim_write_vtx(&self, pos: [f32; 2], uv: [f32; 2], col: u32) {
+		unsafe{sys::ImDrawList_PrimWriteVtx(self.drawlist, pos, uv, col)}
+	}
+	
+	pub fn prim_write_idx(&self, idx: sys::ImDrawIdx) {
+		unsafe{sys::ImDrawList_PrimWriteIdx(self.drawlist, idx)}
+	}
+	
+	pub fn prim_vtx(&self, pos: [f32; 2], uv: [f32; 2], col: u32) {
+		unsafe{sys::ImDrawList_PrimVtx(self.drawlist, pos, uv, col)}
+	}
 }
 
 pub fn im_draw_list___reset_for_new_frame(self_: &mut sys::ImDrawList) {
@@ -3102,8 +3226,8 @@ pub fn find_window_by_name(name: &str) -> *mut sys::ImGuiWindow {
 	unsafe{sys::igFindWindowByName(name_.as_ptr())}
 }
 
-pub fn update_window_parent_and_root_links(window: &mut sys::ImGuiWindow, flags: ImGuiWindowFlags, parent_window: &mut sys::ImGuiWindow) {
-	unsafe{sys::igUpdateWindowParentAndRootLinks(window, flags as i32, parent_window)}
+pub fn update_window_parent_and_root_links(window: &mut sys::ImGuiWindow, flags: WindowFlags, parent_window: &mut sys::ImGuiWindow) {
+	unsafe{sys::igUpdateWindowParentAndRootLinks(window, flags.bits, parent_window)}
 }
 
 pub fn calc_window_next_auto_fit_size(pOut: &mut [f32; 2], window: &mut sys::ImGuiWindow) {
@@ -3122,15 +3246,15 @@ pub fn is_window_nav_focusable(window: &mut sys::ImGuiWindow) -> bool {
 	unsafe{sys::igIsWindowNavFocusable(window)}
 }
 
-pub fn set_window_pos__window_ptr(window: &mut sys::ImGuiWindow, pos: [f32; 2], cond: ImGuiCond) {
+pub fn set_window_pos__window_ptr(window: &mut sys::ImGuiWindow, pos: [f32; 2], cond: Cond) {
 	unsafe{sys::igSetWindowPos_WindowPtr(window, pos, cond as i32)}
 }
 
-pub fn set_window_size__window_ptr(window: &mut sys::ImGuiWindow, size: [f32; 2], cond: ImGuiCond) {
+pub fn set_window_size__window_ptr(window: &mut sys::ImGuiWindow, size: [f32; 2], cond: Cond) {
 	unsafe{sys::igSetWindowSize_WindowPtr(window, size, cond as i32)}
 }
 
-pub fn set_window_collapsed__window_ptr(window: &mut sys::ImGuiWindow, collapsed: bool, cond: ImGuiCond) {
+pub fn set_window_collapsed__window_ptr(window: &mut sys::ImGuiWindow, collapsed: bool, cond: Cond) {
 	unsafe{sys::igSetWindowCollapsed_WindowPtr(window, collapsed, cond as i32)}
 }
 
@@ -3335,7 +3459,7 @@ pub fn item_size__rect(bb: sys::ImRect, text_baseline_y: f32) {
 	unsafe{sys::igItemSize_Rect(bb, text_baseline_y)}
 }
 
-pub fn item_add(bb: sys::ImRect, id: sys::ImGuiID, nav_bb: *const sys::ImRect, flags: ImGuiItemAddFlags) -> bool {
+pub fn item_add(bb: sys::ImRect, id: sys::ImGuiID, nav_bb: *const sys::ImRect, flags: ItemAddFlags) -> bool {
 	unsafe{sys::igItemAdd(bb, id, nav_bb, flags as i32)}
 }
 
@@ -3351,8 +3475,10 @@ pub fn is_clipped_ex(bb: sys::ImRect, id: sys::ImGuiID, clip_even_when_logged: b
 	unsafe{sys::igIsClippedEx(bb, id, clip_even_when_logged)}
 }
 
-pub fn calc_item_size(pOut: &mut [f32; 2], size: [f32; 2], default_w: f32, default_h: f32) {
-	unsafe{sys::igCalcItemSize(pOut, size, default_w, default_h)}
+pub fn calc_item_size(size: [f32; 2], default_w: f32, default_h: f32) -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igCalcItemSize(&mut r, size, default_w, default_h)}
+	r
 }
 
 pub fn calc_wrap_width_for_pos(pos: [f32; 2], wrap_pos_x: f32) -> f32 {
@@ -3367,15 +3493,17 @@ pub fn is_item_toggled_selection() -> bool {
 	unsafe{sys::igIsItemToggledSelection()}
 }
 
-pub fn get_content_region_max_abs(pOut: &mut [f32; 2]) {
-	unsafe{sys::igGetContentRegionMaxAbs(pOut)}
+pub fn get_content_region_max_abs() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::igGetContentRegionMaxAbs(&mut r)}
+	r
 }
 
 pub fn shrink_widths(items: &mut sys::ImGuiShrinkWidthItem, count: i32, width_excess: f32) {
 	unsafe{sys::igShrinkWidths(items, count, width_excess)}
 }
 
-pub fn push_item_flag(option: ImGuiItemFlags, enabled: bool) {
+pub fn push_item_flag(option: ItemFlags, enabled: bool) {
 	unsafe{sys::igPushItemFlag(option as i32, enabled)}
 }
 
@@ -3403,12 +3531,12 @@ pub fn log_set_next_text_decoration(prefix: &str, suffix: &str) {
 	unsafe{sys::igLogSetNextTextDecoration(prefix_.as_ptr(), suffix_.as_ptr())}
 }
 
-pub fn begin_child_ex(name: &str, id: sys::ImGuiID, size_arg: [f32; 2], border: bool, flags: ImGuiWindowFlags) -> bool {
+pub fn begin_child_ex(name: &str, id: sys::ImGuiID, size_arg: [f32; 2], border: bool, flags: WindowFlags) -> bool {
 	let name_ = CString::new(name).unwrap();
-	unsafe{sys::igBeginChildEx(name_.as_ptr(), id, size_arg, border, flags as i32)}
+	unsafe{sys::igBeginChildEx(name_.as_ptr(), id, size_arg, border, flags.bits)}
 }
 
-pub fn open_popup_ex(id: sys::ImGuiID, popup_flags: ImGuiPopupFlags) {
+pub fn open_popup_ex(id: sys::ImGuiID, popup_flags: PopupFlags) {
 	unsafe{sys::igOpenPopupEx(id, popup_flags as i32)}
 }
 
@@ -3420,16 +3548,16 @@ pub fn close_popups_over_window(ref_window: &mut sys::ImGuiWindow, restore_focus
 	unsafe{sys::igClosePopupsOverWindow(ref_window, restore_focus_to_window_under_popup)}
 }
 
-pub fn is_popup_open__id(id: sys::ImGuiID, popup_flags: ImGuiPopupFlags) -> bool {
+pub fn is_popup_open__id(id: sys::ImGuiID, popup_flags: PopupFlags) -> bool {
 	unsafe{sys::igIsPopupOpen_ID(id, popup_flags as i32)}
 }
 
-pub fn begin_popup_ex(id: sys::ImGuiID, extra_flags: ImGuiWindowFlags) -> bool {
-	unsafe{sys::igBeginPopupEx(id, extra_flags as i32)}
+pub fn begin_popup_ex(id: sys::ImGuiID, extra_flags: WindowFlags) -> bool {
+	unsafe{sys::igBeginPopupEx(id, extra_flags.bits)}
 }
 
-pub fn begin_tooltip_ex(extra_flags: ImGuiWindowFlags, tooltip_flags: ImGuiTooltipFlags) {
-	unsafe{sys::igBeginTooltipEx(extra_flags as i32, tooltip_flags as i32)}
+pub fn begin_tooltip_ex(extra_flags: WindowFlags, tooltip_flags: TooltipFlags) {
+	unsafe{sys::igBeginTooltipEx(extra_flags.bits, tooltip_flags as i32)}
 }
 
 pub fn get_popup_allowed_extent_rect(pOut: &mut sys::ImRect, window: &mut sys::ImGuiWindow) {
@@ -3444,13 +3572,13 @@ pub fn find_best_window_pos_for_popup(pOut: &mut [f32; 2], window: &mut sys::ImG
 	unsafe{sys::igFindBestWindowPosForPopup(pOut, window)}
 }
 
-pub fn find_best_window_pos_for_popup_ex(pOut: &mut [f32; 2], ref_pos: [f32; 2], size: [f32; 2], last_dir: *mut ImGuiDir, r_outer: sys::ImRect, r_avoid: sys::ImRect, policy: sys::ImGuiPopupPositionPolicy) {
+pub fn find_best_window_pos_for_popup_ex(pOut: &mut [f32; 2], ref_pos: [f32; 2], size: [f32; 2], last_dir: *mut Dir, r_outer: sys::ImRect, r_avoid: sys::ImRect, policy: sys::ImGuiPopupPositionPolicy) {
 	unsafe{sys::igFindBestWindowPosForPopupEx(pOut, ref_pos, size, last_dir as *mut i32, r_outer, r_avoid, policy)}
 }
 
-pub fn begin_viewport_side_bar(name: &str, viewport: &mut sys::ImGuiViewport, dir: ImGuiDir, size: f32, window_flags: ImGuiWindowFlags) -> bool {
+pub fn begin_viewport_side_bar(name: &str, viewport: &mut sys::ImGuiViewport, dir: Dir, size: f32, window_flags: WindowFlags) -> bool {
 	let name_ = CString::new(name).unwrap();
-	unsafe{sys::igBeginViewportSideBar(name_.as_ptr(), viewport, dir as i32, size, window_flags as i32)}
+	unsafe{sys::igBeginViewportSideBar(name_.as_ptr(), viewport, dir as i32, size, window_flags.bits)}
 }
 
 pub fn menu_item_ex(label: &str, icon: &str, shortcut: &str, selected: bool, enabled: bool) -> bool {
@@ -3460,7 +3588,7 @@ pub fn menu_item_ex(label: &str, icon: &str, shortcut: &str, selected: bool, ena
 	unsafe{sys::igMenuItemEx(label_.as_ptr(), icon_.as_ptr(), shortcut_.as_ptr(), selected, enabled)}
 }
 
-pub fn begin_combo_popup(popup_id: sys::ImGuiID, bb: sys::ImRect, flags: ImGuiComboFlags) -> bool {
+pub fn begin_combo_popup(popup_id: sys::ImGuiID, bb: sys::ImRect, flags: ComboFlags) -> bool {
 	unsafe{sys::igBeginComboPopup(popup_id, bb, flags as i32)}
 }
 
@@ -3484,19 +3612,19 @@ pub fn nav_move_request_cancel() {
 	unsafe{sys::igNavMoveRequestCancel()}
 }
 
-pub fn nav_move_request_forward(move_dir: ImGuiDir, clip_dir: ImGuiDir, bb_rel: sys::ImRect, move_flags: ImGuiNavMoveFlags) {
+pub fn nav_move_request_forward(move_dir: Dir, clip_dir: Dir, bb_rel: sys::ImRect, move_flags: NavMoveFlags) {
 	unsafe{sys::igNavMoveRequestForward(move_dir as i32, clip_dir as i32, bb_rel, move_flags as i32)}
 }
 
-pub fn nav_move_request_try_wrapping(window: &mut sys::ImGuiWindow, move_flags: ImGuiNavMoveFlags) {
+pub fn nav_move_request_try_wrapping(window: &mut sys::ImGuiWindow, move_flags: NavMoveFlags) {
 	unsafe{sys::igNavMoveRequestTryWrapping(window, move_flags as i32)}
 }
 
-pub fn get_nav_input_amount(n: ImGuiNavInput, mode: sys::ImGuiInputReadMode) -> f32 {
+pub fn get_nav_input_amount(n: NavInput, mode: sys::ImGuiInputReadMode) -> f32 {
 	unsafe{sys::igGetNavInputAmount(n as i32, mode)}
 }
 
-pub fn get_nav_input_amount2d(pOut: &mut [f32; 2], dir_sources: ImGuiNavDirSourceFlags, mode: sys::ImGuiInputReadMode, slow_factor: f32, fast_factor: f32) {
+pub fn get_nav_input_amount2d(pOut: &mut [f32; 2], dir_sources: NavDirSourceFlags, mode: sys::ImGuiInputReadMode, slow_factor: f32, fast_factor: f32) {
 	unsafe{sys::igGetNavInputAmount2d(pOut, dir_sources as i32, mode, slow_factor, fast_factor)}
 }
 
@@ -3536,31 +3664,31 @@ pub fn set_active_id_using_nav_and_keys() {
 	unsafe{sys::igSetActiveIdUsingNavAndKeys()}
 }
 
-pub fn is_active_id_using_nav_dir(dir: ImGuiDir) -> bool {
+pub fn is_active_id_using_nav_dir(dir: Dir) -> bool {
 	unsafe{sys::igIsActiveIdUsingNavDir(dir as i32)}
 }
 
-pub fn is_active_id_using_nav_input(input: ImGuiNavInput) -> bool {
+pub fn is_active_id_using_nav_input(input: NavInput) -> bool {
 	unsafe{sys::igIsActiveIdUsingNavInput(input as i32)}
 }
 
-pub fn is_active_id_using_key(key: ImGuiKey) -> bool {
+pub fn is_active_id_using_key(key: Key) -> bool {
 	unsafe{sys::igIsActiveIdUsingKey(key as i32)}
 }
 
-pub fn is_mouse_drag_past_threshold(button: ImGuiMouseButton, lock_threshold: f32) -> bool {
+pub fn is_mouse_drag_past_threshold(button: MouseButton, lock_threshold: f32) -> bool {
 	unsafe{sys::igIsMouseDragPastThreshold(button as i32, lock_threshold)}
 }
 
-pub fn is_key_pressed_map(key: ImGuiKey, repeat: bool) -> bool {
+pub fn is_key_pressed_map(key: Key, repeat: bool) -> bool {
 	unsafe{sys::igIsKeyPressedMap(key as i32, repeat)}
 }
 
-pub fn is_nav_input_down(n: ImGuiNavInput) -> bool {
+pub fn is_nav_input_down(n: NavInput) -> bool {
 	unsafe{sys::igIsNavInputDown(n as i32)}
 }
 
-pub fn is_nav_input_test(n: ImGuiNavInput, rm: sys::ImGuiInputReadMode) -> bool {
+pub fn is_nav_input_test(n: NavInput, rm: sys::ImGuiInputReadMode) -> bool {
 	unsafe{sys::igIsNavInputTest(n as i32, rm)}
 }
 
@@ -3584,7 +3712,7 @@ pub fn set_window_clip_rect_before_set_channel(window: &mut sys::ImGuiWindow, cl
 	unsafe{sys::igSetWindowClipRectBeforeSetChannel(window, clip_rect)}
 }
 
-pub fn begin_columns(str_id: &str, count: i32, flags: ImGuiOldColumnFlags) {
+pub fn begin_columns(str_id: &str, count: i32, flags: OldColumnFlags) {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igBeginColumns(str_id_.as_ptr(), count, flags as i32)}
 }
@@ -3630,7 +3758,7 @@ pub fn table_set_column_width(column_n: i32, width: f32) {
 	unsafe{sys::igTableSetColumnWidth(column_n, width)}
 }
 
-pub fn table_set_column_sort_direction(column_n: i32, sort_direction: ImGuiSortDirection, append_to_sort_specs: bool) {
+pub fn table_set_column_sort_direction(column_n: i32, sort_direction: SortDirection, append_to_sort_specs: bool) {
 	unsafe{sys::igTableSetColumnSortDirection(column_n, sort_direction as i32, append_to_sort_specs)}
 }
 
@@ -3658,9 +3786,9 @@ pub fn table_find_by_id(id: sys::ImGuiID) -> *mut sys::ImGuiTable {
 	unsafe{sys::igTableFindByID(id)}
 }
 
-pub fn begin_table_ex(name: &str, id: sys::ImGuiID, columns_count: i32, flags: ImGuiTableFlags, outer_size: [f32; 2], inner_width: f32) -> bool {
+pub fn begin_table_ex(name: &str, id: sys::ImGuiID, columns_count: i32, flags: TableFlags, outer_size: [f32; 2], inner_width: f32) -> bool {
 	let name_ = CString::new(name).unwrap();
-	unsafe{sys::igBeginTableEx(name_.as_ptr(), id, columns_count, flags as i32, outer_size, inner_width)}
+	unsafe{sys::igBeginTableEx(name_.as_ptr(), id, columns_count, flags.bits, outer_size, inner_width)}
 }
 
 pub fn table_begin_init_memory(table: &mut sys::ImGuiTable, columns_count: i32) {
@@ -3803,7 +3931,7 @@ pub fn table_settings_find_by_id(id: sys::ImGuiID) -> *mut sys::ImGuiTableSettin
 	unsafe{sys::igTableSettingsFindByID(id)}
 }
 
-pub fn begin_tab_bar_ex(tab_bar: &mut sys::ImGuiTabBar, bb: sys::ImRect, flags: ImGuiTabBarFlags) -> bool {
+pub fn begin_tab_bar_ex(tab_bar: &mut sys::ImGuiTabBar, bb: sys::ImRect, flags: TabBarFlags) -> bool {
 	unsafe{sys::igBeginTabBarEx(tab_bar, bb, flags as i32)}
 }
 
@@ -3831,7 +3959,7 @@ pub fn tab_bar_process_reorder(tab_bar: &mut sys::ImGuiTabBar) -> bool {
 	unsafe{sys::igTabBarProcessReorder(tab_bar)}
 }
 
-pub fn tab_item_ex(tab_bar: &mut sys::ImGuiTabBar, label: &str, p_open: &mut bool, flags: ImGuiTabItemFlags) -> bool {
+pub fn tab_item_ex(tab_bar: &mut sys::ImGuiTabBar, label: &str, p_open: &mut bool, flags: TabItemFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igTabItemEx(tab_bar, label_.as_ptr(), p_open, flags as i32)}
 }
@@ -3841,11 +3969,11 @@ pub fn tab_item_calc_size(pOut: &mut [f32; 2], label: &str, has_close_button: bo
 	unsafe{sys::igTabItemCalcSize(pOut, label_.as_ptr(), has_close_button)}
 }
 
-pub fn tab_item_background(draw_list: &mut sys::ImDrawList, bb: sys::ImRect, flags: ImGuiTabItemFlags, col: u32) {
+pub fn tab_item_background(draw_list: &mut sys::ImDrawList, bb: sys::ImRect, flags: TabItemFlags, col: u32) {
 	unsafe{sys::igTabItemBackground(draw_list, bb, flags as i32, col)}
 }
 
-pub fn tab_item_label_and_close_button(draw_list: &mut sys::ImDrawList, bb: sys::ImRect, flags: ImGuiTabItemFlags, frame_padding: [f32; 2], label: &str, tab_id: sys::ImGuiID, close_button_id: sys::ImGuiID, is_contents_visible: bool, out_just_closed: &mut bool, out_text_clipped: &mut bool) {
+pub fn tab_item_label_and_close_button(draw_list: &mut sys::ImDrawList, bb: sys::ImRect, flags: TabItemFlags, frame_padding: [f32; 2], label: &str, tab_id: sys::ImGuiID, close_button_id: sys::ImGuiID, is_contents_visible: bool, out_just_closed: &mut bool, out_text_clipped: &mut bool) {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igTabItemLabelAndCloseButton(draw_list, bb, flags as i32, frame_padding, label_.as_ptr(), tab_id, close_button_id, is_contents_visible, out_just_closed, out_text_clipped)}
 }
@@ -3888,11 +4016,11 @@ pub fn render_frame_border(p_min: [f32; 2], p_max: [f32; 2], rounding: f32) {
 	unsafe{sys::igRenderFrameBorder(p_min, p_max, rounding)}
 }
 
-pub fn render_color_rect_with_alpha_checkerboard(draw_list: &mut sys::ImDrawList, p_min: [f32; 2], p_max: [f32; 2], fill_col: u32, grid_step: f32, grid_off: [f32; 2], rounding: f32, flags: ImDrawFlags) {
+pub fn render_color_rect_with_alpha_checkerboard(draw_list: &mut sys::ImDrawList, p_min: [f32; 2], p_max: [f32; 2], fill_col: u32, grid_step: f32, grid_off: [f32; 2], rounding: f32, flags: DrawFlags) {
 	unsafe{sys::igRenderColorRectWithAlphaCheckerboard(draw_list, p_min, p_max, fill_col, grid_step, grid_off, rounding, flags as i32)}
 }
 
-pub fn render_nav_highlight(bb: sys::ImRect, id: sys::ImGuiID, flags: ImGuiNavHighlightFlags) {
+pub fn render_nav_highlight(bb: sys::ImRect, id: sys::ImGuiID, flags: NavHighlightFlags) {
 	unsafe{sys::igRenderNavHighlight(bb, id, flags as i32)}
 }
 
@@ -3902,7 +4030,7 @@ pub fn find_rendered_text_end(text: &str, text_end: &str) -> *const ::std::os::r
 	unsafe{sys::igFindRenderedTextEnd(text_.as_ptr(), text_end_.as_ptr())}
 }
 
-pub fn render_arrow(draw_list: &mut sys::ImDrawList, pos: [f32; 2], col: u32, dir: ImGuiDir, scale: f32) {
+pub fn render_arrow(draw_list: &mut sys::ImDrawList, pos: [f32; 2], col: u32, dir: Dir, scale: f32) {
 	unsafe{sys::igRenderArrow(draw_list, pos, col, dir as i32, scale)}
 }
 
@@ -3914,11 +4042,11 @@ pub fn render_check_mark(draw_list: &mut sys::ImDrawList, pos: [f32; 2], col: u3
 	unsafe{sys::igRenderCheckMark(draw_list, pos, col, sz)}
 }
 
-pub fn render_mouse_cursor(draw_list: &mut sys::ImDrawList, pos: [f32; 2], scale: f32, mouse_cursor: ImGuiMouseCursor, col_fill: u32, col_border: u32, col_shadow: u32) {
+pub fn render_mouse_cursor(draw_list: &mut sys::ImDrawList, pos: [f32; 2], scale: f32, mouse_cursor: MouseCursor, col_fill: u32, col_border: u32, col_shadow: u32) {
 	unsafe{sys::igRenderMouseCursor(draw_list, pos, scale, mouse_cursor as i32, col_fill, col_border, col_shadow)}
 }
 
-pub fn render_arrow_pointing_at(draw_list: &mut sys::ImDrawList, pos: [f32; 2], half_sz: [f32; 2], direction: ImGuiDir, col: u32) {
+pub fn render_arrow_pointing_at(draw_list: &mut sys::ImDrawList, pos: [f32; 2], half_sz: [f32; 2], direction: Dir, col: u32) {
 	unsafe{sys::igRenderArrowPointingAt(draw_list, pos, half_sz, direction as i32, col)}
 }
 
@@ -3930,13 +4058,13 @@ pub fn render_rect_filled_with_hole(draw_list: &mut sys::ImDrawList, outer: sys:
 	unsafe{sys::igRenderRectFilledWithHole(draw_list, outer, inner, col, rounding)}
 }
 
-pub fn text_ex(text: &str, text_end: &str, flags: ImGuiTextFlags) {
+pub fn text_ex(text: &str, text_end: &str, flags: TextFlags) {
 	let text_ = CString::new(text).unwrap();
 	let text_end_ = CString::new(text_end).unwrap();
 	unsafe{sys::igTextEx(text_.as_ptr(), text_end_.as_ptr(), flags as i32)}
 }
 
-pub fn button_ex(label: &str, size_arg: [f32; 2], flags: ImGuiButtonFlags) -> bool {
+pub fn button_ex(label: &str, size_arg: [f32; 2], flags: ButtonFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igButtonEx(label_.as_ptr(), size_arg, flags as i32)}
 }
@@ -3949,7 +4077,7 @@ pub fn collapse_button(id: sys::ImGuiID, pos: [f32; 2]) -> bool {
 	unsafe{sys::igCollapseButton(id, pos)}
 }
 
-pub fn arrow_button_ex(str_id: &str, dir: ImGuiDir, size_arg: [f32; 2], flags: ImGuiButtonFlags) -> bool {
+pub fn arrow_button_ex(str_id: &str, dir: Dir, size_arg: [f32; 2], flags: ButtonFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igArrowButtonEx(str_id_.as_ptr(), dir as i32, size_arg, flags as i32)}
 }
@@ -3958,12 +4086,12 @@ pub fn scrollbar(axis: sys::ImGuiAxis) {
 	unsafe{sys::igScrollbar(axis)}
 }
 
-pub fn scrollbar_ex(bb: sys::ImRect, id: sys::ImGuiID, axis: sys::ImGuiAxis, p_scroll_v: &mut f32, avail_v: f32, contents_v: f32, flags: ImDrawFlags) -> bool {
+pub fn scrollbar_ex(bb: sys::ImRect, id: sys::ImGuiID, axis: sys::ImGuiAxis, p_scroll_v: &mut f32, avail_v: f32, contents_v: f32, flags: DrawFlags) -> bool {
 	unsafe{sys::igScrollbarEx(bb, id, axis, p_scroll_v, avail_v, contents_v, flags as i32)}
 }
 
-pub fn image_button_ex(id: sys::ImGuiID, texture_id: sys::ImTextureID, size: [f32; 2], uv0: [f32; 2], uv1: [f32; 2], padding: [f32; 2], bg_col: [f32; 4], tint_col: [f32; 4]) -> bool {
-	unsafe{sys::igImageButtonEx(id, texture_id, size, uv0, uv1, padding, bg_col, tint_col)}
+pub fn image_button_ex(id: sys::ImGuiID, texture_id: usize, size: [f32; 2], uv0: [f32; 2], uv1: [f32; 2], padding: [f32; 2], bg_col: [f32; 4], tint_col: [f32; 4]) -> bool {
+	unsafe{sys::igImageButtonEx(id, texture_id as *mut _, size, uv0, uv1, padding, bg_col, tint_col)}
 }
 
 pub fn get_window_scrollbar_rect(pOut: &mut sys::ImRect, window: &mut sys::ImGuiWindow, axis: sys::ImGuiAxis) {
@@ -3978,11 +4106,11 @@ pub fn get_window_resize_corner_id(window: &mut sys::ImGuiWindow, n: i32) -> sys
 	unsafe{sys::igGetWindowResizeCornerID(window, n)}
 }
 
-pub fn get_window_resize_border_id(window: &mut sys::ImGuiWindow, dir: ImGuiDir) -> sys::ImGuiID {
+pub fn get_window_resize_border_id(window: &mut sys::ImGuiWindow, dir: Dir) -> sys::ImGuiID {
 	unsafe{sys::igGetWindowResizeBorderID(window, dir as i32)}
 }
 
-pub fn separator_ex(flags: ImGuiSeparatorFlags) {
+pub fn separator_ex(flags: SeparatorFlags) {
 	unsafe{sys::igSeparatorEx(flags as i32)}
 }
 
@@ -3996,16 +4124,16 @@ pub fn checkbox_flags__u64_ptr(label: &str, flags: &mut sys::ImU64, flags_value:
 	unsafe{sys::igCheckboxFlags_U64Ptr(label_.as_ptr(), flags, flags_value)}
 }
 
-pub fn button_behavior(bb: sys::ImRect, id: sys::ImGuiID, out_hovered: &mut bool, out_held: &mut bool, flags: ImGuiButtonFlags) -> bool {
+pub fn button_behavior(bb: sys::ImRect, id: sys::ImGuiID, out_hovered: &mut bool, out_held: &mut bool, flags: ButtonFlags) -> bool {
 	unsafe{sys::igButtonBehavior(bb, id, out_hovered, out_held, flags as i32)}
 }
 
-pub fn drag_behavior(id: sys::ImGuiID, data_type: ImGuiDataType, p_v: &mut ::std::os::raw::c_void, v_speed: f32, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: ImGuiSliderFlags) -> bool {
+pub fn drag_behavior(id: sys::ImGuiID, data_type: DataType, p_v: &mut ::std::os::raw::c_void, v_speed: f32, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags) -> bool {
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igDragBehavior(id, data_type as i32, p_v, v_speed, p_min, p_max, format_.as_ptr(), flags as i32)}
 }
 
-pub fn slider_behavior(bb: sys::ImRect, id: sys::ImGuiID, data_type: ImGuiDataType, p_v: &mut ::std::os::raw::c_void, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: ImGuiSliderFlags, out_grab_bb: &mut sys::ImRect) -> bool {
+pub fn slider_behavior(bb: sys::ImRect, id: sys::ImGuiID, data_type: DataType, p_v: &mut ::std::os::raw::c_void, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags, out_grab_bb: &mut sys::ImRect) -> bool {
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igSliderBehavior(bb, id, data_type as i32, p_v, p_min, p_max, format_.as_ptr(), flags as i32, out_grab_bb)}
 }
@@ -4014,13 +4142,13 @@ pub fn splitter_behavior(bb: sys::ImRect, id: sys::ImGuiID, axis: sys::ImGuiAxis
 	unsafe{sys::igSplitterBehavior(bb, id, axis, size1, size2, min_size1, min_size2, hover_extend, hover_visibility_delay)}
 }
 
-pub fn tree_node_behavior(id: sys::ImGuiID, flags: ImGuiTreeNodeFlags, label: &str, label_end: &str) -> bool {
+pub fn tree_node_behavior(id: sys::ImGuiID, flags: TreeNodeFlags, label: &str, label_end: &str) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let label_end_ = CString::new(label_end).unwrap();
 	unsafe{sys::igTreeNodeBehavior(id, flags as i32, label_.as_ptr(), label_end_.as_ptr())}
 }
 
-pub fn tree_node_behavior_is_open(id: sys::ImGuiID, flags: ImGuiTreeNodeFlags) -> bool {
+pub fn tree_node_behavior_is_open(id: sys::ImGuiID, flags: TreeNodeFlags) -> bool {
 	unsafe{sys::igTreeNodeBehaviorIsOpen(id, flags as i32)}
 }
 
@@ -4028,46 +4156,46 @@ pub fn tree_push_override_id(id: sys::ImGuiID) {
 	unsafe{sys::igTreePushOverrideID(id)}
 }
 
-pub fn data_type_get_info(data_type: ImGuiDataType) -> *const sys::ImGuiDataTypeInfo {
+pub fn data_type_get_info(data_type: DataType) -> *const sys::ImGuiDataTypeInfo {
 	unsafe{sys::igDataTypeGetInfo(data_type as i32)}
 }
 
-pub fn data_type_format_string(buf: &mut ::std::os::raw::c_char, buf_size: i32, data_type: ImGuiDataType, p_data: *const ::std::os::raw::c_void, format: &str) -> i32 {
+pub fn data_type_format_string(buf: &mut ::std::os::raw::c_char, buf_size: i32, data_type: DataType, p_data: *const ::std::os::raw::c_void, format: &str) -> i32 {
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igDataTypeFormatString(buf, buf_size, data_type as i32, p_data, format_.as_ptr())}
 }
 
-pub fn data_type_apply_op(data_type: ImGuiDataType, op: i32, output: &mut ::std::os::raw::c_void, arg_1: *const ::std::os::raw::c_void, arg_2: *const ::std::os::raw::c_void) {
+pub fn data_type_apply_op(data_type: DataType, op: i32, output: &mut ::std::os::raw::c_void, arg_1: *const ::std::os::raw::c_void, arg_2: *const ::std::os::raw::c_void) {
 	unsafe{sys::igDataTypeApplyOp(data_type as i32, op, output, arg_1, arg_2)}
 }
 
-pub fn data_type_apply_op_from_text(buf: &str, initial_value_buf: &str, data_type: ImGuiDataType, p_data: &mut ::std::os::raw::c_void, format: &str) -> bool {
+pub fn data_type_apply_op_from_text(buf: &str, initial_value_buf: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, format: &str) -> bool {
 	let buf_ = CString::new(buf).unwrap();
 	let initial_value_buf_ = CString::new(initial_value_buf).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igDataTypeApplyOpFromText(buf_.as_ptr(), initial_value_buf_.as_ptr(), data_type as i32, p_data, format_.as_ptr())}
 }
 
-pub fn data_type_compare(data_type: ImGuiDataType, arg_1: *const ::std::os::raw::c_void, arg_2: *const ::std::os::raw::c_void) -> i32 {
+pub fn data_type_compare(data_type: DataType, arg_1: *const ::std::os::raw::c_void, arg_2: *const ::std::os::raw::c_void) -> i32 {
 	unsafe{sys::igDataTypeCompare(data_type as i32, arg_1, arg_2)}
 }
 
-pub fn data_type_clamp(data_type: ImGuiDataType, p_data: &mut ::std::os::raw::c_void, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void) -> bool {
+pub fn data_type_clamp(data_type: DataType, p_data: &mut ::std::os::raw::c_void, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void) -> bool {
 	unsafe{sys::igDataTypeClamp(data_type as i32, p_data, p_min, p_max)}
 }
 
-pub fn input_text_ex(label: &str, hint: &str, buf: &mut ::std::os::raw::c_char, buf_size: i32, size_arg: [f32; 2], flags: ImGuiInputTextFlags, callback: sys::ImGuiInputTextCallback, user_data: &mut ::std::os::raw::c_void) -> bool {
+pub fn input_text_ex(label: &str, hint: &str, buf: &mut ::std::os::raw::c_char, buf_size: i32, size_arg: [f32; 2], flags: InputTextFlags, callback: sys::ImGuiInputTextCallback, user_data: &mut ::std::os::raw::c_void) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let hint_ = CString::new(hint).unwrap();
 	unsafe{sys::igInputTextEx(label_.as_ptr(), hint_.as_ptr(), buf, buf_size, size_arg, flags as i32, callback, user_data)}
 }
 
-pub fn temp_input_text(bb: sys::ImRect, id: sys::ImGuiID, label: &str, buf: &mut ::std::os::raw::c_char, buf_size: i32, flags: ImGuiInputTextFlags) -> bool {
+pub fn temp_input_text(bb: sys::ImRect, id: sys::ImGuiID, label: &str, buf: &mut ::std::os::raw::c_char, buf_size: i32, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igTempInputText(bb, id, label_.as_ptr(), buf, buf_size, flags as i32)}
 }
 
-pub fn temp_input_scalar(bb: sys::ImRect, id: sys::ImGuiID, label: &str, data_type: ImGuiDataType, p_data: &mut ::std::os::raw::c_void, format: &str, p_clamp_min: *const ::std::os::raw::c_void, p_clamp_max: *const ::std::os::raw::c_void) -> bool {
+pub fn temp_input_scalar(bb: sys::ImRect, id: sys::ImGuiID, label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, format: &str, p_clamp_min: *const ::std::os::raw::c_void, p_clamp_max: *const ::std::os::raw::c_void) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	unsafe{sys::igTempInputScalar(bb, id, label_.as_ptr(), data_type as i32, p_data, format_.as_ptr(), p_clamp_min, p_clamp_max)}
@@ -4081,17 +4209,17 @@ pub fn get_input_text_state(id: sys::ImGuiID) -> *mut sys::ImGuiInputTextState {
 	unsafe{sys::igGetInputTextState(id)}
 }
 
-pub fn color_tooltip(text: &str, col: *const f32, flags: ImGuiColorEditFlags) {
+pub fn color_tooltip(text: &str, col: *const f32, flags: ColorEditFlags) {
 	let text_ = CString::new(text).unwrap();
-	unsafe{sys::igColorTooltip(text_.as_ptr(), col, flags as i32)}
+	unsafe{sys::igColorTooltip(text_.as_ptr(), col, flags.bits)}
 }
 
-pub fn color_edit_options_popup(col: *const f32, flags: ImGuiColorEditFlags) {
-	unsafe{sys::igColorEditOptionsPopup(col, flags as i32)}
+pub fn color_edit_options_popup(col: *const f32, flags: ColorEditFlags) {
+	unsafe{sys::igColorEditOptionsPopup(col, flags.bits)}
 }
 
-pub fn color_picker_options_popup(ref_col: *const f32, flags: ImGuiColorEditFlags) {
-	unsafe{sys::igColorPickerOptionsPopup(ref_col, flags as i32)}
+pub fn color_picker_options_popup(ref_col: *const f32, flags: ColorEditFlags) {
+	unsafe{sys::igColorPickerOptionsPopup(ref_col, flags.bits)}
 }
 
 pub fn shade_verts_linear_color_gradient_keep_alpha(draw_list: &mut sys::ImDrawList, vert_start_idx: i32, vert_end_idx: i32, gradient_p0: [f32; 2], gradient_p1: [f32; 2], col0: u32, col1: u32) {

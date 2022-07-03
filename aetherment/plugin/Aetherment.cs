@@ -2,7 +2,6 @@ global using Dalamud.Logging;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Collections.Immutable;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -12,7 +11,6 @@ using Dalamud.Game.Command;
 using Dalamud.Interface.Internal.Notifications;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using ImGuiScene;
 
 namespace Aetherment;
 
@@ -23,27 +21,48 @@ public class Aetherment : IDalamudPlugin {
 	[PluginService][RequiredVersion("1.0")] public static CommandManager         Commands  {get; private set;} = null!;
 	// [PluginService][RequiredVersion("1.0")] public static TitleScreenMenu        TitleMenu  {get; private set;} = null!;
 	
-	public static Config Config {get; private set;} = null!;
 	public static SharpDX.Direct3D11.Device Device => Interface.UiBuilder.Device;
 	
-	private const string command = "/aetherment";
+	private const string maincommand = "/aetherment";
 	
-	private bool aethermentGuiVisible = true;
-	private Gui.Window.Aetherment.AethermentWindow aethermentGui;
+	private IntPtr state;
+	
+	private TextureManager textureManager;
 	
 	private bool isUnloading = false;
 	private FileSystemWatcher? watcher;
 	
-	public Aetherment() {
+	[StructLayout(LayoutKind.Sequential)]
+	private unsafe struct Initializers {
+		public FFI.Str binary_path;
+		public FFI.Str config_path;
+		public IntPtr log;
+		public IntPtr t1;
+		public IntPtr t2;
+		public IntPtr t3;
+		public IntPtr t4;
+		public IntPtr t5;
+	}
+	
+	public unsafe Aetherment() {
 		logDelegate = Log;
-		initialize(Marshal.GetFunctionPointerForDelegate(logDelegate));
+		textureManager = new();
 		
-		Config = Config.Load();
+		var init = new Initializers {
+			binary_path = Interface.AssemblyLocation.DirectoryName!,
+			config_path = Interface.ConfigDirectory.FullName,
+			log = Marshal.GetFunctionPointerForDelegate(logDelegate),
+			t1 = Marshal.GetFunctionPointerForDelegate(textureManager.createTexture),
+			t2 = Marshal.GetFunctionPointerForDelegate(textureManager.createTextureData),
+			t3 = Marshal.GetFunctionPointerForDelegate(textureManager.destroyResource),
+			t4 = Marshal.GetFunctionPointerForDelegate(textureManager.pinData),
+			t5 = Marshal.GetFunctionPointerForDelegate(textureManager.unpinData),
+		};
 		
-		// aethermentGui = new();
+		state = initialize(init);
 		
 		Interface.UiBuilder.Draw += Draw;
-		Commands.AddHandler(command, new CommandInfo(OnCommand) {
+		Commands.AddHandler(maincommand, new CommandInfo(OnCommand) {
 			HelpMessage = "Open Aetherment menu"
 		});
 		
@@ -54,7 +73,7 @@ public class Aetherment : IDalamudPlugin {
 			watcher.Changed += (object _, FileSystemEventArgs e) => {
 				watcher.EnableRaisingEvents = false;
 				Task.Run(()=> {
-					Task.Delay(100);
+					Task.Delay(500);
 					ReloadPlugin();
 				});
 			};
@@ -63,26 +82,24 @@ public class Aetherment : IDalamudPlugin {
 	}
 	
 	public void Dispose() {
+		destroy(state);
 		Interface.UiBuilder.Draw -= Draw;
-		Commands.RemoveHandler(command);
+		Commands.RemoveHandler(maincommand);
 		if(watcher != null)
 			watcher.Dispose();
 	}
 	
 	private void Draw() {
-		if(aethermentGuiVisible)
-			draw();
-			// aethermentGui.Draw(ref aethermentGuiVisible);
+		try {
+			draw(state);
+		} catch {}
 	}
 	
 	private void OnCommand(string cmd, string args) {
-		if(cmd != command)
+		if(cmd != maincommand)
 			return;
 		
-		if(args == "texfinder")
-			return; //todo
-		else
-			aethermentGuiVisible = !aethermentGuiVisible;
+		command(state, args);
 	}
 	
 	#pragma warning disable CS8600,CS8602,CS8603,CS8604 // shhh
@@ -150,6 +167,8 @@ public class Aetherment : IDalamudPlugin {
 			PluginLog.Log(content);
 	}
 	
-	[DllImport("aetherment_core.dll")] private static extern void initialize(IntPtr log);
-	[DllImport("aetherment_core.dll")] private static extern void draw();
+	[DllImport("aetherment_core.dll")] private static extern IntPtr initialize(Initializers data);
+	[DllImport("aetherment_core.dll")] private static extern void destroy(IntPtr state);
+	[DllImport("aetherment_core.dll")] private static extern void draw(IntPtr state);
+	[DllImport("aetherment_core.dll")] private static extern void command(IntPtr state, FFI.Str args);
 }
