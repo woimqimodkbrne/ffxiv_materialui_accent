@@ -1,4 +1,4 @@
-use std::{sync::{Arc, Mutex, RwLock}, thread, time::Instant, collections::HashMap, io::Cursor};
+use std::{sync::{Arc, Mutex, RwLock}, thread, time::Instant, collections::HashMap, io::Cursor, panic::catch_unwind};
 use crate::{gui::{imgui, aeth::{F2 as _, self}}, server::Mod, CLIENT, SERVER};
 
 pub struct Tab {
@@ -171,38 +171,45 @@ impl Tab {
 		let page = Arc::clone(&self.page);
 		
 		thread::spawn(move || {
-			let mut searched_query;
-			let mut searched_tags;
-			let mut searched_page;
-			
-			loop {
-				searched_query = query.read().unwrap().clone();
-				searched_tags = tags.read().unwrap().clone();
-				searched_page = page.read().unwrap().clone();
+			match std::panic::catch_unwind(|| {
+				let mut searched_query;
+				let mut searched_tags;
+				let mut searched_page;
 				
-				if searched_page == 0 {
-					mods.write().unwrap().clear();
+				loop {
+					searched_query = query.read().unwrap().clone();
+					searched_tags = tags.read().unwrap().clone();
+					searched_page = page.read().unwrap().clone();
+					
+					if searched_page == 0 {
+						mods.write().unwrap().clear();
+					}
+					
+					let tags_comma = tags.read().unwrap().iter().map(|e| e.to_string()).collect::<Vec<String>>().join(",");
+					let url = format!("{}/search.json?query={}&tags={}&page={}", SERVER, query.read().unwrap(), tags_comma, page.read().unwrap());
+					log!(log, "searching {}", url);
+					
+					let mut m = CLIENT.get(url)
+						.send()
+						.unwrap()
+						.json::<Vec<Mod>>()
+						.unwrap();
+					
+					if m.len() == 0 {
+						*page.write().unwrap() = -1;
+						break;
+					}
+					
+					mods.write().unwrap().append(&mut m);
+					
+					if *query.read().unwrap() == searched_query && *tags.read().unwrap() == searched_tags && *page.read().unwrap() == searched_page {
+						break;
+					}
 				}
-				
-				let tags_comma = tags.read().unwrap().iter().map(|e| e.to_string()).collect::<Vec<String>>().join(",");
-				let url = format!("{}/search.json?query={}&tags={}&page={}", SERVER, query.read().unwrap(), tags_comma, page.read().unwrap());
-				log!(log, "searching {}", url);
-				
-				let mut m = CLIENT.get(url)
-					.send()
-					.unwrap()
-					.json::<Vec<Mod>>()
-					.unwrap();
-				
-				if m.len() == 0 {
+			}) {
+				Ok(_) => {},
+				Err(_) => {
 					*page.write().unwrap() = -1;
-					break;
-				}
-				
-				mods.write().unwrap().append(&mut m);
-				
-				if *query.read().unwrap() == searched_query && *tags.read().unwrap() == searched_tags && *page.read().unwrap() == searched_page {
-					break;
 				}
 			}
 			

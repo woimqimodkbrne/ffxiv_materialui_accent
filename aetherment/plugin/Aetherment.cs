@@ -26,8 +26,8 @@ public class Aetherment : IDalamudPlugin {
 	private const string maincommand = "/aetherment";
 	
 	private IntPtr state;
-	
 	private TextureManager textureManager;
+	private TextureFinder texFinder;
 	
 	private bool isUnloading = false;
 	private FileSystemWatcher? watcher;
@@ -47,6 +47,7 @@ public class Aetherment : IDalamudPlugin {
 	public unsafe Aetherment() {
 		logDelegate = Log;
 		textureManager = new();
+		texFinder = new();
 		
 		var init = new Initializers {
 			binary_path = Interface.AssemblyLocation.DirectoryName!,
@@ -92,6 +93,7 @@ public class Aetherment : IDalamudPlugin {
 	private void Draw() {
 		try {
 			draw(state);
+			texFinder.Draw();
 		} catch {}
 	}
 	
@@ -99,7 +101,10 @@ public class Aetherment : IDalamudPlugin {
 		if(cmd != maincommand)
 			return;
 		
-		command(state, args);
+		if(args == "texfinder")
+			texFinder.Show();
+		else
+			command(state, args);
 	}
 	
 	#pragma warning disable CS8600,CS8602,CS8603,CS8604 // shhh

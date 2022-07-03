@@ -95,8 +95,8 @@ extern fn initialize(init: Initializers) -> *mut State {
 	
 	std::panic::set_backtrace_style(BacktraceStyle::Short);
 	std::panic::set_hook(Box::new(|info| {
-		log!(ftl, "{}", info);
-		// log!(err, "{}", info);
+		// log!(ftl, "{}", info);
+		log!(err, "{}", info);
 	}));
 	
 	let config_path: PathBuf = init.config_path.into();
