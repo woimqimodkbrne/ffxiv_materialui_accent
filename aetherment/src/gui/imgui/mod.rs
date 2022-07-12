@@ -1305,7 +1305,7 @@ pub fn get_frame_height_with_spacing() -> f32 {
 	unsafe{sys::igGetFrameHeightWithSpacing()}
 }
 
-pub fn push_id__str(str_id: &str) {
+pub fn push_id(str_id: &str) {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igPushID_Str(str_id_.as_ptr())}
 }
@@ -1320,7 +1320,7 @@ pub fn push_id__ptr(ptr_id: *const ::std::os::raw::c_void) {
 	unsafe{sys::igPushID_Ptr(ptr_id)}
 }
 
-pub fn push_id__int(int_id: i32) {
+pub fn push_id_i32(int_id: i32) {
 	unsafe{sys::igPushID_Int(int_id)}
 }
 
@@ -1978,12 +1978,12 @@ pub fn end_popup() {
 	unsafe{sys::igEndPopup()}
 }
 
-pub fn open_popup__str(str_id: &str, popup_flags: PopupFlags) {
+pub fn open_popup(str_id: &str, popup_flags: PopupFlags) {
 	let str_id_ = CString::new(str_id).unwrap();
 	unsafe{sys::igOpenPopup_Str(str_id_.as_ptr(), popup_flags as i32)}
 }
 
-pub fn open_popup__id(id: sys::ImGuiID, popup_flags: PopupFlags) {
+pub fn open_popup_u32(id: sys::ImGuiID, popup_flags: PopupFlags) {
 	unsafe{sys::igOpenPopup_ID(id, popup_flags as i32)}
 }
 
@@ -2346,8 +2346,51 @@ pub fn set_state_storage(storage: &mut sys::ImGuiStorage) {
 	unsafe{sys::igSetStateStorage(storage)}
 }
 
-pub fn get_state_storage() -> *mut sys::ImGuiStorage {
-	unsafe{sys::igGetStateStorage()}
+// pub fn get_state_storage() -> *mut sys::ImGuiStorage {
+// 	unsafe{sys::igGetStateStorage()}
+// }
+
+pub fn get_state_storage() -> Storage {
+	Storage(unsafe{sys::igGetStateStorage()})
+}
+
+pub struct Storage(*mut sys::ImGuiStorage);
+impl Storage {
+	pub fn bool(&self, key: u32, default: bool) -> &'static mut bool {
+		unsafe{&mut *sys::ImGuiStorage_GetBoolRef(self.0, key, default)}
+	}
+	
+	pub fn get_bool(&self, key: u32, default: bool) -> bool {
+		unsafe{sys::ImGuiStorage_GetBool(self.0, key, default)}
+	}
+	
+	pub fn set_bool(&self, key: u32, value: bool) {
+		unsafe{sys::ImGuiStorage_SetBool(self.0, key, value)}
+	}
+	
+	pub fn f32(&self, key: u32, default: f32) -> &'static mut f32 {
+		unsafe{&mut *sys::ImGuiStorage_GetFloatRef(self.0, key, default)}
+	}
+	
+	pub fn get_f32(&self, key: u32, default: f32) -> f32 {
+		unsafe{sys::ImGuiStorage_GetFloat(self.0, key, default)}
+	}
+	
+	pub fn set_f32(&self, key: u32, value: f32) {
+		unsafe{sys::ImGuiStorage_SetFloat(self.0, key, value)}
+	}
+	
+	pub fn i32(&self, key: u32, default: i32) -> &'static mut i32 {
+		unsafe{&mut *sys::ImGuiStorage_GetIntRef(self.0, key, default)}
+	}
+	
+	pub fn get_i32(&self, key: u32, default: i32) -> i32 {
+		unsafe{sys::ImGuiStorage_GetInt(self.0, key, default)}
+	}
+	
+	pub fn set_i32(&self, key: u32, value: i32) {
+		unsafe{sys::ImGuiStorage_SetInt(self.0, key, value)}
+	}
 }
 
 pub fn calc_list_clipping(items_count: i32, items_height: f32, out_items_display_start: &mut i32, out_items_display_end: &mut i32) {

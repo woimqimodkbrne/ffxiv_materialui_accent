@@ -11,6 +11,7 @@ using Dalamud.Game.Command;
 using Dalamud.Interface.Internal.Notifications;
 using Dalamud.IoC;
 using Dalamud.Plugin;
+using Dialog = Dalamud.Interface.ImGuiFileDialog.FileDialog;
 
 namespace Aetherment;
 
@@ -26,6 +27,7 @@ public class Aetherment : IDalamudPlugin {
 	private const string maincommand = "/aetherment";
 	
 	private IntPtr state;
+	private FileDialog fileDialog;
 	private TextureManager textureManager;
 	private TextureFinder texFinder;
 	
@@ -37,15 +39,18 @@ public class Aetherment : IDalamudPlugin {
 		public FFI.Str binary_path;
 		public FFI.Str config_path;
 		public IntPtr log;
+		public IntPtr file_dialog;
 		public IntPtr t1;
 		public IntPtr t2;
 		public IntPtr t3;
 		public IntPtr t4;
 		public IntPtr t5;
+		public IntPtr fa5;
 	}
 	
 	public unsafe Aetherment() {
 		logDelegate = Log;
+		fileDialog = new();
 		textureManager = new();
 		texFinder = new();
 		
@@ -53,16 +58,19 @@ public class Aetherment : IDalamudPlugin {
 			binary_path = Interface.AssemblyLocation.DirectoryName!,
 			config_path = Interface.ConfigDirectory.FullName,
 			log = Marshal.GetFunctionPointerForDelegate(logDelegate),
+			file_dialog = Marshal.GetFunctionPointerForDelegate(fileDialog.openFileDialogDelegate),
 			t1 = Marshal.GetFunctionPointerForDelegate(textureManager.createTexture),
 			t2 = Marshal.GetFunctionPointerForDelegate(textureManager.createTextureData),
 			t3 = Marshal.GetFunctionPointerForDelegate(textureManager.destroyResource),
 			t4 = Marshal.GetFunctionPointerForDelegate(textureManager.pinData),
 			t5 = Marshal.GetFunctionPointerForDelegate(textureManager.unpinData),
+			fa5 = (IntPtr)Dalamud.Interface.UiBuilder.IconFont.NativePtr,
 		};
 		
 		state = initialize(init);
 		
 		Interface.UiBuilder.Draw += Draw;
+		Interface.UiBuilder.AfterBuildFonts += UpdateResources;
 		Commands.AddHandler(maincommand, new CommandInfo(OnCommand) {
 			HelpMessage = "Open Aetherment menu"
 		});
@@ -74,7 +82,7 @@ public class Aetherment : IDalamudPlugin {
 			watcher.Changed += (object _, FileSystemEventArgs e) => {
 				watcher.EnableRaisingEvents = false;
 				Task.Run(()=> {
-					Task.Delay(500);
+					Task.Delay(1000);
 					ReloadPlugin();
 				});
 			};
@@ -83,16 +91,22 @@ public class Aetherment : IDalamudPlugin {
 	}
 	
 	public void Dispose() {
-		destroy(state);
 		Interface.UiBuilder.Draw -= Draw;
+		Interface.UiBuilder.AfterBuildFonts -= UpdateResources;
 		Commands.RemoveHandler(maincommand);
 		if(watcher != null)
 			watcher.Dispose();
+		destroy(state);
+	}
+	
+	public unsafe void UpdateResources() {
+		update_resources(state, (IntPtr)Dalamud.Interface.UiBuilder.IconFont.NativePtr);
 	}
 	
 	private void Draw() {
 		try {
 			draw(state);
+			fileDialog.Draw();
 			texFinder.Draw();
 		} catch {}
 	}
@@ -176,4 +190,5 @@ public class Aetherment : IDalamudPlugin {
 	[DllImport("aetherment_core.dll")] private static extern void destroy(IntPtr state);
 	[DllImport("aetherment_core.dll")] private static extern void draw(IntPtr state);
 	[DllImport("aetherment_core.dll")] private static extern void command(IntPtr state, FFI.Str args);
+	[DllImport("aetherment_core.dll")] private static extern void update_resources(IntPtr state, IntPtr fa5);
 }

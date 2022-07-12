@@ -1,4 +1,4 @@
-use std::{fs::File, path::PathBuf, collections::HashMap};
+use std::{fs::File, path::PathBuf, collections::HashMap, sync::{Arc, Mutex}, io::Write};
 use crate::{gui::{imgui, aeth::{self, F2}}, GAME, apply::{self, penumbra::{ConfOption, ConfSetting}}};
 
 mod tree;
@@ -15,7 +15,7 @@ pub struct Tab {
 	mod_entries: Vec<String>,
 	
 	gametree: Tree,
-	viewer: Option<Box<dyn Viewer>>,
+	viewer: Option<Arc<Mutex<dyn Viewer + Send>>>,
 	path: String,
 	valid_path: bool,
 }
@@ -45,10 +45,12 @@ impl Tab {
 	}
 	
 	pub fn draw(&mut self, state: &mut crate::Data) {
-		aeth::child("left", [300.0, -imgui::get_style().item_spacing.y()], false, imgui::WindowFlags::None, || {
+		aeth::divider("explorer_div", false)
+		.left(100.0, || {
 			aeth::child("trees", [0.0, -(aeth::frame_height() + imgui::get_style().item_spacing.y()) * if self.curmod.is_some() {2.0} else {1.0}], false, imgui::WindowFlags::None, || {
 				if let Some(m) = self.curmod.as_mut() && let Some(path) = m.tree.draw() {
 					self.open_file_mod(path);
+					log!("load");
 				}
 				
 				if let Some(path) = self.gametree.draw() {
@@ -100,15 +102,30 @@ impl Tab {
 					}
 				}
 			});
-		});
-		
-		imgui::same_line();
-		aeth::child("right", [0.0, -imgui::get_style().item_spacing.y()], false, imgui::WindowFlags::None, || {
+		}).right(400.0, || {
 			aeth::child("viewer", [0.0, -aeth::frame_height() - imgui::get_style().item_spacing.y()], false, imgui::WindowFlags::None, || {
 				if let Some(viewer) = self.viewer.as_mut() {
-					viewer.draw(state);
+					viewer.lock().unwrap().draw(state, if let Some(m) = &mut self.curmod {Some(&mut m.datas.penumbra)} else {None});
 				}
 			});
+			
+			if let Some(viewer) = &self.viewer {
+				if imgui::button("Export", [0.0, 0.0]) {
+					let viewer = viewer.clone();
+					let name = self.path[self.path.rfind('/').unwrap() + 1..self.path.rfind('.').unwrap()].to_owned();
+					std::thread::spawn(move || {
+						let exports = viewer.lock().unwrap().valid_exports();
+						if let Some(path) = crate::file_dialog(1, format!("Export {}", &name), exports, name) {
+							log!("export {:?}", path);
+							let ext = path.extension().unwrap().to_str().unwrap();
+							let mut data = Vec::new();
+							viewer.lock().unwrap().save(ext, &mut data);
+							File::create(&path).unwrap().write_all(&data).unwrap();
+						}
+					});
+				}
+				imgui::same_line();
+			}
 			
 			let err = !self.valid_path;
 			if err {imgui::push_style_color(imgui::Col::FrameBg, 0xFF3030B0)}
@@ -121,16 +138,6 @@ impl Tab {
 			}
 			if err {imgui::pop_style_color(1)}
 		});
-		
-		// This shit doesnt fucking work, i cant move it.
-		// aeth::divider("##explorer")
-		// 	.column(imgui::TableColumnFlags::WidthFixed, 200.0, || {
-		// 		imgui::text("test");
-		// 	})
-		// 	.column(imgui::TableColumnFlags::WidthStretch, 0.0, || {
-		// 		imgui::text("test2");
-		// 	})
-		// 	.finish();
 	}
 	
 	fn load_mod(&mut self, m: &str, path: PathBuf) {
@@ -225,6 +232,7 @@ impl Tab {
 				settings.insert(id.clone(), m.datas.penumbra.options.iter().find(|e| e.id() == Some(&id)).unwrap().default());
 			}
 		}
+		// paths.push(paths[1].clone());
 		
 		self.open_viewer(&ext, &path, rootpath, Some(paths), Some(settings));
 		
@@ -233,8 +241,8 @@ impl Tab {
 	
 	fn open_viewer(&mut self, ext: &str, path: &str, rootpath: Option<PathBuf>, realpaths: Option<Vec<Vec<Option<String>>>>, settings: Option<HashMap<String, ConfSetting>>) {
 		self.viewer = match ext {
-			"tex" | "atex" => Some(Box::new(viewer::Tex::new(path.to_owned(), rootpath, realpaths, settings))),
-			_ => None,
+			"tex" | "atex" => Some(Arc::new(Mutex::new(viewer::Tex::new(path.to_owned(), rootpath, realpaths, settings)))),
+			_ => Some(Arc::new(Mutex::new(viewer::Generic::new(path.to_owned(), rootpath, realpaths, settings)))),
 		};
 	}
 }

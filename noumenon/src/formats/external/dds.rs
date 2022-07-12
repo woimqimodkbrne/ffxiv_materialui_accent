@@ -256,8 +256,12 @@ fn convert_from_compressed(format: SFormat, width: usize, height: usize, data: &
 }
 
 fn convert_to_compressed(format: SFormat, width: usize, height: usize, data: &[u8]) -> Vec<u8> {
-	let mut output = Vec::with_capacity(format.compressed_size(width, height));
-	format.compress(data, width, height, squish::Params {
+	let data = data.chunks_exact(4)
+		.flat_map(|p| {
+			[p[2], p[1], p[0], p[3]]
+		}).collect::<Vec<u8>>();
+	let mut output = vec![0u8; format.compressed_size(width, height)];
+	format.compress(&data, width, height, squish::Params {
 		algorithm: squish::Algorithm::IterativeClusterFit,
 		weights: squish::COLOUR_WEIGHTS_UNIFORM,
 		weigh_colour_by_alpha: true,

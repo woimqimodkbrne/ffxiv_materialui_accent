@@ -1,4 +1,4 @@
-use std::{sync::{Arc, Mutex, RwLock}, thread, time::Instant, collections::HashMap, io::Cursor, panic::catch_unwind};
+use std::{sync::{Arc, Mutex, RwLock}, thread, time::Instant, collections::HashMap, io::Cursor};
 use crate::{gui::{imgui, aeth::{F2 as _, self}}, server::Mod, CLIENT, SERVER};
 
 pub struct Tab {
@@ -171,7 +171,7 @@ impl Tab {
 		let page = Arc::clone(&self.page);
 		
 		thread::spawn(move || {
-			match std::panic::catch_unwind(|| {
+			if std::panic::catch_unwind(|| {
 				let mut searched_query;
 				let mut searched_tags;
 				let mut searched_page;
@@ -206,11 +206,8 @@ impl Tab {
 						break;
 					}
 				}
-			}) {
-				Ok(_) => {},
-				Err(_) => {
-					*page.write().unwrap() = -1;
-				}
+			}).is_err() {
+				*page.write().unwrap() = -1;
 			}
 			
 			*fetching.lock().unwrap() = false;

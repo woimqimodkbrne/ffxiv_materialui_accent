@@ -85,9 +85,7 @@ impl Tree {
 	pub fn draw(&mut self) -> Option<String> {
 		let mut r = None;
 		if let Some(id) = self.draw_node(0) {
-			if id != self.selected {
-				r = Some(self.node_path(id));
-			}
+			r = Some(self.node_path(id));
 			self.selected = id;
 		}
 		r

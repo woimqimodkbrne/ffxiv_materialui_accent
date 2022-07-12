@@ -21,7 +21,7 @@ impl<'a> TabBar<'a> {
 	}
 	
 	pub fn tab<F>(mut self, label: &'a str, func: F) -> Self where F: FnOnce() {
-		if unsafe{imgui::sys::ImGuiStorage_GetInt(imgui::get_state_storage(), imgui::get_id(self.id), 0)} == self.tabs.len() as i32 {
+		if imgui::get_state_storage().get_i32(imgui::get_id(self.id), 0) == self.tabs.len() as i32 {
 			func();
 		}
 		if !self.ignore_add {
@@ -33,7 +33,7 @@ impl<'a> TabBar<'a> {
 	
 	pub fn finish(self) {
 		let id = imgui::get_id(self.id);
-		let mut curtab = unsafe{imgui::sys::ImGuiStorage_GetInt(imgui::get_state_storage(), id, 0)};
+		let curtab = imgui::get_state_storage().i32(id, 0);
 		let s = imgui::get_style();
 		let draw = imgui::get_window_draw_list();
 		
@@ -56,13 +56,13 @@ impl<'a> TabBar<'a> {
 			let pos = pos.add(imgui::get_window_pos());
 			imgui::dummy(tabsize);
 			if imgui::is_item_clicked(imgui::MouseButton::Left) {
-				curtab = i as i32;
+				*curtab = i as i32;
 			}
 			
 			draw.add_rect_filled(
 				if i != 0 {pos.add([1.0, 0.0])} else {pos},
 				pos.add(if i != l {tabsize.sub([1.0, 0.0])} else {tabsize}),
-				if imgui::is_item_hovered() {clrh} else if curtab == i as i32 {clra} else {clrn},
+				if imgui::is_item_hovered() {clrh} else if *curtab == i as i32 {clra} else {clrn},
 				s.tab_rounding,
 				if i == 0 {if self.docked_bottom {imgui::DrawFlags::RoundCornersTopLeft} else {imgui::DrawFlags::RoundCornersBottomLeft}}
 				else if i == l {if self.docked_bottom {imgui::DrawFlags::RoundCornersTopRight} else {imgui::DrawFlags::RoundCornersBottomRight}}
@@ -72,11 +72,10 @@ impl<'a> TabBar<'a> {
 			draw.add_text(pos.add(s.frame_padding), clrt, tab);
 		}
 		
-		let p = org.add(imgui::get_window_pos()).add(if self.docked_bottom {[0.0, tabh - 1.0]} else {[0.0, 0.0]});
+		let p = org.add(imgui::get_window_pos()).add(if self.docked_bottom {[0.0, tabh]} else {[0.0, 0.0]});
 		draw.add_line(p, p.add([barw, 0.0]), clra, 1.0);
 		
-		curtab = curtab.min(self.tabs.len() as i32 - 1);
-		unsafe{imgui::sys::ImGuiStorage_SetInt(imgui::get_state_storage(), id, curtab)}
+		*curtab = (*curtab).min(self.tabs.len() as i32 - 1);
 		imgui::set_cursor_pos(trueorg);
 	}
 }
