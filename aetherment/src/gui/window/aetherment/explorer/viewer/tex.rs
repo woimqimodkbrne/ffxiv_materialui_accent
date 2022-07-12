@@ -2,7 +2,7 @@
 
 use std::{fs::File, io::{Seek, Read, Cursor}, collections::HashMap, sync::Mutex, path::PathBuf};
 use noumenon::formats::{game::tex::{self, Format}, external::{dds::Dds, png::Png}};
-use crate::{gui::{imgui, aeth::{self, F2}}, GAME, apply::penumbra::{resolve_layer, ConfSetting, Layer as PLayer, Config}};
+use crate::{gui::{imgui, aeth::{self, F2}}, GAME, apply::penumbra::{resolve_layer, ConfSetting, Layer as PLayer, Config, PenumbraFile}};
 use super::Viewer;
 
 pub struct Tex {
@@ -44,18 +44,14 @@ lazy_static!{
 }
 
 impl Tex {
-	pub fn new(gamepath: String, rootpath: Option<PathBuf>, realpaths: Option<Vec<Vec<Option<String>>>>, settings: Option<HashMap<String, ConfSetting>>) -> Self {
+	pub fn new(gamepath: String, rootpath: Option<PathBuf>, realpaths: Option<PenumbraFile>, settings: Option<HashMap<String, ConfSetting>>) -> Self {
 		let layers = if let Some(paths) = realpaths {
 			let settings = settings.unwrap();
-			paths.into_iter().map(|l| {
+			paths.0.into_iter().map(|l| {
 				Layer {
-					id: l[0].clone(),
-					value: if let Some(id) = l[0].as_ref() {Some(settings[id])} else {None},
-					files: l.into_iter()
-						.enumerate()
-						.filter(|(i, _)| *i > 0)
-						.map(|(_, p)| p.unwrap())
-						.collect::<Vec<String>>()
+					value: if let Some(id) = l.id.as_ref() {Some(settings[id])} else {None},
+					id: l.id,
+					files: l.paths,
 				}
 			})
 			.collect::<Vec<Layer>>()

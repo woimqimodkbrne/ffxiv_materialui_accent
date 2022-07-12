@@ -1,9 +1,9 @@
 use std::{io::Cursor, collections::HashMap};
 use noumenon::formats::game::tex::Tex;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
 use crate::gui::imgui;
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct Config {
 	pub options: Vec<ConfOption>,
 	pub files: HashMap<String, PenumbraFile>,
@@ -11,7 +11,7 @@ pub struct Config {
 	pub manipulations: Vec<u32>, // TODO: check if this is actually u32
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(tag = "type")]
 #[serde(rename_all = "lowercase")]
 pub enum ConfOption {
@@ -62,7 +62,7 @@ impl<'a> ConfOption {
 	}
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct TypRgba {
 	pub id: String,
 	pub name: String,
@@ -70,7 +70,7 @@ pub struct TypRgba {
 	pub default: [f32; 4],
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct TypRgb {
 	pub id: String,
 	pub name: String,
@@ -78,7 +78,7 @@ pub struct TypRgb {
 	pub default: [f32; 3],
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct TypSingle {
 	pub id: String,
 	pub name: String,
@@ -86,14 +86,14 @@ pub struct TypSingle {
 	pub default: f32,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 pub struct TypPenumbra {
 	pub name: String,
 	pub description: String,
 	pub options: Vec<PenumbraOption>,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 #[serde(rename_all = "lowercase")]
 pub struct PenumbraOption {
 	pub name: String,
@@ -102,19 +102,57 @@ pub struct PenumbraOption {
 	pub manipulations: Vec<u32>, // TODO: check if this is actually u32
 }
 
-#[derive(Deserialize)]
-#[serde(untagged)]
-pub enum PenumbraFile {
-	Simple(String),
-	Complex(Vec<Vec<Option<String>>>),
+#[derive(Clone, Debug)]
+pub struct PenumbraFile(pub Vec<FileLayer>);
+
+#[derive(Clone, Debug)]
+pub struct FileLayer {
+	pub id: Option<String>,
+	pub paths: Vec<String>,
 }
 
-impl PenumbraFile {
-	pub fn complex(&self) -> Vec<Vec<Option<String>>> {
-		match self {
-			Self::Simple(v) => vec![vec![None, Some(v.to_string())]],
-			Self::Complex(v) => v.clone(),
+impl<'de> Deserialize<'de> for PenumbraFile {
+	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
+	D: serde::Deserializer<'de> {
+		#[derive(Deserialize)]
+		#[serde(untagged)]
+		enum Paths {
+			Simple(String),
+			Complex(Vec<Vec<Option<String>>>),
 		}
+		
+		let a: Paths = Deserialize::deserialize(deserializer)?;
+		Ok(match a {
+			Paths::Simple(v) => PenumbraFile(vec![FileLayer {
+				id: None,
+				paths: vec![v],
+			}]),
+			Paths::Complex(v) => PenumbraFile(
+				// TODO: dont use unwrap
+				v.into_iter().map(|v| {
+					let mut segs = v.into_iter();
+					FileLayer {
+						id: segs.next().unwrap(),
+						paths: segs.map(|p| p.unwrap()).collect(),
+					}
+				}).collect()
+			),
+		})
+	}
+}
+
+impl Serialize for PenumbraFile {
+	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
+	S: Serializer {
+		let mut layers = serializer.serialize_seq(Some(self.0.len()))?;
+		for layer in &self.0 {
+			let mut paths = vec![layer.id.as_ref()];
+			for p in &layer.paths {
+				paths.push(Some(p));
+			}
+			layers.serialize_element(&paths)?;
+		}
+		layers.end()
 	}
 }
 

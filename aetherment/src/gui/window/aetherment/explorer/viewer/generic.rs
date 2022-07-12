@@ -1,7 +1,7 @@
 // TODO: save the changes to layers
 
 use std::{collections::HashMap,  path::PathBuf, io::Write};
-use crate::{apply::penumbra::{ConfSetting, Config}, GAME, gui::imgui};
+use crate::{apply::penumbra::{ConfSetting, Config, PenumbraFile}, GAME, gui::imgui};
 use super::Viewer;
 
 pub struct Generic {
@@ -11,7 +11,7 @@ pub struct Generic {
 }
 
 impl Generic {
-	pub fn new(gamepath: String, rootpath: Option<PathBuf>, _realpaths: Option<Vec<Vec<Option<String>>>>, _settings: Option<HashMap<String, ConfSetting>>) -> Self {
+	pub fn new(gamepath: String, rootpath: Option<PathBuf>, _realpaths: Option<PenumbraFile>, _settings: Option<HashMap<String, ConfSetting>>) -> Self {
 		Generic {
 			ext: format!(".{}", gamepath.split('.').last().unwrap()),
 			gamepath,
