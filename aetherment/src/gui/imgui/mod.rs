@@ -1055,9 +1055,9 @@ pub fn get_window_content_region_max() -> [f32; 2] {
 	r
 }
 
-pub fn get_window_content_region_width() -> f32 {
-	unsafe{sys::igGetWindowContentRegionWidth()}
-}
+// pub fn get_window_content_region_width() -> f32 {
+// 	unsafe{sys::igGetWindowContentRegionWidth()}
+// }
 
 pub fn get_scroll_x() -> f32 {
 	unsafe{sys::igGetScrollX()}
@@ -2393,9 +2393,9 @@ impl Storage {
 	}
 }
 
-pub fn calc_list_clipping(items_count: i32, items_height: f32, out_items_display_start: &mut i32, out_items_display_end: &mut i32) {
-	unsafe{sys::igCalcListClipping(items_count, items_height, out_items_display_start, out_items_display_end)}
-}
+// pub fn calc_list_clipping(items_count: i32, items_height: f32, out_items_display_start: &mut i32, out_items_display_end: &mut i32) {
+// 	unsafe{sys::igCalcListClipping(items_count, items_height, out_items_display_start, out_items_display_end)}
+// }
 
 pub fn begin_child_frame(id: sys::ImGuiID, size: [f32; 2], flags: WindowFlags) -> bool {
 	unsafe{sys::igBeginChildFrame(id, size, flags.bits)}
@@ -2455,9 +2455,9 @@ pub fn get_key_pressed_amount(key_index: i32, repeat_delay: f32, rate: f32) -> i
 	unsafe{sys::igGetKeyPressedAmount(key_index, repeat_delay, rate)}
 }
 
-pub fn capture_keyboard_from_app(want_capture_keyboard_value: bool) {
-	unsafe{sys::igCaptureKeyboardFromApp(want_capture_keyboard_value)}
-}
+// pub fn capture_keyboard_from_app(want_capture_keyboard_value: bool) {
+// 	unsafe{sys::igCaptureKeyboardFromApp(want_capture_keyboard_value)}
+// }
 
 pub fn is_mouse_down(button: MouseButton) -> bool {
 	unsafe{sys::igIsMouseDown(button as i32)}
@@ -2521,9 +2521,9 @@ pub fn set_mouse_cursor(cursor_type: MouseCursor) {
 	unsafe{sys::igSetMouseCursor(cursor_type as i32)}
 }
 
-pub fn capture_mouse_from_app(want_capture_mouse_value: bool) {
-	unsafe{sys::igCaptureMouseFromApp(want_capture_mouse_value)}
-}
+// pub fn capture_mouse_from_app(want_capture_mouse_value: bool) {
+// 	unsafe{sys::igCaptureMouseFromApp(want_capture_mouse_value)}
+// }
 
 pub fn get_clipboard_text() -> *const ::std::os::raw::c_char {
 	unsafe{sys::igGetClipboardText()}
@@ -3156,9 +3156,9 @@ pub fn im_floor__float(f: f32) -> f32 {
 	unsafe{sys::igImFloor_Float(f)}
 }
 
-pub fn im_floor_signed(f: f32) -> f32 {
-	unsafe{sys::igImFloorSigned(f)}
-}
+// pub fn im_floor_signed(f: f32) -> f32 {
+// 	unsafe{sys::igImFloorSigned(f)}
+// }
 
 pub fn im_floor__vec2(pOut: &mut [f32; 2], v: [f32; 2]) {
 	unsafe{sys::igImFloor_Vec2(pOut, v)}
@@ -3277,9 +3277,9 @@ pub fn calc_window_next_auto_fit_size(pOut: &mut [f32; 2], window: &mut sys::ImG
 	unsafe{sys::igCalcWindowNextAutoFitSize(pOut, window)}
 }
 
-pub fn is_window_child_of(window: &mut sys::ImGuiWindow, potential_parent: &mut sys::ImGuiWindow) -> bool {
-	unsafe{sys::igIsWindowChildOf(window, potential_parent)}
-}
+// pub fn is_window_child_of(window: &mut sys::ImGuiWindow, potential_parent: &mut sys::ImGuiWindow) -> bool {
+// 	unsafe{sys::igIsWindowChildOf(window, potential_parent)}
+// }
 
 pub fn is_window_above(potential_above: &mut sys::ImGuiWindow, potential_below: &mut sys::ImGuiWindow) -> bool {
 	unsafe{sys::igIsWindowAbove(potential_above, potential_below)}
@@ -3345,13 +3345,13 @@ pub fn get_foreground_draw_list__viewport_ptr(viewport: &mut sys::ImGuiViewport)
 	unsafe{sys::igGetForegroundDrawList_ViewportPtr(viewport)}
 }
 
-pub fn initialize(context: &mut sys::ImGuiContext) {
-	unsafe{sys::igInitialize(context)}
-}
+// pub fn initialize(context: &mut sys::ImGuiContext) {
+// 	unsafe{sys::igInitialize(context)}
+// }
 
-pub fn shutdown(context: &mut sys::ImGuiContext) {
-	unsafe{sys::igShutdown(context)}
-}
+// pub fn shutdown(context: &mut sys::ImGuiContext) {
+// 	unsafe{sys::igShutdown(context)}
+// }
 
 pub fn update_hovered_window_and_capture_flags() {
 	unsafe{sys::igUpdateHoveredWindowAndCaptureFlags()}
@@ -3432,9 +3432,9 @@ pub fn set_scroll_from_pos_y__window_ptr(window: &mut sys::ImGuiWindow, local_y:
 	unsafe{sys::igSetScrollFromPosY_WindowPtr(window, local_y, center_y_ratio)}
 }
 
-pub fn scroll_to_bring_rect_into_view(pOut: &mut [f32; 2], window: &mut sys::ImGuiWindow, item_rect: sys::ImRect) {
-	unsafe{sys::igScrollToBringRectIntoView(pOut, window, item_rect)}
-}
+// pub fn scroll_to_bring_rect_into_view(pOut: &mut [f32; 2], window: &mut sys::ImGuiWindow, item_rect: sys::ImRect) {
+// 	unsafe{sys::igScrollToBringRectIntoView(pOut, window, item_rect)}
+// }
 
 pub fn get_item_id() -> sys::ImGuiID {
 	unsafe{sys::igGetItemID()}
@@ -3510,13 +3510,13 @@ pub fn item_hoverable(bb: sys::ImRect, id: sys::ImGuiID) -> bool {
 	unsafe{sys::igItemHoverable(bb, id)}
 }
 
-pub fn item_focusable(window: &mut sys::ImGuiWindow, id: sys::ImGuiID) {
-	unsafe{sys::igItemFocusable(window, id)}
-}
+// pub fn item_focusable(window: &mut sys::ImGuiWindow, id: sys::ImGuiID) {
+// 	unsafe{sys::igItemFocusable(window, id)}
+// }
 
-pub fn is_clipped_ex(bb: sys::ImRect, id: sys::ImGuiID, clip_even_when_logged: bool) -> bool {
-	unsafe{sys::igIsClippedEx(bb, id, clip_even_when_logged)}
-}
+// pub fn is_clipped_ex(bb: sys::ImRect, id: sys::ImGuiID, clip_even_when_logged: bool) -> bool {
+// 	unsafe{sys::igIsClippedEx(bb, id, clip_even_when_logged)}
+// }
 
 pub fn calc_item_size(size: [f32; 2], default_w: f32, default_h: f32) -> [f32; 2] {
 	let mut r = [0f32; 2];
@@ -3655,21 +3655,21 @@ pub fn nav_move_request_cancel() {
 	unsafe{sys::igNavMoveRequestCancel()}
 }
 
-pub fn nav_move_request_forward(move_dir: Dir, clip_dir: Dir, bb_rel: sys::ImRect, move_flags: NavMoveFlags) {
-	unsafe{sys::igNavMoveRequestForward(move_dir as i32, clip_dir as i32, bb_rel, move_flags as i32)}
-}
+// pub fn nav_move_request_forward(move_dir: Dir, clip_dir: Dir, bb_rel: sys::ImRect, move_flags: NavMoveFlags) {
+// 	unsafe{sys::igNavMoveRequestForward(move_dir as i32, clip_dir as i32, bb_rel, move_flags as i32)}
+// }
 
 pub fn nav_move_request_try_wrapping(window: &mut sys::ImGuiWindow, move_flags: NavMoveFlags) {
 	unsafe{sys::igNavMoveRequestTryWrapping(window, move_flags as i32)}
 }
 
-pub fn get_nav_input_amount(n: NavInput, mode: sys::ImGuiInputReadMode) -> f32 {
-	unsafe{sys::igGetNavInputAmount(n as i32, mode)}
-}
+// pub fn get_nav_input_amount(n: NavInput, mode: sys::ImGuiInputReadMode) -> f32 {
+// 	unsafe{sys::igGetNavInputAmount(n as i32, mode)}
+// }
 
-pub fn get_nav_input_amount2d(pOut: &mut [f32; 2], dir_sources: NavDirSourceFlags, mode: sys::ImGuiInputReadMode, slow_factor: f32, fast_factor: f32) {
-	unsafe{sys::igGetNavInputAmount2d(pOut, dir_sources as i32, mode, slow_factor, fast_factor)}
-}
+// pub fn get_nav_input_amount2d(pOut: &mut [f32; 2], dir_sources: NavDirSourceFlags, mode: sys::ImGuiInputReadMode, slow_factor: f32, fast_factor: f32) {
+// 	unsafe{sys::igGetNavInputAmount2d(pOut, dir_sources as i32, mode, slow_factor, fast_factor)}
+// }
 
 pub fn calc_typematic_repeat_amount(t0: f32, t1: f32, repeat_delay: f32, repeat_rate: f32) -> i32 {
 	unsafe{sys::igCalcTypematicRepeatAmount(t0, t1, repeat_delay, repeat_rate)}
@@ -3731,13 +3731,13 @@ pub fn is_nav_input_down(n: NavInput) -> bool {
 	unsafe{sys::igIsNavInputDown(n as i32)}
 }
 
-pub fn is_nav_input_test(n: NavInput, rm: sys::ImGuiInputReadMode) -> bool {
-	unsafe{sys::igIsNavInputTest(n as i32, rm)}
-}
+// pub fn is_nav_input_test(n: NavInput, rm: sys::ImGuiInputReadMode) -> bool {
+// 	unsafe{sys::igIsNavInputTest(n as i32, rm)}
+// }
 
-pub fn get_merged_key_mod_flags() -> i32 {
-	unsafe{sys::igGetMergedKeyModFlags()}
-}
+// pub fn get_merged_key_mod_flags() -> i32 {
+// 	unsafe{sys::igGetMergedKeyModFlags()}
+// }
 
 pub fn begin_drag_drop_target_custom(bb: sys::ImRect, id: sys::ImGuiID) -> bool {
 	unsafe{sys::igBeginDragDropTargetCustom(bb, id)}
@@ -3962,9 +3962,9 @@ pub fn table_get_bound_settings(table: &mut sys::ImGuiTable) -> *mut sys::ImGuiT
 	unsafe{sys::igTableGetBoundSettings(table)}
 }
 
-pub fn table_settings_install_handler(context: &mut sys::ImGuiContext) {
-	unsafe{sys::igTableSettingsInstallHandler(context)}
-}
+// pub fn table_settings_install_handler(context: &mut sys::ImGuiContext) {
+// 	unsafe{sys::igTableSettingsInstallHandler(context)}
+// }
 
 pub fn table_settings_create(id: sys::ImGuiID, columns_count: i32) -> *mut sys::ImGuiTableSettings {
 	unsafe{sys::igTableSettingsCreate(id, columns_count)}
@@ -4085,9 +4085,9 @@ pub fn render_check_mark(draw_list: &mut sys::ImDrawList, pos: [f32; 2], col: u3
 	unsafe{sys::igRenderCheckMark(draw_list, pos, col, sz)}
 }
 
-pub fn render_mouse_cursor(draw_list: &mut sys::ImDrawList, pos: [f32; 2], scale: f32, mouse_cursor: MouseCursor, col_fill: u32, col_border: u32, col_shadow: u32) {
-	unsafe{sys::igRenderMouseCursor(draw_list, pos, scale, mouse_cursor as i32, col_fill, col_border, col_shadow)}
-}
+// pub fn render_mouse_cursor(draw_list: &mut sys::ImDrawList, pos: [f32; 2], scale: f32, mouse_cursor: MouseCursor, col_fill: u32, col_border: u32, col_shadow: u32) {
+// 	unsafe{sys::igRenderMouseCursor(draw_list, pos, scale, mouse_cursor as i32, col_fill, col_border, col_shadow)}
+// }
 
 pub fn render_arrow_pointing_at(draw_list: &mut sys::ImDrawList, pos: [f32; 2], half_sz: [f32; 2], direction: Dir, col: u32) {
 	unsafe{sys::igRenderArrowPointingAt(draw_list, pos, half_sz, direction as i32, col)}
@@ -4129,9 +4129,9 @@ pub fn scrollbar(axis: sys::ImGuiAxis) {
 	unsafe{sys::igScrollbar(axis)}
 }
 
-pub fn scrollbar_ex(bb: sys::ImRect, id: sys::ImGuiID, axis: sys::ImGuiAxis, p_scroll_v: &mut f32, avail_v: f32, contents_v: f32, flags: DrawFlags) -> bool {
-	unsafe{sys::igScrollbarEx(bb, id, axis, p_scroll_v, avail_v, contents_v, flags as i32)}
-}
+// pub fn scrollbar_ex(bb: sys::ImRect, id: sys::ImGuiID, axis: sys::ImGuiAxis, p_scroll_v: &mut f32, avail_v: f32, contents_v: f32, flags: DrawFlags) -> bool {
+// 	unsafe{sys::igScrollbarEx(bb, id, axis, p_scroll_v, avail_v, contents_v, flags as i32)}
+// }
 
 pub fn image_button_ex(id: sys::ImGuiID, texture_id: usize, size: [f32; 2], uv0: [f32; 2], uv1: [f32; 2], padding: [f32; 2], bg_col: [f32; 4], tint_col: [f32; 4]) -> bool {
 	unsafe{sys::igImageButtonEx(id, texture_id as *mut _, size, uv0, uv1, padding, bg_col, tint_col)}
@@ -4212,12 +4212,12 @@ pub fn data_type_apply_op(data_type: DataType, op: i32, output: &mut ::std::os::
 	unsafe{sys::igDataTypeApplyOp(data_type as i32, op, output, arg_1, arg_2)}
 }
 
-pub fn data_type_apply_op_from_text(buf: &str, initial_value_buf: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, format: &str) -> bool {
-	let buf_ = CString::new(buf).unwrap();
-	let initial_value_buf_ = CString::new(initial_value_buf).unwrap();
-	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDataTypeApplyOpFromText(buf_.as_ptr(), initial_value_buf_.as_ptr(), data_type as i32, p_data, format_.as_ptr())}
-}
+// pub fn data_type_apply_op_from_text(buf: &str, initial_value_buf: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, format: &str) -> bool {
+// 	let buf_ = CString::new(buf).unwrap();
+// 	let initial_value_buf_ = CString::new(initial_value_buf).unwrap();
+// 	let format_ = CString::new(format).unwrap();
+// 	unsafe{sys::igDataTypeApplyOpFromText(buf_.as_ptr(), initial_value_buf_.as_ptr(), data_type as i32, p_data, format_.as_ptr())}
+// }
 
 pub fn data_type_compare(data_type: DataType, arg_1: *const ::std::os::raw::c_void, arg_2: *const ::std::os::raw::c_void) -> i32 {
 	unsafe{sys::igDataTypeCompare(data_type as i32, arg_1, arg_2)}

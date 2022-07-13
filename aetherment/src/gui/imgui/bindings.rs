@@ -926,7 +926,7 @@ pub type ImGuiDragDropFlags = ::std::os::raw::c_int;
 pub type ImGuiFocusedFlags = ::std::os::raw::c_int;
 pub type ImGuiHoveredFlags = ::std::os::raw::c_int;
 pub type ImGuiInputTextFlags = ::std::os::raw::c_int;
-pub type ImGuiKeyModFlags = ::std::os::raw::c_int;
+pub type ImGuiModFlags = ::std::os::raw::c_int;
 pub type ImGuiPopupFlags = ::std::os::raw::c_int;
 pub type ImGuiSelectableFlags = ::std::os::raw::c_int;
 pub type ImGuiSliderFlags = ::std::os::raw::c_int;
@@ -939,7 +939,18 @@ pub type ImGuiTreeNodeFlags = ::std::os::raw::c_int;
 pub type ImGuiViewportFlags = ::std::os::raw::c_int;
 pub type ImGuiWindowFlags = ::std::os::raw::c_int;
 pub type ImTextureID = *mut ::std::os::raw::c_void;
+pub type ImDrawIdx = ::std::os::raw::c_ushort;
 pub type ImGuiID = ::std::os::raw::c_uint;
+pub type ImS8 = ::std::os::raw::c_schar;
+pub type ImU8 = ::std::os::raw::c_uchar;
+pub type ImS16 = ::std::os::raw::c_short;
+pub type ImU16 = ::std::os::raw::c_ushort;
+pub type ImS32 = ::std::os::raw::c_int;
+pub type ImU32 = ::std::os::raw::c_uint;
+pub type ImS64 = ::std::os::raw::c_longlong;
+pub type ImWchar16 = ::std::os::raw::c_ushort;
+pub type ImWchar32 = ::std::os::raw::c_uint;
+pub type ImWchar = ImWchar16;
 pub type ImGuiInputTextCallback = ::std::option::Option<
     unsafe extern "C" fn(data: *mut ImGuiInputTextCallbackData) -> ::std::os::raw::c_int,
 >;
@@ -954,359 +965,6 @@ pub type ImGuiMemAllocFunc = ::std::option::Option<
 pub type ImGuiMemFreeFunc = ::std::option::Option<
     unsafe extern "C" fn(ptr: *mut ::std::os::raw::c_void, user_data: *mut ::std::os::raw::c_void),
 >;
-pub type ImWchar16 = ::std::os::raw::c_ushort;
-pub type ImWchar32 = ::std::os::raw::c_uint;
-pub type ImWchar = ImWchar16;
-pub type ImS8 = ::std::os::raw::c_schar;
-pub type ImU8 = ::std::os::raw::c_uchar;
-pub type ImS16 = ::std::os::raw::c_short;
-pub type ImU16 = ::std::os::raw::c_ushort;
-pub type ImS32 = ::std::os::raw::c_int;
-pub type ImU32 = ::std::os::raw::c_uint;
-pub type ImS64 = i64;
-pub type ImDrawCallback = ::std::option::Option<
-    unsafe extern "C" fn(parent_list: *const ImDrawList, cmd: *const ImDrawCmd),
->;
-pub type ImDrawIdx = ::std::os::raw::c_ushort;
-pub type ImGuiLayoutType = ::std::os::raw::c_int;
-pub type ImGuiItemFlags = ::std::os::raw::c_int;
-pub type ImGuiItemAddFlags = ::std::os::raw::c_int;
-pub type ImGuiItemStatusFlags = ::std::os::raw::c_int;
-pub type ImGuiOldColumnFlags = ::std::os::raw::c_int;
-pub type ImGuiNavHighlightFlags = ::std::os::raw::c_int;
-pub type ImGuiNavDirSourceFlags = ::std::os::raw::c_int;
-pub type ImGuiNavMoveFlags = ::std::os::raw::c_int;
-pub type ImGuiNextItemDataFlags = ::std::os::raw::c_int;
-pub type ImGuiNextWindowDataFlags = ::std::os::raw::c_int;
-pub type ImGuiSeparatorFlags = ::std::os::raw::c_int;
-pub type ImGuiTextFlags = ::std::os::raw::c_int;
-pub type ImGuiTooltipFlags = ::std::os::raw::c_int;
-pub type ImGuiErrorLogCallback = ::std::option::Option<
-    unsafe extern "C" fn(
-        user_data: *mut ::std::os::raw::c_void,
-        fmt: *const ::std::os::raw::c_char,
-        ...
-    ),
->;
-extern "C" {
-    #[link_name = "\u{1}?GImGui@@3PEAUImGuiContext@@EA"]
-    pub static mut GImGui: *mut ImGuiContext;
-}
-pub type ImFileHandle = *mut FILE;
-pub type ImPoolIdx = ::std::os::raw::c_int;
-pub type ImGuiContextHookCallback = ::std::option::Option<
-    unsafe extern "C" fn(ctx: *mut ImGuiContext, hook: *mut ImGuiContextHook),
->;
-pub type ImGuiTableColumnIdx = ImS8;
-pub type ImGuiTableDrawChannelIdx = ImU8;
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ::std::os::raw::c_void,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiTableSettings {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiTableSettings,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImChunkStream_ImGuiTableSettings {
-    pub Buf: ImVector_ImGuiTableSettings,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiWindowSettings {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiWindowSettings,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImChunkStream_ImGuiWindowSettings {
-    pub Buf: ImVector_ImGuiWindowSettings,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImSpan_ImGuiTableCellData {
-    pub Data: *mut ImGuiTableCellData,
-    pub DataEnd: *mut ImGuiTableCellData,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImSpan_ImGuiTableColumn {
-    pub Data: *mut ImGuiTableColumn,
-    pub DataEnd: *mut ImGuiTableColumn,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImSpan_ImGuiTableColumnIdx {
-    pub Data: *mut ImGuiTableColumnIdx,
-    pub DataEnd: *mut ImGuiTableColumnIdx,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImDrawChannel {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImDrawChannel,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImDrawCmd {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImDrawCmd,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImDrawIdx {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImDrawIdx,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImDrawListPtr {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut *mut ImDrawList,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImDrawVert {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImDrawVert,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImFontPtr {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut *mut ImFont,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImFontAtlasCustomRect {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImFontAtlasCustomRect,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImFontConfig {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImFontConfig,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImFontGlyph {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImFontGlyph,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiColorMod {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiColorMod,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiContextHook {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiContextHook,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiGroupData {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiGroupData,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiID {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiID,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiItemFlags {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiItemFlags,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiOldColumnData {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiOldColumnData,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiOldColumns {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiOldColumns,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiPopupData {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiPopupData,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiPtrOrIndex {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiPtrOrIndex,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiSettingsHandler {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiSettingsHandler,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiShrinkWidthItem {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiShrinkWidthItem,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiStoragePair {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiStoragePair,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiStyleMod {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiStyleMod,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiTabItem {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiTabItem,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiTableColumnSortSpecs {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiTableColumnSortSpecs,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiTableTempData {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiTableTempData,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiTextRange {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiTextRange,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiViewportPPtr {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut *mut ImGuiViewportP,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiWindowPtr {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut *mut ImGuiWindow,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiWindowStackData {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiWindowStackData,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImTextureID {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImTextureID,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImU32 {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImU32,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImVec2 {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut [f32; 2],
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImVec4 {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut [f32; 4],
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImWchar {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImWchar,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_char {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ::std::os::raw::c_char,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_float {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut f32,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_unsigned_char {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ::std::os::raw::c_uchar,
-}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImVec2 {
@@ -1519,17 +1177,20 @@ pub const ImGuiFocusedFlags_None: ImGuiFocusedFlags_ = 0;
 pub const ImGuiFocusedFlags_ChildWindows: ImGuiFocusedFlags_ = 1;
 pub const ImGuiFocusedFlags_RootWindow: ImGuiFocusedFlags_ = 2;
 pub const ImGuiFocusedFlags_AnyWindow: ImGuiFocusedFlags_ = 4;
+pub const ImGuiFocusedFlags_NoPopupHierarchy: ImGuiFocusedFlags_ = 8;
 pub const ImGuiFocusedFlags_RootAndChildWindows: ImGuiFocusedFlags_ = 3;
 pub type ImGuiFocusedFlags_ = ::std::os::raw::c_int;
 pub const ImGuiHoveredFlags_None: ImGuiHoveredFlags_ = 0;
 pub const ImGuiHoveredFlags_ChildWindows: ImGuiHoveredFlags_ = 1;
 pub const ImGuiHoveredFlags_RootWindow: ImGuiHoveredFlags_ = 2;
 pub const ImGuiHoveredFlags_AnyWindow: ImGuiHoveredFlags_ = 4;
-pub const ImGuiHoveredFlags_AllowWhenBlockedByPopup: ImGuiHoveredFlags_ = 8;
-pub const ImGuiHoveredFlags_AllowWhenBlockedByActiveItem: ImGuiHoveredFlags_ = 32;
-pub const ImGuiHoveredFlags_AllowWhenOverlapped: ImGuiHoveredFlags_ = 64;
-pub const ImGuiHoveredFlags_AllowWhenDisabled: ImGuiHoveredFlags_ = 128;
-pub const ImGuiHoveredFlags_RectOnly: ImGuiHoveredFlags_ = 104;
+pub const ImGuiHoveredFlags_NoPopupHierarchy: ImGuiHoveredFlags_ = 8;
+pub const ImGuiHoveredFlags_AllowWhenBlockedByPopup: ImGuiHoveredFlags_ = 32;
+pub const ImGuiHoveredFlags_AllowWhenBlockedByActiveItem: ImGuiHoveredFlags_ = 128;
+pub const ImGuiHoveredFlags_AllowWhenOverlapped: ImGuiHoveredFlags_ = 256;
+pub const ImGuiHoveredFlags_AllowWhenDisabled: ImGuiHoveredFlags_ = 512;
+pub const ImGuiHoveredFlags_NoNavOverride: ImGuiHoveredFlags_ = 1024;
+pub const ImGuiHoveredFlags_RectOnly: ImGuiHoveredFlags_ = 416;
 pub const ImGuiHoveredFlags_RootAndChildWindows: ImGuiHoveredFlags_ = 3;
 pub type ImGuiHoveredFlags_ = ::std::os::raw::c_int;
 pub const ImGuiDragDropFlags_None: ImGuiDragDropFlags_ = 0;
@@ -1567,36 +1228,153 @@ pub const ImGuiSortDirection_None: ImGuiSortDirection_ = 0;
 pub const ImGuiSortDirection_Ascending: ImGuiSortDirection_ = 1;
 pub const ImGuiSortDirection_Descending: ImGuiSortDirection_ = 2;
 pub type ImGuiSortDirection_ = ::std::os::raw::c_int;
-pub const ImGuiKey_Tab: ImGuiKey_ = 0;
-pub const ImGuiKey_LeftArrow: ImGuiKey_ = 1;
-pub const ImGuiKey_RightArrow: ImGuiKey_ = 2;
-pub const ImGuiKey_UpArrow: ImGuiKey_ = 3;
-pub const ImGuiKey_DownArrow: ImGuiKey_ = 4;
-pub const ImGuiKey_PageUp: ImGuiKey_ = 5;
-pub const ImGuiKey_PageDown: ImGuiKey_ = 6;
-pub const ImGuiKey_Home: ImGuiKey_ = 7;
-pub const ImGuiKey_End: ImGuiKey_ = 8;
-pub const ImGuiKey_Insert: ImGuiKey_ = 9;
-pub const ImGuiKey_Delete: ImGuiKey_ = 10;
-pub const ImGuiKey_Backspace: ImGuiKey_ = 11;
-pub const ImGuiKey_Space: ImGuiKey_ = 12;
-pub const ImGuiKey_Enter: ImGuiKey_ = 13;
-pub const ImGuiKey_Escape: ImGuiKey_ = 14;
-pub const ImGuiKey_KeyPadEnter: ImGuiKey_ = 15;
-pub const ImGuiKey_A: ImGuiKey_ = 16;
-pub const ImGuiKey_C: ImGuiKey_ = 17;
-pub const ImGuiKey_V: ImGuiKey_ = 18;
-pub const ImGuiKey_X: ImGuiKey_ = 19;
-pub const ImGuiKey_Y: ImGuiKey_ = 20;
-pub const ImGuiKey_Z: ImGuiKey_ = 21;
-pub const ImGuiKey_COUNT: ImGuiKey_ = 22;
+pub const ImGuiKey_None: ImGuiKey_ = 0;
+pub const ImGuiKey_Tab: ImGuiKey_ = 512;
+pub const ImGuiKey_LeftArrow: ImGuiKey_ = 513;
+pub const ImGuiKey_RightArrow: ImGuiKey_ = 514;
+pub const ImGuiKey_UpArrow: ImGuiKey_ = 515;
+pub const ImGuiKey_DownArrow: ImGuiKey_ = 516;
+pub const ImGuiKey_PageUp: ImGuiKey_ = 517;
+pub const ImGuiKey_PageDown: ImGuiKey_ = 518;
+pub const ImGuiKey_Home: ImGuiKey_ = 519;
+pub const ImGuiKey_End: ImGuiKey_ = 520;
+pub const ImGuiKey_Insert: ImGuiKey_ = 521;
+pub const ImGuiKey_Delete: ImGuiKey_ = 522;
+pub const ImGuiKey_Backspace: ImGuiKey_ = 523;
+pub const ImGuiKey_Space: ImGuiKey_ = 524;
+pub const ImGuiKey_Enter: ImGuiKey_ = 525;
+pub const ImGuiKey_Escape: ImGuiKey_ = 526;
+pub const ImGuiKey_LeftCtrl: ImGuiKey_ = 527;
+pub const ImGuiKey_LeftShift: ImGuiKey_ = 528;
+pub const ImGuiKey_LeftAlt: ImGuiKey_ = 529;
+pub const ImGuiKey_LeftSuper: ImGuiKey_ = 530;
+pub const ImGuiKey_RightCtrl: ImGuiKey_ = 531;
+pub const ImGuiKey_RightShift: ImGuiKey_ = 532;
+pub const ImGuiKey_RightAlt: ImGuiKey_ = 533;
+pub const ImGuiKey_RightSuper: ImGuiKey_ = 534;
+pub const ImGuiKey_Menu: ImGuiKey_ = 535;
+pub const ImGuiKey_0: ImGuiKey_ = 536;
+pub const ImGuiKey_1: ImGuiKey_ = 537;
+pub const ImGuiKey_2: ImGuiKey_ = 538;
+pub const ImGuiKey_3: ImGuiKey_ = 539;
+pub const ImGuiKey_4: ImGuiKey_ = 540;
+pub const ImGuiKey_5: ImGuiKey_ = 541;
+pub const ImGuiKey_6: ImGuiKey_ = 542;
+pub const ImGuiKey_7: ImGuiKey_ = 543;
+pub const ImGuiKey_8: ImGuiKey_ = 544;
+pub const ImGuiKey_9: ImGuiKey_ = 545;
+pub const ImGuiKey_A: ImGuiKey_ = 546;
+pub const ImGuiKey_B: ImGuiKey_ = 547;
+pub const ImGuiKey_C: ImGuiKey_ = 548;
+pub const ImGuiKey_D: ImGuiKey_ = 549;
+pub const ImGuiKey_E: ImGuiKey_ = 550;
+pub const ImGuiKey_F: ImGuiKey_ = 551;
+pub const ImGuiKey_G: ImGuiKey_ = 552;
+pub const ImGuiKey_H: ImGuiKey_ = 553;
+pub const ImGuiKey_I: ImGuiKey_ = 554;
+pub const ImGuiKey_J: ImGuiKey_ = 555;
+pub const ImGuiKey_K: ImGuiKey_ = 556;
+pub const ImGuiKey_L: ImGuiKey_ = 557;
+pub const ImGuiKey_M: ImGuiKey_ = 558;
+pub const ImGuiKey_N: ImGuiKey_ = 559;
+pub const ImGuiKey_O: ImGuiKey_ = 560;
+pub const ImGuiKey_P: ImGuiKey_ = 561;
+pub const ImGuiKey_Q: ImGuiKey_ = 562;
+pub const ImGuiKey_R: ImGuiKey_ = 563;
+pub const ImGuiKey_S: ImGuiKey_ = 564;
+pub const ImGuiKey_T: ImGuiKey_ = 565;
+pub const ImGuiKey_U: ImGuiKey_ = 566;
+pub const ImGuiKey_V: ImGuiKey_ = 567;
+pub const ImGuiKey_W: ImGuiKey_ = 568;
+pub const ImGuiKey_X: ImGuiKey_ = 569;
+pub const ImGuiKey_Y: ImGuiKey_ = 570;
+pub const ImGuiKey_Z: ImGuiKey_ = 571;
+pub const ImGuiKey_F1: ImGuiKey_ = 572;
+pub const ImGuiKey_F2: ImGuiKey_ = 573;
+pub const ImGuiKey_F3: ImGuiKey_ = 574;
+pub const ImGuiKey_F4: ImGuiKey_ = 575;
+pub const ImGuiKey_F5: ImGuiKey_ = 576;
+pub const ImGuiKey_F6: ImGuiKey_ = 577;
+pub const ImGuiKey_F7: ImGuiKey_ = 578;
+pub const ImGuiKey_F8: ImGuiKey_ = 579;
+pub const ImGuiKey_F9: ImGuiKey_ = 580;
+pub const ImGuiKey_F10: ImGuiKey_ = 581;
+pub const ImGuiKey_F11: ImGuiKey_ = 582;
+pub const ImGuiKey_F12: ImGuiKey_ = 583;
+pub const ImGuiKey_Apostrophe: ImGuiKey_ = 584;
+pub const ImGuiKey_Comma: ImGuiKey_ = 585;
+pub const ImGuiKey_Minus: ImGuiKey_ = 586;
+pub const ImGuiKey_Period: ImGuiKey_ = 587;
+pub const ImGuiKey_Slash: ImGuiKey_ = 588;
+pub const ImGuiKey_Semicolon: ImGuiKey_ = 589;
+pub const ImGuiKey_Equal: ImGuiKey_ = 590;
+pub const ImGuiKey_LeftBracket: ImGuiKey_ = 591;
+pub const ImGuiKey_Backslash: ImGuiKey_ = 592;
+pub const ImGuiKey_RightBracket: ImGuiKey_ = 593;
+pub const ImGuiKey_GraveAccent: ImGuiKey_ = 594;
+pub const ImGuiKey_CapsLock: ImGuiKey_ = 595;
+pub const ImGuiKey_ScrollLock: ImGuiKey_ = 596;
+pub const ImGuiKey_NumLock: ImGuiKey_ = 597;
+pub const ImGuiKey_PrintScreen: ImGuiKey_ = 598;
+pub const ImGuiKey_Pause: ImGuiKey_ = 599;
+pub const ImGuiKey_Keypad0: ImGuiKey_ = 600;
+pub const ImGuiKey_Keypad1: ImGuiKey_ = 601;
+pub const ImGuiKey_Keypad2: ImGuiKey_ = 602;
+pub const ImGuiKey_Keypad3: ImGuiKey_ = 603;
+pub const ImGuiKey_Keypad4: ImGuiKey_ = 604;
+pub const ImGuiKey_Keypad5: ImGuiKey_ = 605;
+pub const ImGuiKey_Keypad6: ImGuiKey_ = 606;
+pub const ImGuiKey_Keypad7: ImGuiKey_ = 607;
+pub const ImGuiKey_Keypad8: ImGuiKey_ = 608;
+pub const ImGuiKey_Keypad9: ImGuiKey_ = 609;
+pub const ImGuiKey_KeypadDecimal: ImGuiKey_ = 610;
+pub const ImGuiKey_KeypadDivide: ImGuiKey_ = 611;
+pub const ImGuiKey_KeypadMultiply: ImGuiKey_ = 612;
+pub const ImGuiKey_KeypadSubtract: ImGuiKey_ = 613;
+pub const ImGuiKey_KeypadAdd: ImGuiKey_ = 614;
+pub const ImGuiKey_KeypadEnter: ImGuiKey_ = 615;
+pub const ImGuiKey_KeypadEqual: ImGuiKey_ = 616;
+pub const ImGuiKey_GamepadStart: ImGuiKey_ = 617;
+pub const ImGuiKey_GamepadBack: ImGuiKey_ = 618;
+pub const ImGuiKey_GamepadFaceUp: ImGuiKey_ = 619;
+pub const ImGuiKey_GamepadFaceDown: ImGuiKey_ = 620;
+pub const ImGuiKey_GamepadFaceLeft: ImGuiKey_ = 621;
+pub const ImGuiKey_GamepadFaceRight: ImGuiKey_ = 622;
+pub const ImGuiKey_GamepadDpadUp: ImGuiKey_ = 623;
+pub const ImGuiKey_GamepadDpadDown: ImGuiKey_ = 624;
+pub const ImGuiKey_GamepadDpadLeft: ImGuiKey_ = 625;
+pub const ImGuiKey_GamepadDpadRight: ImGuiKey_ = 626;
+pub const ImGuiKey_GamepadL1: ImGuiKey_ = 627;
+pub const ImGuiKey_GamepadR1: ImGuiKey_ = 628;
+pub const ImGuiKey_GamepadL2: ImGuiKey_ = 629;
+pub const ImGuiKey_GamepadR2: ImGuiKey_ = 630;
+pub const ImGuiKey_GamepadL3: ImGuiKey_ = 631;
+pub const ImGuiKey_GamepadR3: ImGuiKey_ = 632;
+pub const ImGuiKey_GamepadLStickUp: ImGuiKey_ = 633;
+pub const ImGuiKey_GamepadLStickDown: ImGuiKey_ = 634;
+pub const ImGuiKey_GamepadLStickLeft: ImGuiKey_ = 635;
+pub const ImGuiKey_GamepadLStickRight: ImGuiKey_ = 636;
+pub const ImGuiKey_GamepadRStickUp: ImGuiKey_ = 637;
+pub const ImGuiKey_GamepadRStickDown: ImGuiKey_ = 638;
+pub const ImGuiKey_GamepadRStickLeft: ImGuiKey_ = 639;
+pub const ImGuiKey_GamepadRStickRight: ImGuiKey_ = 640;
+pub const ImGuiKey_ModCtrl: ImGuiKey_ = 641;
+pub const ImGuiKey_ModShift: ImGuiKey_ = 642;
+pub const ImGuiKey_ModAlt: ImGuiKey_ = 643;
+pub const ImGuiKey_ModSuper: ImGuiKey_ = 644;
+pub const ImGuiKey_COUNT: ImGuiKey_ = 645;
+pub const ImGuiKey_NamedKey_BEGIN: ImGuiKey_ = 512;
+pub const ImGuiKey_NamedKey_END: ImGuiKey_ = 645;
+pub const ImGuiKey_NamedKey_COUNT: ImGuiKey_ = 133;
+pub const ImGuiKey_KeysData_SIZE: ImGuiKey_ = 645;
+pub const ImGuiKey_KeysData_OFFSET: ImGuiKey_ = 0;
 pub type ImGuiKey_ = ::std::os::raw::c_int;
-pub const ImGuiKeyModFlags_None: ImGuiKeyModFlags_ = 0;
-pub const ImGuiKeyModFlags_Ctrl: ImGuiKeyModFlags_ = 1;
-pub const ImGuiKeyModFlags_Shift: ImGuiKeyModFlags_ = 2;
-pub const ImGuiKeyModFlags_Alt: ImGuiKeyModFlags_ = 4;
-pub const ImGuiKeyModFlags_Super: ImGuiKeyModFlags_ = 8;
-pub type ImGuiKeyModFlags_ = ::std::os::raw::c_int;
+pub const ImGuiModFlags_None: ImGuiModFlags_ = 0;
+pub const ImGuiModFlags_Ctrl: ImGuiModFlags_ = 1;
+pub const ImGuiModFlags_Shift: ImGuiModFlags_ = 2;
+pub const ImGuiModFlags_Alt: ImGuiModFlags_ = 4;
+pub const ImGuiModFlags_Super: ImGuiModFlags_ = 8;
+pub type ImGuiModFlags_ = ::std::os::raw::c_int;
 pub const ImGuiNavInput_Activate: ImGuiNavInput_ = 0;
 pub const ImGuiNavInput_Cancel: ImGuiNavInput_ = 1;
 pub const ImGuiNavInput_Input: ImGuiNavInput_ = 2;
@@ -1618,7 +1396,6 @@ pub const ImGuiNavInput_KeyRight_: ImGuiNavInput_ = 17;
 pub const ImGuiNavInput_KeyUp_: ImGuiNavInput_ = 18;
 pub const ImGuiNavInput_KeyDown_: ImGuiNavInput_ = 19;
 pub const ImGuiNavInput_COUNT: ImGuiNavInput_ = 20;
-pub const ImGuiNavInput_InternalStart_: ImGuiNavInput_ = 16;
 pub type ImGuiNavInput_ = ::std::os::raw::c_int;
 pub const ImGuiConfigFlags_None: ImGuiConfigFlags_ = 0;
 pub const ImGuiConfigFlags_NavEnableKeyboard: ImGuiConfigFlags_ = 1;
@@ -1789,7 +1566,7 @@ pub type ImGuiCond_ = ::std::os::raw::c_int;
 #[derive(Debug, Copy, Clone)]
 pub struct ImGuiStyle {
     pub alpha: f32,
-    // pub disabledAlpha: f32, // for some reason theres 1 too many shifting all the others down by 4 bytes
+    pub disabled_alpha: f32,
     pub window_padding: [f32; 2],
     pub window_rounding: f32,
     pub window_border_size: f32,
@@ -1832,6 +1609,21 @@ pub struct ImGuiStyle {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct ImGuiKeyData {
+    pub Down: bool,
+    pub DownDuration: f32,
+    pub DownDurationPrev: f32,
+    pub AnalogValue: f32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImWchar {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImWchar,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct ImGuiIO {
     pub ConfigFlags: ImGuiConfigFlags,
     pub BackendFlags: ImGuiBackendFlags,
@@ -1843,7 +1635,6 @@ pub struct ImGuiIO {
     pub MouseDoubleClickTime: f32,
     pub MouseDoubleClickMaxDist: f32,
     pub MouseDragThreshold: f32,
-    pub KeyMap: [::std::os::raw::c_int; 22usize],
     pub KeyRepeatDelay: f32,
     pub KeyRepeatRate: f32,
     pub UserData: *mut ::std::os::raw::c_void,
@@ -1854,6 +1645,7 @@ pub struct ImGuiIO {
     pub DisplayFramebufferScale: [f32; 2],
     pub MouseDrawCursor: bool,
     pub ConfigMacOSXBehaviors: bool,
+    pub ConfigInputTrickleEventQueue: bool,
     pub ConfigInputTextCursorBlink: bool,
     pub ConfigDragClickToInputText: bool,
     pub ConfigWindowsResizeFromEdges: bool,
@@ -1876,20 +1668,10 @@ pub struct ImGuiIO {
         ),
     >,
     pub ClipboardUserData: *mut ::std::os::raw::c_void,
-    pub ImeSetInputScreenPosFn: ::std::option::Option<
-        unsafe extern "C" fn(x: ::std::os::raw::c_int, y: ::std::os::raw::c_int),
+    pub SetPlatformImeDataFn: ::std::option::Option<
+        unsafe extern "C" fn(viewport: *mut ImGuiViewport, data: *mut ImGuiPlatformImeData),
     >,
-    pub ImeWindowHandle: *mut ::std::os::raw::c_void,
-    pub MousePos: [f32; 2],
-    pub MouseDown: [bool; 5usize],
-    pub MouseWheel: f32,
-    pub MouseWheelH: f32,
-    pub KeyCtrl: bool,
-    pub KeyShift: bool,
-    pub KeyAlt: bool,
-    pub KeySuper: bool,
-    pub KeysDown: [bool; 512usize],
-    pub NavInputs: [f32; 20usize],
+    pub _UnusedPadding: *mut ::std::os::raw::c_void,
     pub WantCaptureMouse: bool,
     pub WantCaptureKeyboard: bool,
     pub WantTextInput: bool,
@@ -1904,25 +1686,40 @@ pub struct ImGuiIO {
     pub MetricsActiveWindows: ::std::os::raw::c_int,
     pub MetricsActiveAllocations: ::std::os::raw::c_int,
     pub MouseDelta: [f32; 2],
-    pub KeyMods: ImGuiKeyModFlags,
-    pub KeyModsPrev: ImGuiKeyModFlags,
+    pub KeyMap: [::std::os::raw::c_int; 645usize],
+    pub KeysDown: [bool; 645usize],
+    pub MousePos: [f32; 2],
+    pub MouseDown: [bool; 5usize],
+    pub MouseWheel: f32,
+    pub MouseWheelH: f32,
+    pub KeyCtrl: bool,
+    pub KeyShift: bool,
+    pub KeyAlt: bool,
+    pub KeySuper: bool,
+    pub NavInputs: [f32; 20usize],
+    pub KeyMods: ImGuiModFlags,
+    pub KeysData: [ImGuiKeyData; 645usize],
+    pub WantCaptureMouseUnlessPopupClose: bool,
     pub MousePosPrev: [f32; 2],
     pub MouseClickedPos: [ImVec2; 5usize],
     pub MouseClickedTime: [f64; 5usize],
     pub MouseClicked: [bool; 5usize],
     pub MouseDoubleClicked: [bool; 5usize],
+    pub MouseClickedCount: [ImU16; 5usize],
+    pub MouseClickedLastCount: [ImU16; 5usize],
     pub MouseReleased: [bool; 5usize],
     pub MouseDownOwned: [bool; 5usize],
-    pub MouseDownWasDoubleClick: [bool; 5usize],
+    pub MouseDownOwnedUnlessPopupClose: [bool; 5usize],
     pub MouseDownDuration: [f32; 5usize],
     pub MouseDownDurationPrev: [f32; 5usize],
-    pub MouseDragMaxDistanceAbs: [ImVec2; 5usize],
     pub MouseDragMaxDistanceSqr: [f32; 5usize],
-    pub KeysDownDuration: [f32; 512usize],
-    pub KeysDownDurationPrev: [f32; 512usize],
     pub NavInputsDownDuration: [f32; 20usize],
     pub NavInputsDownDurationPrev: [f32; 20usize],
     pub PenPressure: f32,
+    pub AppFocusLost: bool,
+    pub AppAcceptingEvents: bool,
+    pub BackendUsingLegacyKeyArrays: ImS8,
+    pub BackendUsingLegacyNavInputArray: bool,
     pub InputQueueSurrogate: ImWchar16,
     pub InputQueueCharacters: ImVector_ImWchar,
 }
@@ -2016,10 +1813,24 @@ pub struct ImGuiTextRange {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiTextRange {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiTextRange,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct ImGuiTextFilter {
     pub InputBuf: [::std::os::raw::c_char; 256usize],
     pub Filters: ImVector_ImGuiTextRange,
     pub CountGrep: ::std::os::raw::c_int,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_char {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ::std::os::raw::c_char,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2041,36 +1852,15 @@ pub union ImGuiStoragePair__bindgen_ty_1 {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiStoragePair {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiStoragePair,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct ImGuiStorage {
     pub Data: ImVector_ImGuiStoragePair,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiTabBar {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiTabBar,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImPool_ImGuiTabBar {
-    pub Buf: ImVector_ImGuiTabBar,
-    pub Map: ImGuiStorage,
-    pub FreeIdx: ImPoolIdx,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImVector_ImGuiTable {
-    pub Size: ::std::os::raw::c_int,
-    pub Capacity: ::std::os::raw::c_int,
-    pub Data: *mut ImGuiTable,
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImPool_ImGuiTable {
-    pub Buf: ImVector_ImGuiTable,
-    pub Map: ImGuiStorage,
-    pub FreeIdx: ImPoolIdx,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2078,16 +1868,18 @@ pub struct ImGuiListClipper {
     pub DisplayStart: ::std::os::raw::c_int,
     pub DisplayEnd: ::std::os::raw::c_int,
     pub ItemsCount: ::std::os::raw::c_int,
-    pub StepNo: ::std::os::raw::c_int,
-    pub ItemsFrozen: ::std::os::raw::c_int,
     pub ItemsHeight: f32,
     pub StartPosY: f32,
+    pub TempData: *mut ::std::os::raw::c_void,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImColor {
     pub Value: [f32; 4],
 }
+pub type ImDrawCallback = ::std::option::Option<
+    unsafe extern "C" fn(parent_list: *const ImDrawList, cmd: *const ImDrawCmd),
+>;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImDrawCmd {
@@ -2115,9 +1907,30 @@ pub struct ImDrawCmdHeader {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImDrawCmd {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImDrawCmd,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImDrawIdx {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImDrawIdx,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct ImDrawChannel {
     pub _CmdBuffer: ImVector_ImDrawCmd,
     pub _IdxBuffer: ImVector_ImDrawIdx,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImDrawChannel {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImDrawChannel,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2147,6 +1960,34 @@ pub const ImDrawListFlags_AntiAliasedLinesUseTex: ImDrawListFlags_ = 2;
 pub const ImDrawListFlags_AntiAliasedFill: ImDrawListFlags_ = 4;
 pub const ImDrawListFlags_AllowVtxOffset: ImDrawListFlags_ = 8;
 pub type ImDrawListFlags_ = ::std::os::raw::c_int;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImDrawVert {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImDrawVert,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImVec4 {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut [f32; 4],
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImTextureID {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImTextureID,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImVec2 {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut [f32; 2],
+}
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImDrawList {
@@ -2274,6 +2115,13 @@ impl ImFontGlyph {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImU32 {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImU32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct ImFontGlyphRangesBuilder {
     pub UsedChars: ImVector_ImU32,
 }
@@ -2296,6 +2144,27 @@ pub const ImFontAtlasFlags_NoBakedLines: ImFontAtlasFlags_ = 4;
 pub type ImFontAtlasFlags_ = ::std::os::raw::c_int;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImFontPtr {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut *mut ImFont,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImFontAtlasCustomRect {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImFontAtlasCustomRect,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImFontConfig {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImFontConfig,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct ImFontAtlas {
     pub Flags: ImFontAtlasFlags,
     pub TexID: ImTextureID,
@@ -2313,11 +2182,25 @@ pub struct ImFontAtlas {
     pub Fonts: ImVector_ImFontPtr,
     pub CustomRects: ImVector_ImFontAtlasCustomRect,
     pub ConfigData: ImVector_ImFontConfig,
-    pub TexUvLines: [ImVec4; 64usize],
+    pub TexUvLines: [[f32; 4]; 64usize],
     pub FontBuilderIO: *const ImFontBuilderIO,
     pub FontBuilderFlags: ::std::os::raw::c_uint,
     pub PackIdMouseCursors: ::std::os::raw::c_int,
     pub PackIdLines: ::std::os::raw::c_int,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_float {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut f32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImFontGlyph {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImFontGlyph,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2354,6 +2237,40 @@ pub struct ImGuiViewport {
     pub Size: [f32; 2],
     pub WorkPos: [f32; 2],
     pub WorkSize: [f32; 2],
+    pub PlatformHandleRaw: *mut ::std::os::raw::c_void,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImGuiPlatformImeData {
+    pub WantVisible: bool,
+    pub InputPos: [f32; 2],
+    pub InputLineHeight: f32,
+}
+pub type ImGuiLayoutType = ::std::os::raw::c_int;
+pub type ImGuiActivateFlags = ::std::os::raw::c_int;
+pub type ImGuiDebugLogFlags = ::std::os::raw::c_int;
+pub type ImGuiItemFlags = ::std::os::raw::c_int;
+pub type ImGuiItemStatusFlags = ::std::os::raw::c_int;
+pub type ImGuiOldColumnFlags = ::std::os::raw::c_int;
+pub type ImGuiNavHighlightFlags = ::std::os::raw::c_int;
+pub type ImGuiNavDirSourceFlags = ::std::os::raw::c_int;
+pub type ImGuiNavMoveFlags = ::std::os::raw::c_int;
+pub type ImGuiNextItemDataFlags = ::std::os::raw::c_int;
+pub type ImGuiNextWindowDataFlags = ::std::os::raw::c_int;
+pub type ImGuiScrollFlags = ::std::os::raw::c_int;
+pub type ImGuiSeparatorFlags = ::std::os::raw::c_int;
+pub type ImGuiTextFlags = ::std::os::raw::c_int;
+pub type ImGuiTooltipFlags = ::std::os::raw::c_int;
+pub type ImGuiErrorLogCallback = ::std::option::Option<
+    unsafe extern "C" fn(
+        user_data: *mut ::std::os::raw::c_void,
+        fmt: *const ::std::os::raw::c_char,
+        ...
+    ),
+>;
+extern "C" {
+    #[link_name = "\u{1}?GImGui@@3PEAUImGuiContext@@EA"]
+    pub static mut GImGui: *mut ImGuiContext;
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2401,6 +2318,7 @@ pub struct StbTexteditRow {
     pub ymax: f32,
     pub num_chars: ::std::os::raw::c_int,
 }
+pub type ImFileHandle = *mut FILE;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImVec1 {
@@ -2423,6 +2341,7 @@ pub struct ImRect {
 pub struct ImBitVector {
     pub Storage: ImVector_ImU32,
 }
+pub type ImPoolIdx = ::std::os::raw::c_int;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImDrawListSharedData {
@@ -2440,6 +2359,13 @@ pub struct ImDrawListSharedData {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImDrawListPtr {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut *mut ImDrawList,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct ImDrawDataBuilder {
     pub Layers: [ImVector_ImDrawListPtr; 2usize],
 }
@@ -2452,10 +2378,8 @@ pub const ImGuiItemFlags_NoNavDefaultFocus: ImGuiItemFlags_ = 16;
 pub const ImGuiItemFlags_SelectableDontClosePopup: ImGuiItemFlags_ = 32;
 pub const ImGuiItemFlags_MixedValue: ImGuiItemFlags_ = 64;
 pub const ImGuiItemFlags_ReadOnly: ImGuiItemFlags_ = 128;
+pub const ImGuiItemFlags_Inputable: ImGuiItemFlags_ = 256;
 pub type ImGuiItemFlags_ = ::std::os::raw::c_int;
-pub const ImGuiItemAddFlags_None: ImGuiItemAddFlags_ = 0;
-pub const ImGuiItemAddFlags_Focusable: ImGuiItemAddFlags_ = 1;
-pub type ImGuiItemAddFlags_ = ::std::os::raw::c_int;
 pub const ImGuiItemStatusFlags_None: ImGuiItemStatusFlags_ = 0;
 pub const ImGuiItemStatusFlags_HoveredRect: ImGuiItemStatusFlags_ = 1;
 pub const ImGuiItemStatusFlags_HasDisplayRect: ImGuiItemStatusFlags_ = 2;
@@ -2465,9 +2389,7 @@ pub const ImGuiItemStatusFlags_ToggledOpen: ImGuiItemStatusFlags_ = 16;
 pub const ImGuiItemStatusFlags_HasDeactivated: ImGuiItemStatusFlags_ = 32;
 pub const ImGuiItemStatusFlags_Deactivated: ImGuiItemStatusFlags_ = 64;
 pub const ImGuiItemStatusFlags_HoveredWindow: ImGuiItemStatusFlags_ = 128;
-pub const ImGuiItemStatusFlags_FocusedByCode: ImGuiItemStatusFlags_ = 256;
-pub const ImGuiItemStatusFlags_FocusedByTabbing: ImGuiItemStatusFlags_ = 512;
-pub const ImGuiItemStatusFlags_Focused: ImGuiItemStatusFlags_ = 768;
+pub const ImGuiItemStatusFlags_FocusedByTabbing: ImGuiItemStatusFlags_ = 256;
 pub type ImGuiItemStatusFlags_ = ::std::os::raw::c_int;
 pub const ImGuiInputTextFlags_Multiline: ImGuiInputTextFlagsPrivate_ = 67108864;
 pub const ImGuiInputTextFlags_NoMarkEdited: ImGuiInputTextFlagsPrivate_ = 134217728;
@@ -2534,49 +2456,6 @@ pub type ImGuiAxis = ::std::os::raw::c_int;
 pub const ImGuiPlotType_Lines: ImGuiPlotType = 0;
 pub const ImGuiPlotType_Histogram: ImGuiPlotType = 1;
 pub type ImGuiPlotType = ::std::os::raw::c_int;
-pub const ImGuiInputSource_None: ImGuiInputSource = 0;
-pub const ImGuiInputSource_Mouse: ImGuiInputSource = 1;
-pub const ImGuiInputSource_Keyboard: ImGuiInputSource = 2;
-pub const ImGuiInputSource_Gamepad: ImGuiInputSource = 3;
-pub const ImGuiInputSource_Nav: ImGuiInputSource = 4;
-pub const ImGuiInputSource_Clipboard: ImGuiInputSource = 5;
-pub const ImGuiInputSource_COUNT: ImGuiInputSource = 6;
-pub type ImGuiInputSource = ::std::os::raw::c_int;
-pub const ImGuiInputReadMode_Down: ImGuiInputReadMode = 0;
-pub const ImGuiInputReadMode_Pressed: ImGuiInputReadMode = 1;
-pub const ImGuiInputReadMode_Released: ImGuiInputReadMode = 2;
-pub const ImGuiInputReadMode_Repeat: ImGuiInputReadMode = 3;
-pub const ImGuiInputReadMode_RepeatSlow: ImGuiInputReadMode = 4;
-pub const ImGuiInputReadMode_RepeatFast: ImGuiInputReadMode = 5;
-pub type ImGuiInputReadMode = ::std::os::raw::c_int;
-pub const ImGuiNavHighlightFlags_None: ImGuiNavHighlightFlags_ = 0;
-pub const ImGuiNavHighlightFlags_TypeDefault: ImGuiNavHighlightFlags_ = 1;
-pub const ImGuiNavHighlightFlags_TypeThin: ImGuiNavHighlightFlags_ = 2;
-pub const ImGuiNavHighlightFlags_AlwaysDraw: ImGuiNavHighlightFlags_ = 4;
-pub const ImGuiNavHighlightFlags_NoRounding: ImGuiNavHighlightFlags_ = 8;
-pub type ImGuiNavHighlightFlags_ = ::std::os::raw::c_int;
-pub const ImGuiNavDirSourceFlags_None: ImGuiNavDirSourceFlags_ = 0;
-pub const ImGuiNavDirSourceFlags_Keyboard: ImGuiNavDirSourceFlags_ = 1;
-pub const ImGuiNavDirSourceFlags_PadDPad: ImGuiNavDirSourceFlags_ = 2;
-pub const ImGuiNavDirSourceFlags_PadLStick: ImGuiNavDirSourceFlags_ = 4;
-pub type ImGuiNavDirSourceFlags_ = ::std::os::raw::c_int;
-pub const ImGuiNavMoveFlags_None: ImGuiNavMoveFlags_ = 0;
-pub const ImGuiNavMoveFlags_LoopX: ImGuiNavMoveFlags_ = 1;
-pub const ImGuiNavMoveFlags_LoopY: ImGuiNavMoveFlags_ = 2;
-pub const ImGuiNavMoveFlags_WrapX: ImGuiNavMoveFlags_ = 4;
-pub const ImGuiNavMoveFlags_WrapY: ImGuiNavMoveFlags_ = 8;
-pub const ImGuiNavMoveFlags_AllowCurrentNavId: ImGuiNavMoveFlags_ = 16;
-pub const ImGuiNavMoveFlags_AlsoScoreVisibleSet: ImGuiNavMoveFlags_ = 32;
-pub const ImGuiNavMoveFlags_ScrollToEdge: ImGuiNavMoveFlags_ = 64;
-pub type ImGuiNavMoveFlags_ = ::std::os::raw::c_int;
-pub const ImGuiNavForward_None: ImGuiNavForward = 0;
-pub const ImGuiNavForward_ForwardQueued: ImGuiNavForward = 1;
-pub const ImGuiNavForward_ForwardActive: ImGuiNavForward = 2;
-pub type ImGuiNavForward = ::std::os::raw::c_int;
-pub const ImGuiNavLayer_Main: ImGuiNavLayer = 0;
-pub const ImGuiNavLayer_Menu: ImGuiNavLayer = 1;
-pub const ImGuiNavLayer_COUNT: ImGuiNavLayer = 2;
-pub type ImGuiNavLayer = ::std::os::raw::c_int;
 pub const ImGuiPopupPositionPolicy_Default: ImGuiPopupPositionPolicy = 0;
 pub const ImGuiPopupPositionPolicy_ComboBox: ImGuiPopupPositionPolicy = 1;
 pub const ImGuiPopupPositionPolicy_Tooltip: ImGuiPopupPositionPolicy = 2;
@@ -2671,8 +2550,6 @@ pub struct ImGuiInputTextState {
     pub SelectedAllMouseLock: bool,
     pub Edited: bool,
     pub Flags: ImGuiInputTextFlags,
-    pub UserCallback: ImGuiInputTextCallback,
-    pub UserCallbackData: *mut ::std::os::raw::c_void,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2680,21 +2557,11 @@ pub struct ImGuiPopupData {
     pub PopupId: ImGuiID,
     pub Window: *mut ImGuiWindow,
     pub SourceWindow: *mut ImGuiWindow,
+    pub ParentNavLayer: ::std::os::raw::c_int,
     pub OpenFrameCount: ::std::os::raw::c_int,
     pub OpenParentId: ImGuiID,
     pub OpenPopupPos: [f32; 2],
     pub OpenMousePos: [f32; 2],
-}
-#[repr(C)]
-#[derive(Debug, Copy, Clone)]
-pub struct ImGuiNavItemData {
-    pub Window: *mut ImGuiWindow,
-    pub ID: ImGuiID,
-    pub FocusScopeId: ImGuiID,
-    pub RectRel: ImRect,
-    pub DistBox: f32,
-    pub DistCenter: f32,
-    pub DistAxial: f32,
 }
 pub const ImGuiNextWindowDataFlags_None: ImGuiNextWindowDataFlags_ = 0;
 pub const ImGuiNextWindowDataFlags_HasPos: ImGuiNextWindowDataFlags_ = 1;
@@ -2745,25 +2612,213 @@ pub struct ImGuiLastItemData {
     pub InFlags: ImGuiItemFlags,
     pub StatusFlags: ImGuiItemStatusFlags,
     pub Rect: ImRect,
+    pub NavRect: ImRect,
     pub DisplayRect: ImRect,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImGuiStackSizes {
+    pub SizeOfIDStack: ::std::os::raw::c_short,
+    pub SizeOfColorStack: ::std::os::raw::c_short,
+    pub SizeOfStyleVarStack: ::std::os::raw::c_short,
+    pub SizeOfFontStack: ::std::os::raw::c_short,
+    pub SizeOfFocusScopeStack: ::std::os::raw::c_short,
+    pub SizeOfGroupStack: ::std::os::raw::c_short,
+    pub SizeOfItemFlagsStack: ::std::os::raw::c_short,
+    pub SizeOfBeginPopupStack: ::std::os::raw::c_short,
+    pub SizeOfDisabledStack: ::std::os::raw::c_short,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImGuiWindowStackData {
     pub Window: *mut ImGuiWindow,
     pub ParentLastItemDataBackup: ImGuiLastItemData,
+    pub StackSizesOnBegin: ImGuiStackSizes,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImGuiShrinkWidthItem {
     pub Index: ::std::os::raw::c_int,
     pub Width: f32,
+    pub InitialWidth: f32,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImGuiPtrOrIndex {
     pub Ptr: *mut ::std::os::raw::c_void,
     pub Index: ::std::os::raw::c_int,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN {
+    pub Storage: [ImU32; 5usize],
+}
+pub type ImBitArrayForNamedKeys = ImBitArray_ImGuiKey_NamedKey_COUNT__lessImGuiKey_NamedKey_BEGIN;
+pub const ImGuiKey_LegacyNativeKey_BEGIN: ImGuiKeyPrivate_ = 0;
+pub const ImGuiKey_LegacyNativeKey_END: ImGuiKeyPrivate_ = 512;
+pub const ImGuiKey_Gamepad_BEGIN: ImGuiKeyPrivate_ = 617;
+pub const ImGuiKey_Gamepad_END: ImGuiKeyPrivate_ = 641;
+pub type ImGuiKeyPrivate_ = ::std::os::raw::c_int;
+pub const ImGuiInputEventType_None: ImGuiInputEventType = 0;
+pub const ImGuiInputEventType_MousePos: ImGuiInputEventType = 1;
+pub const ImGuiInputEventType_MouseWheel: ImGuiInputEventType = 2;
+pub const ImGuiInputEventType_MouseButton: ImGuiInputEventType = 3;
+pub const ImGuiInputEventType_Key: ImGuiInputEventType = 4;
+pub const ImGuiInputEventType_Text: ImGuiInputEventType = 5;
+pub const ImGuiInputEventType_Focus: ImGuiInputEventType = 6;
+pub const ImGuiInputEventType_COUNT: ImGuiInputEventType = 7;
+pub type ImGuiInputEventType = ::std::os::raw::c_int;
+pub const ImGuiInputSource_None: ImGuiInputSource = 0;
+pub const ImGuiInputSource_Mouse: ImGuiInputSource = 1;
+pub const ImGuiInputSource_Keyboard: ImGuiInputSource = 2;
+pub const ImGuiInputSource_Gamepad: ImGuiInputSource = 3;
+pub const ImGuiInputSource_Clipboard: ImGuiInputSource = 4;
+pub const ImGuiInputSource_Nav: ImGuiInputSource = 5;
+pub const ImGuiInputSource_COUNT: ImGuiInputSource = 6;
+pub type ImGuiInputSource = ::std::os::raw::c_int;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImGuiInputEventMousePos {
+    pub PosX: f32,
+    pub PosY: f32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImGuiInputEventMouseWheel {
+    pub WheelX: f32,
+    pub WheelY: f32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImGuiInputEventMouseButton {
+    pub Button: ::std::os::raw::c_int,
+    pub Down: bool,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImGuiInputEventKey {
+    pub Key: ImGuiKey,
+    pub Down: bool,
+    pub AnalogValue: f32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImGuiInputEventText {
+    pub Char: ::std::os::raw::c_uint,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImGuiInputEventAppFocused {
+    pub Focused: bool,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub struct ImGuiInputEvent {
+    pub Type: ImGuiInputEventType,
+    pub Source: ImGuiInputSource,
+    pub __bindgen_anon_1: ImGuiInputEvent__bindgen_ty_1,
+    pub AddedByTestEngine: bool,
+}
+#[repr(C)]
+#[derive(Copy, Clone)]
+pub union ImGuiInputEvent__bindgen_ty_1 {
+    pub MousePos: ImGuiInputEventMousePos,
+    pub MouseWheel: ImGuiInputEventMouseWheel,
+    pub MouseButton: ImGuiInputEventMouseButton,
+    pub Key: ImGuiInputEventKey,
+    pub Text: ImGuiInputEventText,
+    pub AppFocused: ImGuiInputEventAppFocused,
+}
+pub const ImGuiNavReadMode_Down: ImGuiNavReadMode = 0;
+pub const ImGuiNavReadMode_Pressed: ImGuiNavReadMode = 1;
+pub const ImGuiNavReadMode_Released: ImGuiNavReadMode = 2;
+pub const ImGuiNavReadMode_Repeat: ImGuiNavReadMode = 3;
+pub const ImGuiNavReadMode_RepeatSlow: ImGuiNavReadMode = 4;
+pub const ImGuiNavReadMode_RepeatFast: ImGuiNavReadMode = 5;
+pub type ImGuiNavReadMode = ::std::os::raw::c_int;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImGuiListClipperRange {
+    pub Min: ::std::os::raw::c_int,
+    pub Max: ::std::os::raw::c_int,
+    pub PosToIndexConvert: bool,
+    pub PosToIndexOffsetMin: ImS8,
+    pub PosToIndexOffsetMax: ImS8,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiListClipperRange {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiListClipperRange,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImGuiListClipperData {
+    pub ListClipper: *mut ImGuiListClipper,
+    pub LossynessOffset: f32,
+    pub StepNo: ::std::os::raw::c_int,
+    pub ItemsFrozen: ::std::os::raw::c_int,
+    pub Ranges: ImVector_ImGuiListClipperRange,
+}
+pub const ImGuiActivateFlags_None: ImGuiActivateFlags_ = 0;
+pub const ImGuiActivateFlags_PreferInput: ImGuiActivateFlags_ = 1;
+pub const ImGuiActivateFlags_PreferTweak: ImGuiActivateFlags_ = 2;
+pub const ImGuiActivateFlags_TryToPreserveState: ImGuiActivateFlags_ = 4;
+pub type ImGuiActivateFlags_ = ::std::os::raw::c_int;
+pub const ImGuiScrollFlags_None: ImGuiScrollFlags_ = 0;
+pub const ImGuiScrollFlags_KeepVisibleEdgeX: ImGuiScrollFlags_ = 1;
+pub const ImGuiScrollFlags_KeepVisibleEdgeY: ImGuiScrollFlags_ = 2;
+pub const ImGuiScrollFlags_KeepVisibleCenterX: ImGuiScrollFlags_ = 4;
+pub const ImGuiScrollFlags_KeepVisibleCenterY: ImGuiScrollFlags_ = 8;
+pub const ImGuiScrollFlags_AlwaysCenterX: ImGuiScrollFlags_ = 16;
+pub const ImGuiScrollFlags_AlwaysCenterY: ImGuiScrollFlags_ = 32;
+pub const ImGuiScrollFlags_NoScrollParent: ImGuiScrollFlags_ = 64;
+pub const ImGuiScrollFlags_MaskX_: ImGuiScrollFlags_ = 21;
+pub const ImGuiScrollFlags_MaskY_: ImGuiScrollFlags_ = 42;
+pub type ImGuiScrollFlags_ = ::std::os::raw::c_int;
+pub const ImGuiNavHighlightFlags_None: ImGuiNavHighlightFlags_ = 0;
+pub const ImGuiNavHighlightFlags_TypeDefault: ImGuiNavHighlightFlags_ = 1;
+pub const ImGuiNavHighlightFlags_TypeThin: ImGuiNavHighlightFlags_ = 2;
+pub const ImGuiNavHighlightFlags_AlwaysDraw: ImGuiNavHighlightFlags_ = 4;
+pub const ImGuiNavHighlightFlags_NoRounding: ImGuiNavHighlightFlags_ = 8;
+pub type ImGuiNavHighlightFlags_ = ::std::os::raw::c_int;
+pub const ImGuiNavDirSourceFlags_None: ImGuiNavDirSourceFlags_ = 0;
+pub const ImGuiNavDirSourceFlags_RawKeyboard: ImGuiNavDirSourceFlags_ = 1;
+pub const ImGuiNavDirSourceFlags_Keyboard: ImGuiNavDirSourceFlags_ = 2;
+pub const ImGuiNavDirSourceFlags_PadDPad: ImGuiNavDirSourceFlags_ = 4;
+pub const ImGuiNavDirSourceFlags_PadLStick: ImGuiNavDirSourceFlags_ = 8;
+pub type ImGuiNavDirSourceFlags_ = ::std::os::raw::c_int;
+pub const ImGuiNavMoveFlags_None: ImGuiNavMoveFlags_ = 0;
+pub const ImGuiNavMoveFlags_LoopX: ImGuiNavMoveFlags_ = 1;
+pub const ImGuiNavMoveFlags_LoopY: ImGuiNavMoveFlags_ = 2;
+pub const ImGuiNavMoveFlags_WrapX: ImGuiNavMoveFlags_ = 4;
+pub const ImGuiNavMoveFlags_WrapY: ImGuiNavMoveFlags_ = 8;
+pub const ImGuiNavMoveFlags_AllowCurrentNavId: ImGuiNavMoveFlags_ = 16;
+pub const ImGuiNavMoveFlags_AlsoScoreVisibleSet: ImGuiNavMoveFlags_ = 32;
+pub const ImGuiNavMoveFlags_ScrollToEdgeY: ImGuiNavMoveFlags_ = 64;
+pub const ImGuiNavMoveFlags_Forwarded: ImGuiNavMoveFlags_ = 128;
+pub const ImGuiNavMoveFlags_DebugNoResult: ImGuiNavMoveFlags_ = 256;
+pub const ImGuiNavMoveFlags_FocusApi: ImGuiNavMoveFlags_ = 512;
+pub const ImGuiNavMoveFlags_Tabbing: ImGuiNavMoveFlags_ = 1024;
+pub const ImGuiNavMoveFlags_Activate: ImGuiNavMoveFlags_ = 2048;
+pub const ImGuiNavMoveFlags_DontSetNavHighlight: ImGuiNavMoveFlags_ = 4096;
+pub type ImGuiNavMoveFlags_ = ::std::os::raw::c_int;
+pub const ImGuiNavLayer_Main: ImGuiNavLayer = 0;
+pub const ImGuiNavLayer_Menu: ImGuiNavLayer = 1;
+pub const ImGuiNavLayer_COUNT: ImGuiNavLayer = 2;
+pub type ImGuiNavLayer = ::std::os::raw::c_int;
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImGuiNavItemData {
+    pub Window: *mut ImGuiWindow,
+    pub ID: ImGuiID,
+    pub FocusScopeId: ImGuiID,
+    pub RectRel: ImRect,
+    pub InFlags: ImGuiItemFlags,
+    pub DistBox: f32,
+    pub DistCenter: f32,
+    pub DistAxial: f32,
 }
 pub const ImGuiOldColumnFlags_None: ImGuiOldColumnFlags_ = 0;
 pub const ImGuiOldColumnFlags_NoBorder: ImGuiOldColumnFlags_ = 1;
@@ -2779,6 +2834,13 @@ pub struct ImGuiOldColumnData {
     pub OffsetNormBeforeResize: f32,
     pub Flags: ImGuiOldColumnFlags,
     pub ClipRect: ImRect,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiOldColumnData {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiOldColumnData,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -2861,9 +2923,20 @@ pub struct ImGuiSettingsHandler {
     >,
     pub UserData: *mut ::std::os::raw::c_void,
 }
+pub const ImGuiDebugLogFlags_None: ImGuiDebugLogFlags_ = 0;
+pub const ImGuiDebugLogFlags_EventActiveId: ImGuiDebugLogFlags_ = 1;
+pub const ImGuiDebugLogFlags_EventFocus: ImGuiDebugLogFlags_ = 2;
+pub const ImGuiDebugLogFlags_EventPopup: ImGuiDebugLogFlags_ = 4;
+pub const ImGuiDebugLogFlags_EventNav: ImGuiDebugLogFlags_ = 8;
+pub const ImGuiDebugLogFlags_EventIO: ImGuiDebugLogFlags_ = 16;
+pub const ImGuiDebugLogFlags_EventMask_: ImGuiDebugLogFlags_ = 31;
+pub const ImGuiDebugLogFlags_OutputToTTY: ImGuiDebugLogFlags_ = 1024;
+pub type ImGuiDebugLogFlags_ = ::std::os::raw::c_int;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImGuiMetricsConfig {
+    pub ShowDebugLog: bool,
+    pub ShowStackTool: bool,
     pub ShowWindowsRects: bool,
     pub ShowWindowsBeginOrder: bool,
     pub ShowTablesRects: bool,
@@ -2874,15 +2947,57 @@ pub struct ImGuiMetricsConfig {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
-pub struct ImGuiStackSizes {
-    pub SizeOfIDStack: ::std::os::raw::c_short,
-    pub SizeOfColorStack: ::std::os::raw::c_short,
-    pub SizeOfStyleVarStack: ::std::os::raw::c_short,
-    pub SizeOfFontStack: ::std::os::raw::c_short,
-    pub SizeOfFocusScopeStack: ::std::os::raw::c_short,
-    pub SizeOfGroupStack: ::std::os::raw::c_short,
-    pub SizeOfBeginPopupStack: ::std::os::raw::c_short,
+pub struct ImGuiStackLevelInfo {
+    pub ID: ImGuiID,
+    pub QueryFrameCount: ImS8,
+    pub QuerySuccess: bool,
+    pub _bitfield_align_1: [u8; 0],
+    pub _bitfield_1: __BindgenBitfieldUnit<[u8; 1usize]>,
+    pub __bindgen_padding_0: [u8; 5usize],
+    pub Desc: [::std::os::raw::c_char; 57usize],
 }
+impl ImGuiStackLevelInfo {
+    #[inline]
+    pub fn DataType(&self) -> ImGuiDataType {
+        unsafe { ::std::mem::transmute(self._bitfield_1.get(0usize, 8u8) as u32) }
+    }
+    #[inline]
+    pub fn set_DataType(&mut self, val: ImGuiDataType) {
+        unsafe {
+            let val: u32 = ::std::mem::transmute(val);
+            self._bitfield_1.set(0usize, 8u8, val as u64)
+        }
+    }
+    #[inline]
+    pub fn new_bitfield_1(DataType: ImGuiDataType) -> __BindgenBitfieldUnit<[u8; 1usize]> {
+        let mut __bindgen_bitfield_unit: __BindgenBitfieldUnit<[u8; 1usize]> = Default::default();
+        __bindgen_bitfield_unit.set(0usize, 8u8, {
+            let DataType: u32 = unsafe { ::std::mem::transmute(DataType) };
+            DataType as u64
+        });
+        __bindgen_bitfield_unit
+    }
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiStackLevelInfo {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiStackLevelInfo,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImGuiStackTool {
+    pub LastActiveFrame: ::std::os::raw::c_int,
+    pub StackLevel: ::std::os::raw::c_int,
+    pub QueryId: ImGuiID,
+    pub Results: ImVector_ImGuiStackLevelInfo,
+    pub CopyToClipboardOnCtrlC: bool,
+    pub CopyToClipboardLastTime: f32,
+}
+pub type ImGuiContextHookCallback = ::std::option::Option<
+    unsafe extern "C" fn(ctx: *mut ImGuiContext, hook: *mut ImGuiContextHook),
+>;
 pub const ImGuiContextHookType_NewFramePre: ImGuiContextHookType = 0;
 pub const ImGuiContextHookType_NewFramePost: ImGuiContextHookType = 1;
 pub const ImGuiContextHookType_EndFramePre: ImGuiContextHookType = 2;
@@ -2903,10 +3018,171 @@ pub struct ImGuiContextHook {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiInputEvent {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiInputEvent,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiWindowPtr {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut *mut ImGuiWindow,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiWindowStackData {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiWindowStackData,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiColorMod {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiColorMod,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiStyleMod {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiStyleMod,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiID {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiID,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiItemFlags {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiItemFlags,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiGroupData {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiGroupData,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiPopupData {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiPopupData,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiViewportPPtr {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut *mut ImGuiViewportP,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_unsigned_char {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ::std::os::raw::c_uchar,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiListClipperData {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiListClipperData,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiTableTempData {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiTableTempData,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiTable {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiTable,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImPool_ImGuiTable {
+    pub Buf: ImVector_ImGuiTable,
+    pub Map: ImGuiStorage,
+    pub FreeIdx: ImPoolIdx,
+    pub AliveCount: ImPoolIdx,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiTabBar {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiTabBar,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImPool_ImGuiTabBar {
+    pub Buf: ImVector_ImGuiTabBar,
+    pub Map: ImGuiStorage,
+    pub FreeIdx: ImPoolIdx,
+    pub AliveCount: ImPoolIdx,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiPtrOrIndex {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiPtrOrIndex,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiShrinkWidthItem {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiShrinkWidthItem,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiSettingsHandler {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiSettingsHandler,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImChunkStream_ImGuiWindowSettings {
+    pub Buf: ImVector_char,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImChunkStream_ImGuiTableSettings {
+    pub Buf: ImVector_char,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiContextHook {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiContextHook,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct ImGuiContext {
     pub Initialized: bool,
     pub FontAtlasOwnedByContext: bool,
     pub IO: ImGuiIO,
+    pub InputEventsQueue: ImVector_ImGuiInputEvent,
+    pub InputEventsTrail: ImVector_ImGuiInputEvent,
     pub Style: ImGuiStyle,
     pub Font: *mut ImFont,
     pub FontSize: f32,
@@ -2921,7 +3197,6 @@ pub struct ImGuiContext {
     pub WithinEndChild: bool,
     pub GcCompactAll: bool,
     pub TestEngineHookItems: bool,
-    pub TestEngineHookIdInfo: ImGuiID,
     pub TestEngine: *mut ::std::os::raw::c_void,
     pub Windows: ImVector_ImGuiWindowPtr,
     pub WindowsFocusOrder: ImVector_ImGuiWindowPtr,
@@ -2937,6 +3212,7 @@ pub struct ImGuiContext {
     pub WheelingWindow: *mut ImGuiWindow,
     pub WheelingWindowRefMousePos: [f32; 2],
     pub WheelingWindowTimer: f32,
+    pub DebugHookIdInfo: ImGuiID,
     pub HoveredId: ImGuiID,
     pub HoveredIdPreviousFrame: ImGuiID,
     pub HoveredIdAllowOverlap: bool,
@@ -2954,10 +3230,6 @@ pub struct ImGuiContext {
     pub ActiveIdHasBeenPressedBefore: bool,
     pub ActiveIdHasBeenEditedBefore: bool,
     pub ActiveIdHasBeenEditedThisFrame: bool,
-    pub ActiveIdUsingMouseWheel: bool,
-    pub ActiveIdUsingNavDirMask: ImU32,
-    pub ActiveIdUsingNavInputMask: ImU32,
-    pub ActiveIdUsingKeyInputMask: ImU64,
     pub ActiveIdClickOffset: [f32; 2],
     pub ActiveIdWindow: *mut ImGuiWindow,
     pub ActiveIdSource: ImGuiInputSource,
@@ -2968,6 +3240,10 @@ pub struct ImGuiContext {
     pub ActiveIdPreviousFrameWindow: *mut ImGuiWindow,
     pub LastActiveId: ImGuiID,
     pub LastActiveIdTimer: f32,
+    pub ActiveIdUsingMouseWheel: bool,
+    pub ActiveIdUsingNavDirMask: ImU32,
+    pub ActiveIdUsingNavInputMask: ImU32,
+    pub ActiveIdUsingKeyInputMask: ImBitArrayForNamedKeys,
     pub CurrentItemFlags: ImGuiItemFlags,
     pub NextItemData: ImGuiNextItemData,
     pub LastItemData: ImGuiLastItemData,
@@ -2980,6 +3256,7 @@ pub struct ImGuiContext {
     pub GroupStack: ImVector_ImGuiGroupData,
     pub OpenPopupStack: ImVector_ImGuiPopupData,
     pub BeginPopupStack: ImVector_ImGuiPopupData,
+    pub BeginMenuCount: ::std::os::raw::c_int,
     pub Viewports: ImVector_ImGuiViewportPPtr,
     pub NavWindow: *mut ImGuiWindow,
     pub NavId: ImGuiID,
@@ -2987,17 +3264,15 @@ pub struct ImGuiContext {
     pub NavActivateId: ImGuiID,
     pub NavActivateDownId: ImGuiID,
     pub NavActivatePressedId: ImGuiID,
-    pub NavInputId: ImGuiID,
-    pub NavJustTabbedId: ImGuiID,
+    pub NavActivateInputId: ImGuiID,
+    pub NavActivateFlags: ImGuiActivateFlags,
     pub NavJustMovedToId: ImGuiID,
     pub NavJustMovedToFocusScopeId: ImGuiID,
-    pub NavJustMovedToKeyMods: ImGuiKeyModFlags,
+    pub NavJustMovedToKeyMods: ImGuiModFlags,
     pub NavNextActivateId: ImGuiID,
+    pub NavNextActivateFlags: ImGuiActivateFlags,
     pub NavInputSource: ImGuiInputSource,
-    pub NavScoringRect: ImRect,
-    pub NavScoringCount: ::std::os::raw::c_int,
     pub NavLayer: ImGuiNavLayer,
-    pub NavIdTabCounter: ::std::os::raw::c_int,
     pub NavIdIsAlive: bool,
     pub NavMousePosDirty: bool,
     pub NavDisableHighlight: bool,
@@ -3007,31 +3282,30 @@ pub struct ImGuiContext {
     pub NavInitRequestFromMove: bool,
     pub NavInitResultId: ImGuiID,
     pub NavInitResultRectRel: ImRect,
-    pub NavMoveRequest: bool,
-    pub NavMoveRequestFlags: ImGuiNavMoveFlags,
-    pub NavMoveRequestForward: ImGuiNavForward,
-    pub NavMoveRequestKeyMods: ImGuiKeyModFlags,
+    pub NavMoveSubmitted: bool,
+    pub NavMoveScoringItems: bool,
+    pub NavMoveForwardToNextFrame: bool,
+    pub NavMoveFlags: ImGuiNavMoveFlags,
+    pub NavMoveScrollFlags: ImGuiScrollFlags,
+    pub NavMoveKeyMods: ImGuiModFlags,
     pub NavMoveDir: ImGuiDir,
-    pub NavMoveDirLast: ImGuiDir,
+    pub NavMoveDirForDebug: ImGuiDir,
     pub NavMoveClipDir: ImGuiDir,
+    pub NavScoringRect: ImRect,
+    pub NavScoringNoClipRect: ImRect,
+    pub NavScoringDebugCount: ::std::os::raw::c_int,
+    pub NavTabbingDir: ::std::os::raw::c_int,
+    pub NavTabbingCounter: ::std::os::raw::c_int,
     pub NavMoveResultLocal: ImGuiNavItemData,
-    pub NavMoveResultLocalVisibleSet: ImGuiNavItemData,
+    pub NavMoveResultLocalVisible: ImGuiNavItemData,
     pub NavMoveResultOther: ImGuiNavItemData,
-    pub NavWrapRequestWindow: *mut ImGuiWindow,
-    pub NavWrapRequestFlags: ImGuiNavMoveFlags,
+    pub NavTabbingResultFirst: ImGuiNavItemData,
     pub NavWindowingTarget: *mut ImGuiWindow,
     pub NavWindowingTargetAnim: *mut ImGuiWindow,
     pub NavWindowingListWindow: *mut ImGuiWindow,
     pub NavWindowingTimer: f32,
     pub NavWindowingHighlightAlpha: f32,
     pub NavWindowingToggleLayer: bool,
-    pub TabFocusRequestCurrWindow: *mut ImGuiWindow,
-    pub TabFocusRequestNextWindow: *mut ImGuiWindow,
-    pub TabFocusRequestCurrCounterRegular: ::std::os::raw::c_int,
-    pub TabFocusRequestCurrCounterTabStop: ::std::os::raw::c_int,
-    pub TabFocusRequestNextCounterRegular: ::std::os::raw::c_int,
-    pub TabFocusRequestNextCounterTabStop: ::std::os::raw::c_int,
-    pub TabFocusPressed: bool,
     pub DimBgRatio: f32,
     pub MouseCursor: ImGuiMouseCursor,
     pub DragDropActive: bool,
@@ -3051,39 +3325,43 @@ pub struct ImGuiContext {
     pub DragDropHoldJustPressedId: ImGuiID,
     pub DragDropPayloadBufHeap: ImVector_unsigned_char,
     pub DragDropPayloadBufLocal: [::std::os::raw::c_uchar; 16usize],
+    pub ClipperTempDataStacked: ::std::os::raw::c_int,
+    pub ClipperTempData: ImVector_ImGuiListClipperData,
     pub CurrentTable: *mut ImGuiTable,
-    pub CurrentTableStackIdx: ::std::os::raw::c_int,
+    pub TablesTempDataStacked: ::std::os::raw::c_int,
+    pub TablesTempData: ImVector_ImGuiTableTempData,
     pub Tables: ImPool_ImGuiTable,
-    pub TablesTempDataStack: ImVector_ImGuiTableTempData,
     pub TablesLastTimeActive: ImVector_float,
     pub DrawChannelsTempMergeBuffer: ImVector_ImDrawChannel,
     pub CurrentTabBar: *mut ImGuiTabBar,
     pub TabBars: ImPool_ImGuiTabBar,
     pub CurrentTabBarStack: ImVector_ImGuiPtrOrIndex,
     pub ShrinkWidthBuffer: ImVector_ImGuiShrinkWidthItem,
-    pub LastValidMousePos: [f32; 2],
+    pub MouseLastValidPos: [f32; 2],
     pub InputTextState: ImGuiInputTextState,
     pub InputTextPasswordFont: ImFont,
     pub TempInputId: ImGuiID,
     pub ColorEditOptions: ImGuiColorEditFlags,
     pub ColorEditLastHue: f32,
     pub ColorEditLastSat: f32,
-    pub ColorEditLastColor: [f32; 3usize],
+    pub ColorEditLastColor: ImU32,
     pub ColorPickerRef: [f32; 4],
     pub ComboPreviewData: ImGuiComboPreviewData,
+    pub SliderGrabClickOffset: f32,
     pub SliderCurrentAccum: f32,
     pub SliderCurrentAccumDirty: bool,
     pub DragCurrentAccumDirty: bool,
     pub DragCurrentAccum: f32,
     pub DragSpeedDefaultRatio: f32,
-    pub DisabledAlphaBackup: f32,
     pub ScrollbarClickDeltaToGrabCenter: f32,
-    pub TooltipOverrideCount: ::std::os::raw::c_int,
+    pub DisabledAlphaBackup: f32,
+    pub DisabledStackSize: ::std::os::raw::c_short,
+    pub TooltipOverrideCount: ::std::os::raw::c_short,
     pub TooltipSlowDelay: f32,
     pub ClipboardHandlerData: ImVector_char,
     pub MenusIdSubmittedThisFrame: ImVector_ImGuiID,
-    pub PlatformImePos: [f32; 2],
-    pub PlatformImeLastPos: [f32; 2],
+    pub PlatformImeData: ImGuiPlatformImeData,
+    pub PlatformImeDataPrev: ImGuiPlatformImeData,
     pub PlatformLocaleDecimalPoint: ::std::os::raw::c_char,
     pub SettingsLoaded: bool,
     pub SettingsDirtyTimer: f32,
@@ -3104,9 +3382,12 @@ pub struct ImGuiContext {
     pub LogDepthRef: ::std::os::raw::c_int,
     pub LogDepthToExpand: ::std::os::raw::c_int,
     pub LogDepthToExpandDefault: ::std::os::raw::c_int,
+    pub DebugLogFlags: ImGuiDebugLogFlags,
+    pub DebugLogBuf: ImGuiTextBuffer,
     pub DebugItemPickerActive: bool,
     pub DebugItemPickerBreakId: ImGuiID,
     pub DebugMetricsConfig: ImGuiMetricsConfig,
+    pub DebugStackTool: ImGuiStackTool,
     pub FramerateSecPerFrame: [f32; 120usize],
     pub FramerateSecPerFrameIdx: ::std::os::raw::c_int,
     pub FramerateSecPerFrameCount: ::std::os::raw::c_int,
@@ -3114,7 +3395,7 @@ pub struct ImGuiContext {
     pub WantCaptureMouseNextFrame: ::std::os::raw::c_int,
     pub WantCaptureKeyboardNextFrame: ::std::os::raw::c_int,
     pub WantTextInputNextFrame: ::std::os::raw::c_int,
-    pub TempBuffer: [::std::os::raw::c_char; 3073usize],
+    pub TempBuffer: ImVector_char,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -3128,9 +3409,11 @@ pub struct ImGuiWindowTempData {
     pub PrevLineSize: [f32; 2],
     pub CurrLineTextBaseOffset: f32,
     pub PrevLineTextBaseOffset: f32,
+    pub IsSameLine: bool,
     pub Indent: ImVec1,
     pub ColumnsOffset: ImVec1,
     pub GroupOffset: ImVec1,
+    pub CursorStartPosLossyness: [f32; 2],
     pub NavLayerCurrent: ImGuiNavLayer,
     pub NavLayersActiveMask: ::std::os::raw::c_short,
     pub NavLayersActiveMaskNext: ::std::os::raw::c_short,
@@ -3148,13 +3431,17 @@ pub struct ImGuiWindowTempData {
     pub CurrentTableIdx: ::std::os::raw::c_int,
     pub LayoutType: ImGuiLayoutType,
     pub ParentLayoutType: ImGuiLayoutType,
-    pub FocusCounterRegular: ::std::os::raw::c_int,
-    pub FocusCounterTabStop: ::std::os::raw::c_int,
     pub ItemWidth: f32,
     pub TextWrapPos: f32,
     pub ItemWidthStack: ImVector_float,
     pub TextWrapPosStack: ImVector_float,
-    pub StackSizesOnBegin: ImGuiStackSizes,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiOldColumns {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiOldColumns,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -3162,6 +3449,7 @@ pub struct ImGuiWindow {
     pub Name: *mut ::std::os::raw::c_char,
     pub ID: ImGuiID,
     pub Flags: ImGuiWindowFlags,
+    pub Viewport: *mut ImGuiViewportP,
     pub Pos: [f32; 2],
     pub Size: [f32; 2],
     pub SizeFull: [f32; 2],
@@ -3191,6 +3479,7 @@ pub struct ImGuiWindow {
     pub Appearing: bool,
     pub Hidden: bool,
     pub IsFallbackWindow: bool,
+    pub IsExplicitChild: bool,
     pub HasCloseButton: bool,
     pub ResizeBorderHeld: ::std::os::raw::c_schar,
     pub BeginCount: ::std::os::raw::c_short,
@@ -3232,7 +3521,9 @@ pub struct ImGuiWindow {
     pub DrawList: *mut ImDrawList,
     pub DrawListInst: ImDrawList,
     pub ParentWindow: *mut ImGuiWindow,
+    pub ParentWindowInBeginStack: *mut ImGuiWindow,
     pub RootWindow: *mut ImGuiWindow,
+    pub RootWindowPopupTree: *mut ImGuiWindow,
     pub RootWindowForTitleBarHighlight: *mut ImGuiWindow,
     pub RootWindowForNav: *mut ImGuiWindow,
     pub NavLastChildNavWindow: *mut ImGuiWindow,
@@ -3319,10 +3610,18 @@ pub struct ImGuiTabItem {
     pub Offset: f32,
     pub Width: f32,
     pub ContentWidth: f32,
+    pub RequestedWidth: f32,
     pub NameOffset: ImS32,
     pub BeginOrder: ImS16,
     pub IndexDuringLayout: ImS16,
     pub WantClose: bool,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiTabItem {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiTabItem,
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
@@ -3359,6 +3658,8 @@ pub struct ImGuiTabBar {
     pub BackupCursorPos: [f32; 2],
     pub TabsNames: ImGuiTextBuffer,
 }
+pub type ImGuiTableColumnIdx = ImS8;
+pub type ImGuiTableDrawChannelIdx = ImU8;
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
 pub struct ImGuiTableColumn {
@@ -3469,6 +3770,44 @@ pub struct ImGuiTableCellData {
 }
 #[repr(C)]
 #[derive(Debug, Copy, Clone)]
+pub struct ImGuiTableInstanceData {
+    pub LastOuterHeight: f32,
+    pub LastFirstRowHeight: f32,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImSpan_ImGuiTableColumn {
+    pub Data: *mut ImGuiTableColumn,
+    pub DataEnd: *mut ImGuiTableColumn,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImSpan_ImGuiTableColumnIdx {
+    pub Data: *mut ImGuiTableColumnIdx,
+    pub DataEnd: *mut ImGuiTableColumnIdx,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImSpan_ImGuiTableCellData {
+    pub Data: *mut ImGuiTableCellData,
+    pub DataEnd: *mut ImGuiTableCellData,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiTableInstanceData {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiTableInstanceData,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
+pub struct ImVector_ImGuiTableColumnSortSpecs {
+    pub Size: ::std::os::raw::c_int,
+    pub Capacity: ::std::os::raw::c_int,
+    pub Data: *mut ImGuiTableColumnSortSpecs,
+}
+#[repr(C)]
+#[derive(Debug, Copy, Clone)]
 pub struct ImGuiTable {
     pub ID: ImGuiID,
     pub Flags: ImGuiTableFlags,
@@ -3509,11 +3848,10 @@ pub struct ImGuiTable {
     pub CellPaddingY: f32,
     pub CellSpacingX1: f32,
     pub CellSpacingX2: f32,
-    pub LastOuterHeight: f32,
-    pub LastFirstRowHeight: f32,
     pub InnerWidth: f32,
     pub ColumnsGivenWidth: f32,
     pub ColumnsAutoFitWidth: f32,
+    pub ColumnsStretchSumWeights: f32,
     pub ResizedColumnNextWidth: f32,
     pub ResizeLockMinContentsX2: f32,
     pub RefScale: f32,
@@ -3530,6 +3868,8 @@ pub struct ImGuiTable {
     pub InnerWindow: *mut ImGuiWindow,
     pub ColumnsNames: ImGuiTextBuffer,
     pub DrawSplitter: *mut ImDrawListSplitter,
+    pub InstanceDataFirst: ImGuiTableInstanceData,
+    pub InstanceDataExtra: ImVector_ImGuiTableInstanceData,
     pub SortSpecsSingle: ImGuiTableColumnSortSpecs,
     pub SortSpecsMulti: ImVector_ImGuiTableColumnSortSpecs,
     pub SortSpecs: ImGuiTableSortSpecs,
@@ -3723,13 +4063,13 @@ extern "C" {
     pub fn ImVec2_ImVec2_Float(_x: f32, _y: f32) -> *mut ImVec2;
 }
 extern "C" {
-    pub fn ImVec4_ImVec4_Nil() -> *mut ImVec4;
+    pub fn ImVec4_ImVec4_Nil() -> *mut [f32; 4];
 }
 extern "C" {
     pub fn ImVec4_destroy(self_: *mut [f32; 4]);
 }
 extern "C" {
-    pub fn ImVec4_ImVec4_Float(_x: f32, _y: f32, _z: f32, _w: f32) -> *mut ImVec4;
+    pub fn ImVec4_ImVec4_Float(_x: f32, _y: f32, _z: f32, _w: f32) -> *mut [f32; 4];
 }
 extern "C" {
     pub fn igCreateContext(shared_font_atlas: *mut ImFontAtlas) -> *mut ImGuiContext;
@@ -3766,6 +4106,12 @@ extern "C" {
 }
 extern "C" {
     pub fn igShowMetricsWindow(p_open: *mut bool);
+}
+extern "C" {
+    pub fn igShowDebugLogWindow(p_open: *mut bool);
+}
+extern "C" {
+    pub fn igShowStackToolWindow(p_open: *mut bool);
 }
 extern "C" {
     pub fn igShowAboutWindow(p_open: *mut bool);
@@ -3918,9 +4264,6 @@ extern "C" {
 }
 extern "C" {
     pub fn igGetWindowContentRegionMax(pOut: *mut [f32; 2]);
-}
-extern "C" {
-    pub fn igGetWindowContentRegionWidth() -> f32;
 }
 extern "C" {
     pub fn igGetScrollX() -> f32;
@@ -5303,6 +5646,12 @@ extern "C" {
     pub fn igGetMainViewport() -> *mut ImGuiViewport;
 }
 extern "C" {
+    pub fn igGetBackgroundDrawList_Nil() -> *mut ImDrawList;
+}
+extern "C" {
+    pub fn igGetForegroundDrawList_Nil() -> *mut ImDrawList;
+}
+extern "C" {
     pub fn igIsRectVisible_Nil(size: [f32; 2]) -> bool;
 }
 extern "C" {
@@ -5315,12 +5664,6 @@ extern "C" {
     pub fn igGetFrameCount() -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub fn igGetBackgroundDrawList_Nil() -> *mut ImDrawList;
-}
-extern "C" {
-    pub fn igGetForegroundDrawList_Nil() -> *mut ImDrawList;
-}
-extern "C" {
     pub fn igGetDrawListSharedData() -> *mut ImDrawListSharedData;
 }
 extern "C" {
@@ -5331,14 +5674,6 @@ extern "C" {
 }
 extern "C" {
     pub fn igGetStateStorage() -> *mut ImGuiStorage;
-}
-extern "C" {
-    pub fn igCalcListClipping(
-        items_count: ::std::os::raw::c_int,
-        items_height: f32,
-        out_items_display_start: *mut ::std::os::raw::c_int,
-        out_items_display_end: *mut ::std::os::raw::c_int,
-    );
 }
 extern "C" {
     pub fn igBeginChildFrame(id: ImGuiID, size: [f32; 2], flags: ImGuiWindowFlags) -> bool;
@@ -5382,26 +5717,26 @@ extern "C" {
     );
 }
 extern "C" {
-    pub fn igGetKeyIndex(imgui_key: ImGuiKey) -> ::std::os::raw::c_int;
+    pub fn igIsKeyDown(key: ImGuiKey) -> bool;
 }
 extern "C" {
-    pub fn igIsKeyDown(user_key_index: ::std::os::raw::c_int) -> bool;
+    pub fn igIsKeyPressed(key: ImGuiKey, repeat: bool) -> bool;
 }
 extern "C" {
-    pub fn igIsKeyPressed(user_key_index: ::std::os::raw::c_int, repeat: bool) -> bool;
-}
-extern "C" {
-    pub fn igIsKeyReleased(user_key_index: ::std::os::raw::c_int) -> bool;
+    pub fn igIsKeyReleased(key: ImGuiKey) -> bool;
 }
 extern "C" {
     pub fn igGetKeyPressedAmount(
-        key_index: ::std::os::raw::c_int,
+        key: ImGuiKey,
         repeat_delay: f32,
         rate: f32,
     ) -> ::std::os::raw::c_int;
 }
 extern "C" {
-    pub fn igCaptureKeyboardFromApp(want_capture_keyboard_value: bool);
+    pub fn igGetKeyName(key: ImGuiKey) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    pub fn igSetNextFrameWantCaptureKeyboard(want_capture_keyboard: bool);
 }
 extern "C" {
     pub fn igIsMouseDown(button: ImGuiMouseButton) -> bool;
@@ -5414,6 +5749,9 @@ extern "C" {
 }
 extern "C" {
     pub fn igIsMouseDoubleClicked(button: ImGuiMouseButton) -> bool;
+}
+extern "C" {
+    pub fn igGetMouseClickedCount(button: ImGuiMouseButton) -> ::std::os::raw::c_int;
 }
 extern "C" {
     pub fn igIsMouseHoveringRect(r_min: [f32; 2], r_max: [f32; 2], clip: bool) -> bool;
@@ -5446,7 +5784,7 @@ extern "C" {
     pub fn igSetMouseCursor(cursor_type: ImGuiMouseCursor);
 }
 extern "C" {
-    pub fn igCaptureMouseFromApp(want_capture_mouse_value: bool);
+    pub fn igSetNextFrameWantCaptureMouse(want_capture_mouse: bool);
 }
 extern "C" {
     pub fn igGetClipboardText() -> *const ::std::os::raw::c_char;
@@ -5465,6 +5803,9 @@ extern "C" {
 }
 extern "C" {
     pub fn igSaveIniSettingsToMemory(out_ini_size: *mut size_t) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    pub fn igDebugTextEncoding(text: *const ::std::os::raw::c_char);
 }
 extern "C" {
     pub fn igDebugCheckVersionAndDataLayout(
@@ -5507,6 +5848,28 @@ extern "C" {
     pub fn ImGuiStyle_ScaleAllSizes(self_: *mut ImGuiStyle, scale_factor: f32);
 }
 extern "C" {
+    pub fn ImGuiIO_AddKeyEvent(self_: *mut ImGuiIO, key: ImGuiKey, down: bool);
+}
+extern "C" {
+    pub fn ImGuiIO_AddKeyAnalogEvent(self_: *mut ImGuiIO, key: ImGuiKey, down: bool, v: f32);
+}
+extern "C" {
+    pub fn ImGuiIO_AddMousePosEvent(self_: *mut ImGuiIO, x: f32, y: f32);
+}
+extern "C" {
+    pub fn ImGuiIO_AddMouseButtonEvent(
+        self_: *mut ImGuiIO,
+        button: ::std::os::raw::c_int,
+        down: bool,
+    );
+}
+extern "C" {
+    pub fn ImGuiIO_AddMouseWheelEvent(self_: *mut ImGuiIO, wh_x: f32, wh_y: f32);
+}
+extern "C" {
+    pub fn ImGuiIO_AddFocusEvent(self_: *mut ImGuiIO, focused: bool);
+}
+extern "C" {
     pub fn ImGuiIO_AddInputCharacter(self_: *mut ImGuiIO, c: ::std::os::raw::c_uint);
 }
 extern "C" {
@@ -5516,10 +5879,22 @@ extern "C" {
     pub fn ImGuiIO_AddInputCharactersUTF8(self_: *mut ImGuiIO, str_: *const ::std::os::raw::c_char);
 }
 extern "C" {
+    pub fn ImGuiIO_SetKeyEventNativeData(
+        self_: *mut ImGuiIO,
+        key: ImGuiKey,
+        native_keycode: ::std::os::raw::c_int,
+        native_scancode: ::std::os::raw::c_int,
+        native_legacy_index: ::std::os::raw::c_int,
+    );
+}
+extern "C" {
+    pub fn ImGuiIO_SetAppAcceptingEvents(self_: *mut ImGuiIO, accepting_events: bool);
+}
+extern "C" {
     pub fn ImGuiIO_ClearInputCharacters(self_: *mut ImGuiIO);
 }
 extern "C" {
-    pub fn ImGuiIO_AddFocusEvent(self_: *mut ImGuiIO, focused: bool);
+    pub fn ImGuiIO_ClearInputKeys(self_: *mut ImGuiIO);
 }
 extern "C" {
     pub fn ImGuiIO_ImGuiIO() -> *mut ImGuiIO;
@@ -5803,10 +6178,23 @@ extern "C" {
     pub fn ImGuiListClipper_Step(self_: *mut ImGuiListClipper) -> bool;
 }
 extern "C" {
+    pub fn ImGuiListClipper_ForceDisplayRangeByIndices(
+        self_: *mut ImGuiListClipper,
+        item_min: ::std::os::raw::c_int,
+        item_max: ::std::os::raw::c_int,
+    );
+}
+extern "C" {
     pub fn ImColor_ImColor_Nil() -> *mut ImColor;
 }
 extern "C" {
     pub fn ImColor_destroy(self_: *mut ImColor);
+}
+extern "C" {
+    pub fn ImColor_ImColor_Float(r: f32, g: f32, b: f32, a: f32) -> *mut ImColor;
+}
+extern "C" {
+    pub fn ImColor_ImColor_Vec4(col: [f32; 4]) -> *mut ImColor;
 }
 extern "C" {
     pub fn ImColor_ImColor_Int(
@@ -5818,12 +6206,6 @@ extern "C" {
 }
 extern "C" {
     pub fn ImColor_ImColor_U32(rgba: ImU32) -> *mut ImColor;
-}
-extern "C" {
-    pub fn ImColor_ImColor_Float(r: f32, g: f32, b: f32, a: f32) -> *mut ImColor;
-}
-extern "C" {
-    pub fn ImColor_ImColor_Vec4(col: [f32; 4]) -> *mut ImColor;
 }
 extern "C" {
     pub fn ImColor_SetHSV(self_: *mut ImColor, h: f32, s: f32, v: f32, a: f32);
@@ -6654,6 +7036,15 @@ extern "C" {
     pub fn ImGuiViewport_GetWorkCenter(pOut: *mut [f32; 2], self_: *mut ImGuiViewport);
 }
 extern "C" {
+    pub fn ImGuiPlatformImeData_ImGuiPlatformImeData() -> *mut ImGuiPlatformImeData;
+}
+extern "C" {
+    pub fn ImGuiPlatformImeData_destroy(self_: *mut ImGuiPlatformImeData);
+}
+extern "C" {
+    pub fn igGetKeyIndex(key: ImGuiKey) -> ::std::os::raw::c_int;
+}
+extern "C" {
     pub fn igImHashData(
         data: *const ::std::os::raw::c_void,
         data_size: size_t,
@@ -6666,6 +7057,19 @@ extern "C" {
         data_size: size_t,
         seed: ImU32,
     ) -> ImGuiID;
+}
+extern "C" {
+    pub fn igImQsort(
+        base: *mut ::std::os::raw::c_void,
+        count: size_t,
+        size_of_element: size_t,
+        compare_func: ::std::option::Option<
+            unsafe extern "C" fn(
+                arg1: *const ::std::os::raw::c_void,
+                arg2: *const ::std::os::raw::c_void,
+            ) -> ::std::os::raw::c_int,
+        >,
+    );
 }
 extern "C" {
     pub fn igImAlphaBlendColors(col_a: ImU32, col_b: ImU32) -> ImU32;
@@ -6743,6 +7147,12 @@ extern "C" {
     pub fn igImStrSkipBlank(str_: *const ::std::os::raw::c_char) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
+    pub fn igImCharIsBlankA(c: ::std::os::raw::c_char) -> bool;
+}
+extern "C" {
+    pub fn igImCharIsBlankW(c: ::std::os::raw::c_uint) -> bool;
+}
+extern "C" {
     pub fn igImFormatString(
         buf: *mut ::std::os::raw::c_char,
         buf_size: size_t,
@@ -6757,6 +7167,22 @@ extern "C" {
         fmt: *const ::std::os::raw::c_char,
         args: va_list,
     ) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn igImFormatStringToTempBuffer(
+        out_buf: *mut *const ::std::os::raw::c_char,
+        out_buf_end: *mut *const ::std::os::raw::c_char,
+        fmt: *const ::std::os::raw::c_char,
+        ...
+    );
+}
+extern "C" {
+    pub fn igImFormatStringToTempBufferV(
+        out_buf: *mut *const ::std::os::raw::c_char,
+        out_buf_end: *mut *const ::std::os::raw::c_char,
+        fmt: *const ::std::os::raw::c_char,
+        args: va_list,
+    );
 }
 extern "C" {
     pub fn igImParseFormatFindStart(
@@ -6776,16 +7202,24 @@ extern "C" {
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
+    pub fn igImParseFormatSanitizeForPrinting(
+        fmt_in: *const ::std::os::raw::c_char,
+        fmt_out: *mut ::std::os::raw::c_char,
+        fmt_out_size: size_t,
+    );
+}
+extern "C" {
+    pub fn igImParseFormatSanitizeForScanning(
+        fmt_in: *const ::std::os::raw::c_char,
+        fmt_out: *mut ::std::os::raw::c_char,
+        fmt_out_size: size_t,
+    ) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
     pub fn igImParseFormatPrecision(
         format: *const ::std::os::raw::c_char,
         default_value: ::std::os::raw::c_int,
     ) -> ::std::os::raw::c_int;
-}
-extern "C" {
-    pub fn igImCharIsBlankA(c: ::std::os::raw::c_char) -> bool;
-}
-extern "C" {
-    pub fn igImCharIsBlankW(c: ::std::os::raw::c_uint) -> bool;
 }
 extern "C" {
     pub fn igImTextCharToUtf8(
@@ -6938,10 +7372,13 @@ extern "C" {
     pub fn igImFloor_Float(f: f32) -> f32;
 }
 extern "C" {
-    pub fn igImFloorSigned(f: f32) -> f32;
+    pub fn igImFloorSigned_Float(f: f32) -> f32;
 }
 extern "C" {
     pub fn igImFloor_Vec2(pOut: *mut [f32; 2], v: [f32; 2]);
+}
+extern "C" {
+    pub fn igImFloorSigned_Vec2(pOut: *mut [f32; 2], v: [f32; 2]);
 }
 extern "C" {
     pub fn igImModPositive(
@@ -6960,6 +7397,9 @@ extern "C" {
 }
 extern "C" {
     pub fn igImMul(pOut: *mut [f32; 2], lhs: [f32; 2], rhs: [f32; 2]);
+}
+extern "C" {
+    pub fn igImIsFloatAboveGuaranteedIntegerPrecision(f: f32) -> bool;
 }
 extern "C" {
     pub fn igImBezierCubicCalc(
@@ -7301,15 +7741,6 @@ extern "C" {
     pub fn ImGuiPopupData_destroy(self_: *mut ImGuiPopupData);
 }
 extern "C" {
-    pub fn ImGuiNavItemData_ImGuiNavItemData() -> *mut ImGuiNavItemData;
-}
-extern "C" {
-    pub fn ImGuiNavItemData_destroy(self_: *mut ImGuiNavItemData);
-}
-extern "C" {
-    pub fn ImGuiNavItemData_Clear(self_: *mut ImGuiNavItemData);
-}
-extern "C" {
     pub fn ImGuiNextWindowData_ImGuiNextWindowData() -> *mut ImGuiNextWindowData;
 }
 extern "C" {
@@ -7334,6 +7765,18 @@ extern "C" {
     pub fn ImGuiLastItemData_destroy(self_: *mut ImGuiLastItemData);
 }
 extern "C" {
+    pub fn ImGuiStackSizes_ImGuiStackSizes() -> *mut ImGuiStackSizes;
+}
+extern "C" {
+    pub fn ImGuiStackSizes_destroy(self_: *mut ImGuiStackSizes);
+}
+extern "C" {
+    pub fn ImGuiStackSizes_SetToCurrentState(self_: *mut ImGuiStackSizes);
+}
+extern "C" {
+    pub fn ImGuiStackSizes_CompareWithCurrentState(self_: *mut ImGuiStackSizes);
+}
+extern "C" {
     pub fn ImGuiPtrOrIndex_ImGuiPtrOrIndex_Ptr(
         ptr: *mut ::std::os::raw::c_void,
     ) -> *mut ImGuiPtrOrIndex;
@@ -7345,6 +7788,47 @@ extern "C" {
     pub fn ImGuiPtrOrIndex_ImGuiPtrOrIndex_Int(
         index: ::std::os::raw::c_int,
     ) -> *mut ImGuiPtrOrIndex;
+}
+extern "C" {
+    pub fn ImGuiInputEvent_ImGuiInputEvent() -> *mut ImGuiInputEvent;
+}
+extern "C" {
+    pub fn ImGuiInputEvent_destroy(self_: *mut ImGuiInputEvent);
+}
+extern "C" {
+    pub fn ImGuiListClipperRange_FromIndices(
+        min: ::std::os::raw::c_int,
+        max: ::std::os::raw::c_int,
+    ) -> ImGuiListClipperRange;
+}
+extern "C" {
+    pub fn ImGuiListClipperRange_FromPositions(
+        y1: f32,
+        y2: f32,
+        off_min: ::std::os::raw::c_int,
+        off_max: ::std::os::raw::c_int,
+    ) -> ImGuiListClipperRange;
+}
+extern "C" {
+    pub fn ImGuiListClipperData_ImGuiListClipperData() -> *mut ImGuiListClipperData;
+}
+extern "C" {
+    pub fn ImGuiListClipperData_destroy(self_: *mut ImGuiListClipperData);
+}
+extern "C" {
+    pub fn ImGuiListClipperData_Reset(
+        self_: *mut ImGuiListClipperData,
+        clipper: *mut ImGuiListClipper,
+    );
+}
+extern "C" {
+    pub fn ImGuiNavItemData_ImGuiNavItemData() -> *mut ImGuiNavItemData;
+}
+extern "C" {
+    pub fn ImGuiNavItemData_destroy(self_: *mut ImGuiNavItemData);
+}
+extern "C" {
+    pub fn ImGuiNavItemData_Clear(self_: *mut ImGuiNavItemData);
 }
 extern "C" {
     pub fn ImGuiOldColumnData_ImGuiOldColumnData() -> *mut ImGuiOldColumnData;
@@ -7415,16 +7899,16 @@ extern "C" {
     pub fn ImGuiMetricsConfig_destroy(self_: *mut ImGuiMetricsConfig);
 }
 extern "C" {
-    pub fn ImGuiStackSizes_ImGuiStackSizes() -> *mut ImGuiStackSizes;
+    pub fn ImGuiStackLevelInfo_ImGuiStackLevelInfo() -> *mut ImGuiStackLevelInfo;
 }
 extern "C" {
-    pub fn ImGuiStackSizes_destroy(self_: *mut ImGuiStackSizes);
+    pub fn ImGuiStackLevelInfo_destroy(self_: *mut ImGuiStackLevelInfo);
 }
 extern "C" {
-    pub fn ImGuiStackSizes_SetToCurrentState(self_: *mut ImGuiStackSizes);
+    pub fn ImGuiStackTool_ImGuiStackTool() -> *mut ImGuiStackTool;
 }
 extern "C" {
-    pub fn ImGuiStackSizes_CompareWithCurrentState(self_: *mut ImGuiStackSizes);
+    pub fn ImGuiStackTool_destroy(self_: *mut ImGuiStackTool);
 }
 extern "C" {
     pub fn ImGuiContextHook_ImGuiContextHook() -> *mut ImGuiContextHook;
@@ -7462,25 +7946,6 @@ extern "C" {
 }
 extern "C" {
     pub fn ImGuiWindow_GetID_Int(self_: *mut ImGuiWindow, n: ::std::os::raw::c_int) -> ImGuiID;
-}
-extern "C" {
-    pub fn ImGuiWindow_GetIDNoKeepAlive_Str(
-        self_: *mut ImGuiWindow,
-        str_: *const ::std::os::raw::c_char,
-        str_end: *const ::std::os::raw::c_char,
-    ) -> ImGuiID;
-}
-extern "C" {
-    pub fn ImGuiWindow_GetIDNoKeepAlive_Ptr(
-        self_: *mut ImGuiWindow,
-        ptr: *const ::std::os::raw::c_void,
-    ) -> ImGuiID;
-}
-extern "C" {
-    pub fn ImGuiWindow_GetIDNoKeepAlive_Int(
-        self_: *mut ImGuiWindow,
-        n: ::std::os::raw::c_int,
-    ) -> ImGuiID;
 }
 extern "C" {
     pub fn ImGuiWindow_GetIDFromRectangle(self_: *mut ImGuiWindow, r_abs: ImRect) -> ImGuiID;
@@ -7534,6 +7999,12 @@ extern "C" {
     pub fn ImGuiTableColumn_destroy(self_: *mut ImGuiTableColumn);
 }
 extern "C" {
+    pub fn ImGuiTableInstanceData_ImGuiTableInstanceData() -> *mut ImGuiTableInstanceData;
+}
+extern "C" {
+    pub fn ImGuiTableInstanceData_destroy(self_: *mut ImGuiTableInstanceData);
+}
+extern "C" {
     pub fn ImGuiTable_ImGuiTable() -> *mut ImGuiTable;
 }
 extern "C" {
@@ -7585,7 +8056,17 @@ extern "C" {
     pub fn igCalcWindowNextAutoFitSize(pOut: *mut [f32; 2], window: *mut ImGuiWindow);
 }
 extern "C" {
-    pub fn igIsWindowChildOf(window: *mut ImGuiWindow, potential_parent: *mut ImGuiWindow) -> bool;
+    pub fn igIsWindowChildOf(
+        window: *mut ImGuiWindow,
+        potential_parent: *mut ImGuiWindow,
+        popup_hierarchy: bool,
+    ) -> bool;
+}
+extern "C" {
+    pub fn igIsWindowWithinBeginStackOf(
+        window: *mut ImGuiWindow,
+        potential_parent: *mut ImGuiWindow,
+    ) -> bool;
 }
 extern "C" {
     pub fn igIsWindowAbove(
@@ -7613,6 +8094,12 @@ extern "C" {
     pub fn igSetWindowHitTestHole(window: *mut ImGuiWindow, pos: [f32; 2], size: [f32; 2]);
 }
 extern "C" {
+    pub fn igWindowRectAbsToRel(pOut: *mut ImRect, window: *mut ImGuiWindow, r: ImRect);
+}
+extern "C" {
+    pub fn igWindowRectRelToAbs(pOut: *mut ImRect, window: *mut ImGuiWindow, r: ImRect);
+}
+extern "C" {
     pub fn igFocusWindow(window: *mut ImGuiWindow);
 }
 extern "C" {
@@ -7631,6 +8118,17 @@ extern "C" {
     pub fn igBringWindowToDisplayBack(window: *mut ImGuiWindow);
 }
 extern "C" {
+    pub fn igBringWindowToDisplayBehind(window: *mut ImGuiWindow, above_window: *mut ImGuiWindow);
+}
+extern "C" {
+    pub fn igFindWindowDisplayIndex(window: *mut ImGuiWindow) -> ::std::os::raw::c_int;
+}
+extern "C" {
+    pub fn igFindBottomMostVisibleWindowWithinBeginStack(
+        window: *mut ImGuiWindow,
+    ) -> *mut ImGuiWindow;
+}
+extern "C" {
     pub fn igSetCurrentFont(font: *mut ImFont);
 }
 extern "C" {
@@ -7646,10 +8144,13 @@ extern "C" {
     pub fn igGetForegroundDrawList_ViewportPtr(viewport: *mut ImGuiViewport) -> *mut ImDrawList;
 }
 extern "C" {
-    pub fn igInitialize(context: *mut ImGuiContext);
+    pub fn igInitialize();
 }
 extern "C" {
-    pub fn igShutdown(context: *mut ImGuiContext);
+    pub fn igShutdown();
+}
+extern "C" {
+    pub fn igUpdateInputEvents(trickle_fast_inputs: bool);
 }
 extern "C" {
     pub fn igUpdateHoveredWindowAndCaptureFlags();
@@ -7673,6 +8174,9 @@ extern "C" {
     pub fn igCallContextHooks(context: *mut ImGuiContext, type_: ImGuiContextHookType);
 }
 extern "C" {
+    pub fn igSetWindowViewport(window: *mut ImGuiWindow, viewport: *mut ImGuiViewportP);
+}
+extern "C" {
     pub fn igMarkIniSettingsDirty_Nil();
 }
 extern "C" {
@@ -7693,6 +8197,12 @@ extern "C" {
     pub fn igFindOrCreateWindowSettings(
         name: *const ::std::os::raw::c_char,
     ) -> *mut ImGuiWindowSettings;
+}
+extern "C" {
+    pub fn igAddSettingsHandler(handler: *const ImGuiSettingsHandler);
+}
+extern "C" {
+    pub fn igRemoveSettingsHandler(type_name: *const ::std::os::raw::c_char);
 }
 extern "C" {
     pub fn igFindSettingsHandler(
@@ -7723,11 +8233,21 @@ extern "C" {
     );
 }
 extern "C" {
-    pub fn igScrollToBringRectIntoView(
+    pub fn igScrollToItem(flags: ImGuiScrollFlags);
+}
+extern "C" {
+    pub fn igScrollToRect(window: *mut ImGuiWindow, rect: ImRect, flags: ImGuiScrollFlags);
+}
+extern "C" {
+    pub fn igScrollToRectEx(
         pOut: *mut [f32; 2],
         window: *mut ImGuiWindow,
-        item_rect: ImRect,
+        rect: ImRect,
+        flags: ImGuiScrollFlags,
     );
+}
+extern "C" {
+    pub fn igScrollToBringRectIntoView(window: *mut ImGuiWindow, rect: ImRect);
 }
 extern "C" {
     pub fn igGetItemID() -> ImGuiID;
@@ -7786,17 +8306,22 @@ extern "C" {
         bb: ImRect,
         id: ImGuiID,
         nav_bb: *const ImRect,
-        flags: ImGuiItemAddFlags,
+        extra_flags: ImGuiItemFlags,
     ) -> bool;
 }
 extern "C" {
     pub fn igItemHoverable(bb: ImRect, id: ImGuiID) -> bool;
 }
 extern "C" {
-    pub fn igItemFocusable(window: *mut ImGuiWindow, id: ImGuiID);
+    pub fn igIsClippedEx(bb: ImRect, id: ImGuiID) -> bool;
 }
 extern "C" {
-    pub fn igIsClippedEx(bb: ImRect, id: ImGuiID, clip_even_when_logged: bool) -> bool;
+    pub fn igSetLastItemData(
+        item_id: ImGuiID,
+        in_flags: ImGuiItemFlags,
+        status_flags: ImGuiItemStatusFlags,
+        item_rect: ImRect,
+    );
 }
 extern "C" {
     pub fn igCalcItemSize(pOut: *mut [f32; 2], size: [f32; 2], default_w: f32, default_h: f32);
@@ -7870,19 +8395,25 @@ extern "C" {
     );
 }
 extern "C" {
+    pub fn igClosePopupsExceptModals();
+}
+extern "C" {
     pub fn igIsPopupOpen_ID(id: ImGuiID, popup_flags: ImGuiPopupFlags) -> bool;
 }
 extern "C" {
     pub fn igBeginPopupEx(id: ImGuiID, extra_flags: ImGuiWindowFlags) -> bool;
 }
 extern "C" {
-    pub fn igBeginTooltipEx(extra_flags: ImGuiWindowFlags, tooltip_flags: ImGuiTooltipFlags);
+    pub fn igBeginTooltipEx(tooltip_flags: ImGuiTooltipFlags, extra_window_flags: ImGuiWindowFlags);
 }
 extern "C" {
     pub fn igGetPopupAllowedExtentRect(pOut: *mut ImRect, window: *mut ImGuiWindow);
 }
 extern "C" {
     pub fn igGetTopMostPopupModal() -> *mut ImGuiWindow;
+}
+extern "C" {
+    pub fn igGetTopMostAndVisiblePopupModal() -> *mut ImGuiWindow;
 }
 extern "C" {
     pub fn igFindBestWindowPosForPopup(pOut: *mut [f32; 2], window: *mut ImGuiWindow);
@@ -7908,6 +8439,13 @@ extern "C" {
     ) -> bool;
 }
 extern "C" {
+    pub fn igBeginMenuEx(
+        label: *const ::std::os::raw::c_char,
+        icon: *const ::std::os::raw::c_char,
+        enabled: bool,
+    ) -> bool;
+}
+extern "C" {
     pub fn igMenuItemEx(
         label: *const ::std::os::raw::c_char,
         icon: *const ::std::os::raw::c_char,
@@ -7929,30 +8467,50 @@ extern "C" {
     pub fn igNavInitWindow(window: *mut ImGuiWindow, force_reinit: bool);
 }
 extern "C" {
+    pub fn igNavInitRequestApplyResult();
+}
+extern "C" {
     pub fn igNavMoveRequestButNoResultYet() -> bool;
 }
 extern "C" {
-    pub fn igNavMoveRequestCancel();
+    pub fn igNavMoveRequestSubmit(
+        move_dir: ImGuiDir,
+        clip_dir: ImGuiDir,
+        move_flags: ImGuiNavMoveFlags,
+        scroll_flags: ImGuiScrollFlags,
+    );
 }
 extern "C" {
     pub fn igNavMoveRequestForward(
         move_dir: ImGuiDir,
         clip_dir: ImGuiDir,
-        bb_rel: ImRect,
         move_flags: ImGuiNavMoveFlags,
+        scroll_flags: ImGuiScrollFlags,
     );
+}
+extern "C" {
+    pub fn igNavMoveRequestResolveWithLastItem(result: *mut ImGuiNavItemData);
+}
+extern "C" {
+    pub fn igNavMoveRequestCancel();
+}
+extern "C" {
+    pub fn igNavMoveRequestApplyResult();
 }
 extern "C" {
     pub fn igNavMoveRequestTryWrapping(window: *mut ImGuiWindow, move_flags: ImGuiNavMoveFlags);
 }
 extern "C" {
-    pub fn igGetNavInputAmount(n: ImGuiNavInput, mode: ImGuiInputReadMode) -> f32;
+    pub fn igGetNavInputName(n: ImGuiNavInput) -> *const ::std::os::raw::c_char;
+}
+extern "C" {
+    pub fn igGetNavInputAmount(n: ImGuiNavInput, mode: ImGuiNavReadMode) -> f32;
 }
 extern "C" {
     pub fn igGetNavInputAmount2d(
         pOut: *mut [f32; 2],
         dir_sources: ImGuiNavDirSourceFlags,
-        mode: ImGuiInputReadMode,
+        mode: ImGuiNavReadMode,
         slow_factor: f32,
         fast_factor: f32,
     );
@@ -7967,6 +8525,9 @@ extern "C" {
 }
 extern "C" {
     pub fn igActivateItem(id: ImGuiID);
+}
+extern "C" {
+    pub fn igSetNavWindow(window: *mut ImGuiWindow);
 }
 extern "C" {
     pub fn igSetNavID(
@@ -7989,6 +8550,18 @@ extern "C" {
     pub fn igGetFocusScope() -> ImGuiID;
 }
 extern "C" {
+    pub fn igIsNamedKey(key: ImGuiKey) -> bool;
+}
+extern "C" {
+    pub fn igIsLegacyKey(key: ImGuiKey) -> bool;
+}
+extern "C" {
+    pub fn igIsGamepadKey(key: ImGuiKey) -> bool;
+}
+extern "C" {
+    pub fn igGetKeyData(key: ImGuiKey) -> *mut ImGuiKeyData;
+}
+extern "C" {
     pub fn igSetItemUsingMouseWheel();
 }
 extern "C" {
@@ -8004,19 +8577,25 @@ extern "C" {
     pub fn igIsActiveIdUsingKey(key: ImGuiKey) -> bool;
 }
 extern "C" {
-    pub fn igIsMouseDragPastThreshold(button: ImGuiMouseButton, lock_threshold: f32) -> bool;
+    pub fn igSetActiveIdUsingKey(key: ImGuiKey);
 }
 extern "C" {
-    pub fn igIsKeyPressedMap(key: ImGuiKey, repeat: bool) -> bool;
+    pub fn igIsMouseDragPastThreshold(button: ImGuiMouseButton, lock_threshold: f32) -> bool;
 }
 extern "C" {
     pub fn igIsNavInputDown(n: ImGuiNavInput) -> bool;
 }
 extern "C" {
-    pub fn igIsNavInputTest(n: ImGuiNavInput, rm: ImGuiInputReadMode) -> bool;
+    pub fn igIsNavInputTest(n: ImGuiNavInput, rm: ImGuiNavReadMode) -> bool;
 }
 extern "C" {
-    pub fn igGetMergedKeyModFlags() -> ImGuiKeyModFlags;
+    pub fn igGetMergedModFlags() -> ImGuiModFlags;
+}
+extern "C" {
+    pub fn igIsKeyPressedMap(key: ImGuiKey, repeat: bool) -> bool;
+}
+extern "C" {
+    pub fn igIsDragDropActive() -> bool;
 }
 extern "C" {
     pub fn igBeginDragDropTargetCustom(bb: ImRect, id: ImGuiID) -> bool;
@@ -8133,6 +8712,12 @@ extern "C" {
     pub fn igTableMergeDrawChannels(table: *mut ImGuiTable);
 }
 extern "C" {
+    pub fn igTableGetInstanceData(
+        table: *mut ImGuiTable,
+        instance_no: ::std::os::raw::c_int,
+    ) -> *mut ImGuiTableInstanceData;
+}
+extern "C" {
     pub fn igTableSortSpecsSanitize(table: *mut ImGuiTable);
 }
 extern "C" {
@@ -8216,7 +8801,7 @@ extern "C" {
     pub fn igTableGetBoundSettings(table: *mut ImGuiTable) -> *mut ImGuiTableSettings;
 }
 extern "C" {
-    pub fn igTableSettingsInstallHandler(context: *mut ImGuiContext);
+    pub fn igTableSettingsAddSettingsHandler();
 }
 extern "C" {
     pub fn igTableSettingsCreate(
@@ -8378,6 +8963,16 @@ extern "C" {
     ) -> *const ::std::os::raw::c_char;
 }
 extern "C" {
+    pub fn igRenderMouseCursor(
+        pos: [f32; 2],
+        scale: f32,
+        mouse_cursor: ImGuiMouseCursor,
+        col_fill: ImU32,
+        col_border: ImU32,
+        col_shadow: ImU32,
+    );
+}
+extern "C" {
     pub fn igRenderArrow(
         draw_list: *mut ImDrawList,
         pos: [f32; 2],
@@ -8391,17 +8986,6 @@ extern "C" {
 }
 extern "C" {
     pub fn igRenderCheckMark(draw_list: *mut ImDrawList, pos: [f32; 2], col: ImU32, sz: f32);
-}
-extern "C" {
-    pub fn igRenderMouseCursor(
-        draw_list: *mut ImDrawList,
-        pos: [f32; 2],
-        scale: f32,
-        mouse_cursor: ImGuiMouseCursor,
-        col_fill: ImU32,
-        col_border: ImU32,
-        col_shadow: ImU32,
-    );
 }
 extern "C" {
     pub fn igRenderArrowPointingAt(
@@ -8467,9 +9051,9 @@ extern "C" {
         bb: ImRect,
         id: ImGuiID,
         axis: ImGuiAxis,
-        p_scroll_v: *mut f32,
-        avail_v: f32,
-        contents_v: f32,
+        p_scroll_v: *mut ImS64,
+        avail_v: ImS64,
+        contents_v: ImS64,
         flags: ImDrawFlags,
     ) -> bool;
 }
@@ -8598,9 +9182,8 @@ extern "C" {
     );
 }
 extern "C" {
-    pub fn igDataTypeApplyOpFromText(
+    pub fn igDataTypeApplyFromText(
         buf: *const ::std::os::raw::c_char,
-        initial_value_buf: *const ::std::os::raw::c_char,
         data_type: ImGuiDataType,
         p_data: *mut ::std::os::raw::c_void,
         format: *const ::std::os::raw::c_char,
@@ -8726,7 +9309,19 @@ extern "C" {
     pub fn igGcAwakeTransientWindowBuffers(window: *mut ImGuiWindow);
 }
 extern "C" {
+    pub fn igDebugLog(fmt: *const ::std::os::raw::c_char, ...);
+}
+extern "C" {
+    pub fn igDebugLogV(fmt: *const ::std::os::raw::c_char, args: va_list);
+}
+extern "C" {
     pub fn igErrorCheckEndFrameRecover(
+        log_callback: ImGuiErrorLogCallback,
+        user_data: *mut ::std::os::raw::c_void,
+    );
+}
+extern "C" {
+    pub fn igErrorCheckEndWindowRecover(
         log_callback: ImGuiErrorLogCallback,
         user_data: *mut ::std::os::raw::c_void,
     );
@@ -8739,6 +9334,14 @@ extern "C" {
 }
 extern "C" {
     pub fn igShowFontAtlas(atlas: *mut ImFontAtlas);
+}
+extern "C" {
+    pub fn igDebugHookIdInfo(
+        id: ImGuiID,
+        data_type: ImGuiDataType,
+        data_id: *const ::std::os::raw::c_void,
+        data_id_end: *const ::std::os::raw::c_void,
+    );
 }
 extern "C" {
     pub fn igDebugNodeColumns(columns: *mut ImGuiOldColumns);
@@ -8763,6 +9366,9 @@ extern "C" {
     pub fn igDebugNodeFont(font: *mut ImFont);
 }
 extern "C" {
+    pub fn igDebugNodeFontGlyph(font: *mut ImFont, glyph: *const ImFontGlyph);
+}
+extern "C" {
     pub fn igDebugNodeStorage(storage: *mut ImGuiStorage, label: *const ::std::os::raw::c_char);
 }
 extern "C" {
@@ -8775,6 +9381,9 @@ extern "C" {
     pub fn igDebugNodeTableSettings(settings: *mut ImGuiTableSettings);
 }
 extern "C" {
+    pub fn igDebugNodeInputTextState(state: *mut ImGuiInputTextState);
+}
+extern "C" {
     pub fn igDebugNodeWindow(window: *mut ImGuiWindow, label: *const ::std::os::raw::c_char);
 }
 extern "C" {
@@ -8784,6 +9393,13 @@ extern "C" {
     pub fn igDebugNodeWindowsList(
         windows: *mut ImVector_ImGuiWindowPtr,
         label: *const ::std::os::raw::c_char,
+    );
+}
+extern "C" {
+    pub fn igDebugNodeWindowsListByBeginStackParent(
+        windows: *mut *mut ImGuiWindow,
+        windows_size: ::std::os::raw::c_int,
+        parent_in_begin_stack: *mut ImGuiWindow,
     );
 }
 extern "C" {
