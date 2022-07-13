@@ -45,7 +45,9 @@ impl Tab {
 			// refresh mod, probably wanna simply add tree entry and refresh viewer instead. TODO: this
 			*refresh = false;
 			drop(refresh);
-			self.load_mod(&self.selected_mod.clone(), self.curmod.as_ref().unwrap().path.clone());
+			let m = self.curmod.as_ref().unwrap();
+			File::create(m.path.join("datas.json")).unwrap().write_all(crate::serialize_json(json!(*m.datas.lock().unwrap())).as_bytes()).unwrap();
+			self.load_mod(&self.selected_mod.clone(), m.path.clone());
 		} else {
 			drop(refresh);
 		}
@@ -53,12 +55,25 @@ impl Tab {
 		aeth::divider("explorer_div", false)
 		.left(100.0, || {
 			aeth::child("trees", [0.0, -(aeth::frame_height() + imgui::get_style().item_spacing.y()) * if self.curmod.is_some() {2.0} else {1.0}], false, imgui::WindowFlags::None, || {
-				if let Some(m) = self.curmod.as_mut() && let Some(path) = m.tree.draw() {
-					self.open_file_mod(path);
-					log!("load");
+				if let Some(m) = self.curmod.as_mut() {
+					aeth::popup("modfilecontext", imgui::WindowFlags::None, || {
+						if imgui::button("Remove", [0.0, 0.0]) {
+							m.datas.lock().unwrap().penumbra.update_file(&m.opt, &m.subopt, &self.path, None);
+							*self.refresh_mod.lock().unwrap() = true;
+							imgui::close_current_popup();
+						}
+					});
+					
+					if let Some((button, path)) = m.tree.draw() {
+						if matches!(button, imgui::MouseButton::Right) {
+							imgui::open_popup("modfilecontext", imgui::PopupFlags::MouseButtonRight);
+						} else {
+							self.open_file_mod(path);
+						}
+					}
 				}
 				
-				if let Some(path) = self.gametree.draw() {
+				if let Some((_button, path)) = self.gametree.draw() {
 					self.open_file(path);
 				}
 			});
@@ -274,22 +289,22 @@ impl Tab {
 					id: None,
 					paths: vec![format!("files/{}", &hash)],
 				}]);
-				let mut datas = datas.lock().unwrap();
-				if opt == "" { // No option
-					datas.penumbra.files.entry(gamepath)
-						.and_modify(|p| *p = file.clone())
-						.or_insert(file);
-				} else {
-					// if !datas.penumbra.options.iter().any(|o| o.name() == &opt) {}
-					match datas.penumbra.options.iter_mut().find(|o| o.name() == &opt).unwrap() {
-						ConfOption::Single(v) | ConfOption::Multi(v) => {
-							v.options.iter_mut().find(|o| &o.name == &subopt).unwrap().files.entry(gamepath)
-								.and_modify(|p| *p = file.clone())
-								.or_insert(file);
-						}
-						_ => {},
-					}
-				}
+				datas.lock().unwrap().penumbra.update_file(&opt, &subopt, &gamepath, Some(file));
+				// if opt == "" { // No option
+				// 	datas.penumbra.files.entry(gamepath)
+				// 		.and_modify(|p| *p = file.clone())
+				// 		.or_insert(file);
+				// } else {
+				// 	// if !datas.penumbra.options.iter().any(|o| o.name() == &opt) {}
+				// 	match datas.penumbra.options.iter_mut().find(|o| o.name() == &opt).unwrap() {
+				// 		ConfOption::Single(v) | ConfOption::Multi(v) => {
+				// 			v.options.iter_mut().find(|o| &o.name == &subopt).unwrap().files.entry(gamepath)
+				// 				.and_modify(|p| *p = file.clone())
+				// 				.or_insert(file);
+				// 		}
+				// 		_ => {},
+				// 	}
+				// }
 				File::create(modpath.join("datas.json")).unwrap().write_all(crate::serialize_json(json!(*datas)).as_bytes()).unwrap();
 				*refresh_mod.lock().unwrap() = true;
 			}

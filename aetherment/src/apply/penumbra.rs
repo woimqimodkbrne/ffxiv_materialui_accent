@@ -11,6 +11,29 @@ pub struct Config {
 	pub manipulations: Vec<u32>, // TODO: check if this is actually u32
 }
 
+impl Config {
+	pub fn update_file<S>(&mut self, opt: &str, subopt: &str, path: S, file: Option<PenumbraFile>) where
+	S: Into<String> {
+		let files = if opt == "" { // No option
+			&mut self.files
+		} else {
+			match self.options.iter_mut().find(|o| o.name() == opt).unwrap() {
+				ConfOption::Single(v) | ConfOption::Multi(v) => {
+					&mut v.options.iter_mut().find(|o| o.name == subopt).unwrap().files
+				}
+				_ => return,
+			}
+		};
+		
+		match file {
+			Some(file) => {files.entry(path.into())
+				.and_modify(|p| *p = file.clone())
+				.or_insert(file);},
+			None => {files.remove(&path.into());},
+		}
+	}
+}
+
 #[derive(Deserialize, Serialize)]
 #[serde(tag = "type")]
 #[serde(rename_all = "lowercase")]

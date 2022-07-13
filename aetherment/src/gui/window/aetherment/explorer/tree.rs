@@ -82,16 +82,16 @@ impl Tree {
 		Ok(tree)
 	}
 	
-	pub fn draw(&mut self) -> Option<String> {
+	pub fn draw(&mut self) -> Option<(imgui::MouseButton, String)> {
 		let mut r = None;
-		if let Some(id) = self.draw_node(0) {
-			r = Some(self.node_path(id));
+		if let Some((button, id)) = self.draw_node(0) {
+			r = Some((button, self.node_path(id)));
 			self.selected = id;
 		}
 		r
 	}
 	
-	fn draw_node(&self, nodeid: usize) -> Option<usize> {
+	fn draw_node(&self, nodeid: usize) -> Option<(imgui::MouseButton, usize)> {
 		let mut r = None;
 		let node = self.nodes.get(nodeid).unwrap();
 		if node.is_folder {
@@ -108,7 +108,9 @@ impl Tree {
 				if node.is_enabled {imgui::SelectableFlags::None} else {imgui::SelectableFlags::Disabled},
 				[0.0, 0.0]
 			) {
-				r = Some(nodeid)
+				r = Some((imgui::MouseButton::Left, nodeid))
+			} else if imgui::is_item_clicked(imgui::MouseButton::Right) {
+				r = Some((imgui::MouseButton::Right, nodeid))
 			}
 		}
 		

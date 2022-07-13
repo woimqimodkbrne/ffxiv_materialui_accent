@@ -193,6 +193,8 @@ impl Viewer for Tex {
 			draw.add_image(TEXTURE.lock().unwrap().resource(), preview_pos, preview_pos.add([w, h]), [0.0, 0.0], [1.0, 1.0], 0xFFFFFFFF);
 		}).right(175.0, || {
 			let header = &self.tex.as_ref().unwrap().header;
+			imgui::text(&format!("{:?}", header.format));
+			
 			let mut changed = false;
 			if !matches!(header.format, Format::A8) || !matches!(header.format, Format::L8) {
 				changed |= imgui::checkbox("R", &mut self.r);

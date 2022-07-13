@@ -17,7 +17,7 @@ pub struct Pixel {
 #[binrw]
 #[brw(little, repr = u32)]
 #[repr(u32)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug)]
 pub enum Format {
 	Unknown = 0x0,
 	
