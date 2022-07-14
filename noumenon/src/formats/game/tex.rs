@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use std::{io::{Cursor, Read, Seek, Write, SeekFrom}, borrow::Cow};
+use std::{io::{Cursor, Read, Seek, Write, SeekFrom, BufReader}, borrow::Cow};
 use binrw::{BinRead, BinReaderExt, BinWrite, binrw};
 use image::{codecs::png::PngEncoder, ImageEncoder, ColorType};
 use ironworks::file::File;
@@ -209,7 +209,7 @@ impl Dds for Tex {
 				height,
 				depths,
 				mip_levels,
-				lod_offsets: [0u32, 1u32, 2u32],
+				lod_offsets: [0, 1, 2],
 				mip_offsets,
 			}
 		}
@@ -245,10 +245,27 @@ impl Dds for Tex {
 }
 
 impl Png for Tex {
-	fn read<T>(_reader: &mut T) -> Self where T: Read + Seek {
-		// let png = PngDecoder::new(reader).unwrap();
-		// let data = Vec::with_capacity(png.total_bytes())
-		todo!();
+	fn read<T>(reader: &mut T) -> Self where T: Read + Seek {
+		let img = image::io::Reader::with_format(BufReader::new(reader), image::ImageFormat::Png)
+			.decode()
+			.unwrap();
+		
+		Tex {
+			header: Header {
+				flags: 0x00800000,
+				format: Format::Argb8,
+				width: img.width() as u16,
+				height: img.height() as u16,
+				depths: 0,
+				mip_levels: 1,
+				lod_offsets: [0, 1, 2],
+				mip_offsets: [80, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+			},
+			data: img.into_rgba8()
+				.chunks_exact(4)
+				.flat_map(|p| [p[2], p[1], p[0], p[3]])
+				.collect::<Vec<u8>>(),
+		}
 	}
 	
 	fn write<T>(&self, writer: &mut T) where T: Write + Seek {
