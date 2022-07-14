@@ -1,4 +1,3 @@
-use crate::gui::imgui;
 use super::F2;
 
 pub struct Divider<'a> {

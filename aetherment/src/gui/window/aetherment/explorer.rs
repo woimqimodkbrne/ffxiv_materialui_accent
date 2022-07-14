@@ -1,5 +1,5 @@
 use std::{fs::File, path::PathBuf, collections::HashMap, sync::{Arc, Mutex}, io::{Write, Cursor}};
-use crate::{gui::{imgui, aeth::{self, F2}}, GAME, apply::{self, penumbra::{ConfOption, ConfSetting, PenumbraFile, FileLayer}}};
+use crate::{gui::aeth::{self, F2}, GAME, apply::{self, penumbra::{ConfOption, ConfSetting, PenumbraFile, FileLayer}}};
 
 mod tree;
 mod viewer;
@@ -36,7 +36,9 @@ impl Tab {
 			
 			newopt: String::with_capacity(32),
 			
-			gametree: Tree::from_file("Game Files", state.binary_path.join("assets").join("paths")).unwrap(),
+			// TODO: thread it or smth, its super slow
+			// gametree: Tree::from_file("Game Files", state.binary_path.join("assets").join("paths")).unwrap(),
+			gametree: Tree::new("Game Files"),
 			viewer: None,
 			path: String::with_capacity(128),
 			valid_path: false,

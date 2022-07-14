@@ -1,5 +1,5 @@
 use std::{collections::BTreeMap, path::Path, fs::File, io::{BufReader, BufRead}, rc::Rc};
-use crate::gui::{imgui, aeth};
+use crate::gui::aeth;
 
 pub struct Tree {
 	selected: usize,

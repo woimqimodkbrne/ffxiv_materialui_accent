@@ -1,7 +1,7 @@
 // TODO: save the changes to layers
 
 use std::{collections::HashMap,  path::PathBuf, io::Write};
-use crate::{apply::penumbra::{ConfSetting, Config, PenumbraFile}, GAME, gui::imgui};
+use crate::{apply::penumbra::{ConfSetting, Config, PenumbraFile}, GAME};
 use super::Viewer;
 
 pub struct Generic {

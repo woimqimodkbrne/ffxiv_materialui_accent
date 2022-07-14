@@ -2,4 +2,21 @@
 members = [
 	"aetherment",
 	"noumenon",
+	"imgui",
 ]
+
+[profile.release]
+opt-level = 3
+lto = true
+
+[profile.dev_r]
+inherits = "dev"
+
+[profile.dev_r.package.aetherment]
+opt-level = 0
+debug = true
+strip = false
+incremental = true
+
+[profile.dev_r.package."*"]
+opt-level = 3

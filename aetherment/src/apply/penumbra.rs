@@ -1,7 +1,6 @@
 use std::{io::Cursor, collections::HashMap};
 use noumenon::formats::game::tex::Tex;
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
-use crate::gui::imgui;
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {

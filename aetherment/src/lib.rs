@@ -9,6 +9,8 @@ use ironworks::{Ironworks, sqpack::SqPack, ffxiv};
 use serde::Serialize;
 use reqwest::blocking as req;
 
+extern crate imgui;
+
 // ---------------------------------------- //
 
 pub fn serialize_json(json: serde_json::Value) -> String {
@@ -55,7 +57,6 @@ pub mod server;
 pub mod config;
 pub mod apply;
 pub mod gui {
-	pub mod imgui;
 	pub mod aeth;
 	pub mod window {
 		pub mod aetherment;
@@ -73,7 +74,7 @@ struct State {
 pub struct Data {
 	binary_path: PathBuf,
 	#[allow(dead_code)] config_path: PathBuf,
-	fa5: &'static mut gui::imgui::sys::ImFont,
+	fa5: &'static mut imgui::sys::ImFont,
 	
 	config: config::Config,
 }
@@ -89,7 +90,7 @@ struct Initializers<'a> {
 	drop_texture: fn(usize),
 	pin_texture: fn(usize) -> *mut u8,
 	unpin_texture: fn(usize),
-	fa5: *mut gui::imgui::sys::ImFont
+	fa5: *mut imgui::sys::ImFont
 }
 
 #[no_mangle]
@@ -134,7 +135,7 @@ extern fn destroy(state: *mut State) {
 }
 
 #[no_mangle]
-extern fn update_resources(state: *mut State, fa5: *mut gui::imgui::sys::ImFont) {
+extern fn update_resources(state: *mut State, fa5: *mut imgui::sys::ImFont) {
 	let state = unsafe{&mut *state};
 	
 	state.data.fa5 = unsafe{&mut *fa5};
@@ -143,8 +144,6 @@ extern fn update_resources(state: *mut State, fa5: *mut gui::imgui::sys::ImFont)
 #[no_mangle]
 extern fn draw(state: *mut State) {
 	let state = unsafe{&mut *state};
-	
-	use gui::imgui;
 	
 	if state.win_aetherment.visible {
 		imgui::set_next_window_size([1100.0, 600.0], imgui::Cond::FirstUseEver);

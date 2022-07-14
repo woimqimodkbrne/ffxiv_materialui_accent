@@ -1,4 +1,3 @@
-use crate::gui::imgui;
 use super::F2 as _;
 
 pub struct TabBar<'a> {

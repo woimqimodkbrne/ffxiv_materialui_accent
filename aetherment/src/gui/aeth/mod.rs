@@ -47,8 +47,6 @@ impl F2 for [f32; 2] {
 	}
 }
 
-use super::imgui;
-
 pub fn frame_height() -> f32 {
 	imgui::get_style().frame_padding[1] * 2.0 + imgui::get_font_size()
 }

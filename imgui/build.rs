@@ -2,7 +2,7 @@ use std::{collections::{HashMap, HashSet}, fs::File, io::Write};
 use regex::Regex;
 
 fn main() {
-	println!("cargo:rustc-link-search=./aetherment/lib");
+	println!("cargo:rustc-link-search=./imgui/lib");
 	println!("cargo:rustc-link-lib=cimgui");
 	// println!("cargo:rerun-if-changed=build.rs");
 	// println!("cargo:rerun-if-changed=./lib/cimgui.lib");

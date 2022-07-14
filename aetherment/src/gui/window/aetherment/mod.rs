@@ -1,4 +1,4 @@
-use crate::{gui::{imgui, aeth}};
+use crate::gui::aeth;
 
 mod settings;
 mod manager;

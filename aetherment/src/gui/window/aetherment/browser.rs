@@ -1,5 +1,5 @@
 use std::{sync::{Arc, Mutex, RwLock}, thread, time::Instant, collections::HashMap, io::Cursor};
-use crate::{gui::{imgui, aeth::{F2 as _, self}}, server::Mod, CLIENT, SERVER};
+use crate::{gui::aeth::{F2 as _, self}, server::Mod, CLIENT, SERVER};
 
 pub struct Tab {
 	fetching: Arc<Mutex<bool>>,

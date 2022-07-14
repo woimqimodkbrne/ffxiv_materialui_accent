@@ -2,7 +2,7 @@
 
 use std::{fs::File, io::{Seek, Read, Cursor}, collections::HashMap, sync::Mutex, path::PathBuf};
 use noumenon::formats::{game::tex::{self, Format}, external::{dds::Dds, png::Png}};
-use crate::{gui::{imgui, aeth::{self, F2}}, GAME, apply::penumbra::{resolve_layer, ConfSetting, Layer as PLayer, Config, PenumbraFile}};
+use crate::{gui::aeth::{self, F2}, GAME, apply::penumbra::{resolve_layer, ConfSetting, Layer as PLayer, Config, PenumbraFile}};
 use super::Viewer;
 
 pub struct Tex {

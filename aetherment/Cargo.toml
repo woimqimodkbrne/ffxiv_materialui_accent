@@ -20,13 +20,7 @@ crate-type = ["cdylib"]
 # 	"Win32_Graphics_Dxgi_Common",
 # ]
 
-[build-dependencies]
-bindgen = "0.60.1"
-regex = "1.5.6"
-lazy_static = "1.4.0"
-
 [dependencies]
-bitflags = "1.3.2"
 anyhow = "1.0.57"
 rayon = "1.5.3"
 walkdir = "2.3.2"
@@ -39,5 +33,6 @@ serde_json = "1.0"
 lazy_static = "1.4.0"
 image = "0.24.2"
 reqwest = {version = "0.11.10", features = ["blocking", "json", "multipart"]}
+imgui = {path = "../imgui"}
 noumenon = {path = "../noumenon"}
 ironworks = {git = "https://github.com/ackwell/ironworks", rev = "bd787883d324f3a150bce5f1ab348d86e770e23e", features = ["ffxiv", "sqpack"]}
