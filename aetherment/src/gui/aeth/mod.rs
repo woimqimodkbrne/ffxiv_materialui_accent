@@ -60,3 +60,21 @@ pub fn width_left() -> f32 {
 pub fn offset(xy: [f32; 2]) {
 	imgui::set_cursor_pos(imgui::get_cursor_pos().add(xy));
 }
+
+pub fn next_max_width() {
+	imgui::set_next_item_width(imgui::get_column_width(-1));
+}
+
+pub fn button_icon(icon: &str, font: &mut imgui::sys::ImFont) -> bool {
+	imgui::push_font(font);
+	// push_style_var causes a crash and cba figuring out why
+	let prev = imgui::get_style().frame_padding[0];
+	imgui::get_style().frame_padding[0] = 0.0;
+	// imgui::push_style_var2(imgui::StyleVar::FramePadding, [0.0, 0.0]);
+	let r = imgui::button(icon, [frame_height(); 2]);
+	// imgui::pop_style_var(1);
+	imgui::get_style().frame_padding[0] = prev;
+	imgui::pop_font();
+	
+	r
+}

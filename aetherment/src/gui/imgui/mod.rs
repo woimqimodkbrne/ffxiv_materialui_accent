@@ -10,7 +10,7 @@ use std::ffi::CString;
 pub mod sys;
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Col {
 	Text = 0,
 	TextDisabled = 1,
@@ -69,7 +69,7 @@ pub enum Col {
 }
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Cond {
 	None = 0,
 	Always = 1,
@@ -79,7 +79,7 @@ pub enum Cond {
 }
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum DataType {
 	Float = 8,
 	Double = 9,
@@ -87,7 +87,7 @@ pub enum DataType {
 }
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Dir {
 	Left = 0,
 	Right = 1,
@@ -97,35 +97,109 @@ pub enum Dir {
 }
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Key {
-	Tab = 0,
-	LeftArrow = 1,
-	RightArrow = 2,
-	UpArrow = 3,
-	DownArrow = 4,
-	PageUp = 5,
-	PageDown = 6,
-	Home = 7,
-	End = 8,
-	Insert = 9,
-	Delete = 10,
-	Backspace = 11,
-	Space = 12,
-	Enter = 13,
-	Escape = 14,
-	KeyPadEnter = 15,
-	A = 16,
-	C = 17,
-	V = 18,
-	X = 19,
-	Y = 20,
-	Z = 21,
-	COUNT = 22,
+	None = 0,
+	Tab = 512,
+	LeftArrow = 513,
+	RightArrow = 514,
+	UpArrow = 515,
+	DownArrow = 516,
+	PageUp = 517,
+	PageDown = 518,
+	Home = 519,
+	End = 520,
+	Insert = 521,
+	Delete = 522,
+	Backspace = 523,
+	Space = 524,
+	Enter = 525,
+	Escape = 526,
+	LeftCtrl = 527,
+	LeftShift = 528,
+	LeftAlt = 529,
+	LeftSuper = 530,
+	RightCtrl = 531,
+	RightShift = 532,
+	RightAlt = 533,
+	RightSuper = 534,
+	Menu = 535,
+	A = 546,
+	B = 547,
+	C = 548,
+	D = 549,
+	E = 550,
+	F = 551,
+	G = 552,
+	H = 553,
+	I = 554,
+	J = 555,
+	K = 556,
+	L = 557,
+	M = 558,
+	N = 559,
+	O = 560,
+	P = 561,
+	Q = 562,
+	R = 563,
+	S = 564,
+	T = 565,
+	U = 566,
+	V = 567,
+	W = 568,
+	X = 569,
+	Y = 570,
+	Z = 571,
+	Apostrophe = 584,
+	Comma = 585,
+	Minus = 586,
+	Period = 587,
+	Slash = 588,
+	Semicolon = 589,
+	Equal = 590,
+	LeftBracket = 591,
+	Backslash = 592,
+	RightBracket = 593,
+	GraveAccent = 594,
+	CapsLock = 595,
+	ScrollLock = 596,
+	NumLock = 597,
+	PrintScreen = 598,
+	Pause = 599,
+	KeypadDecimal = 610,
+	KeypadDivide = 611,
+	KeypadMultiply = 612,
+	KeypadSubtract = 613,
+	KeypadAdd = 614,
+	KeypadEnter = 615,
+	KeypadEqual = 616,
+	GamepadStart = 617,
+	GamepadBack = 618,
+	GamepadFaceUp = 619,
+	GamepadFaceDown = 620,
+	GamepadFaceLeft = 621,
+	GamepadFaceRight = 622,
+	GamepadDpadUp = 623,
+	GamepadDpadDown = 624,
+	GamepadDpadLeft = 625,
+	GamepadDpadRight = 626,
+	GamepadLStickUp = 633,
+	GamepadLStickDown = 634,
+	GamepadLStickLeft = 635,
+	GamepadLStickRight = 636,
+	GamepadRStickUp = 637,
+	GamepadRStickDown = 638,
+	GamepadRStickLeft = 639,
+	GamepadRStickRight = 640,
+	ModCtrl = 641,
+	ModShift = 642,
+	ModAlt = 643,
+	ModSuper = 644,
+	COUNT = 645,
 }
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum NavInput {
 	Activate = 0,
 	Cancel = 1,
@@ -147,7 +221,7 @@ pub enum NavInput {
 }
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum MouseButton {
 	Left = 0,
 	Right = 1,
@@ -156,7 +230,7 @@ pub enum MouseButton {
 }
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum MouseCursor {
 	Arrow = 0,
 	TextInput = 1,
@@ -171,7 +245,7 @@ pub enum MouseCursor {
 }
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum SortDirection {
 	None = 0,
 	Ascending = 1,
@@ -179,7 +253,7 @@ pub enum SortDirection {
 }
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum StyleVar {
 	Alpha = 0,
 	DisabledAlpha = 1,
@@ -210,66 +284,56 @@ pub enum StyleVar {
 }
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum TableBgTarget {
 	None = 0,
 	CellBg = 3,
 }
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum DrawFlags {
-	None = 0,
-	Closed = 1,
-	RoundCornersTopLeft = 16,
-	RoundCornersTopRight = 32,
-	RoundCornersBottomLeft = 64,
-	RoundCornersBottomRight = 128,
-	RoundCornersNone = 256,
-	RoundCornersTop = 48,
-	RoundCornersBottom = 192,
-	RoundCornersLeft = 80,
-	RoundCornersRight = 160,
-	RoundCornersAll = 240,
-}
+bitflags::bitflags!{pub struct DrawFlags: i32 {
+	const None = 0;
+	const Closed = 1;
+	const RoundCornersTopLeft = 16;
+	const RoundCornersTopRight = 32;
+	const RoundCornersBottomLeft = 64;
+	const RoundCornersBottomRight = 128;
+	const RoundCornersNone = 256;
+	const RoundCornersTop = 48;
+	const RoundCornersBottom = 192;
+	const RoundCornersLeft = 80;
+	const RoundCornersRight = 160;
+	const RoundCornersAll = 240;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum DrawListFlags {
-	None = 0,
-	AntiAliasedLines = 1,
-	AntiAliasedLinesUseTex = 2,
-	AntiAliasedFill = 4,
-	AllowVtxOffset = 8,
-}
+bitflags::bitflags!{pub struct ListFlags: i32 {
+	const None = 0;
+	const AntiAliasedLines = 1;
+	const AntiAliasedLinesUseTex = 2;
+	const AntiAliasedFill = 4;
+	const AllowVtxOffset = 8;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum ImFontAtlasFlags {
-	None = 0,
-	NoPowerOfTwoHeight = 1,
-	NoMouseCursors = 2,
-	NoBakedLines = 4,
-}
+bitflags::bitflags!{pub struct AtlasFlags: i32 {
+	const None = 0;
+	const NoPowerOfTwoHeight = 1;
+	const NoMouseCursors = 2;
+	const NoBakedLines = 4;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum BackendFlags {
-	None = 0,
-	HasGamepad = 1,
-	HasMouseCursors = 2,
-	HasSetMousePos = 4,
-	RendererHasVtxOffset = 8,
-}
+bitflags::bitflags!{pub struct BackendFlags: i32 {
+	const None = 0;
+	const HasGamepad = 1;
+	const HasMouseCursors = 2;
+	const HasSetMousePos = 4;
+	const RendererHasVtxOffset = 8;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum ButtonFlags {
-	None = 0,
-	MouseButtonLeft = 1,
-	MouseButtonRight = 2,
-	MouseButtonMiddle = 4,
-}
+bitflags::bitflags!{pub struct ButtonFlags: i32 {
+	const None = 0;
+	const MouseButtonLeft = 1;
+	const MouseButtonRight = 2;
+	const MouseButtonMiddle = 4;
+}}
 
 bitflags::bitflags!{pub struct ColorEditFlags: i32 {
 	const None = 0;
@@ -297,171 +361,151 @@ bitflags::bitflags!{pub struct ColorEditFlags: i32 {
 	const InputHSV = 268435456;
 }}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum ConfigFlags {
-	None = 0,
-	NavEnableKeyboard = 1,
-	NavEnableGamepad = 2,
-	NavEnableSetMousePos = 4,
-	NavNoCaptureKeyboard = 8,
-	NoMouse = 16,
-	NoMouseCursorChange = 32,
-	IsSRGB = 1048576,
-	IsTouchScreen = 2097152,
-}
+bitflags::bitflags!{pub struct ConfigFlags: i32 {
+	const None = 0;
+	const NavEnableKeyboard = 1;
+	const NavEnableGamepad = 2;
+	const NavEnableSetMousePos = 4;
+	const NavNoCaptureKeyboard = 8;
+	const NoMouse = 16;
+	const NoMouseCursorChange = 32;
+	const IsSRGB = 1048576;
+	const IsTouchScreen = 2097152;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum ComboFlags {
-	None = 0,
-	PopupAlignLeft = 1,
-	HeightSmall = 2,
-	HeightRegular = 4,
-	HeightLarge = 8,
-	HeightLargest = 16,
-	NoArrowButton = 32,
-	NoPreview = 64,
-}
+bitflags::bitflags!{pub struct ComboFlags: i32 {
+	const None = 0;
+	const PopupAlignLeft = 1;
+	const HeightSmall = 2;
+	const HeightRegular = 4;
+	const HeightLarge = 8;
+	const HeightLargest = 16;
+	const NoArrowButton = 32;
+	const NoPreview = 64;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum DragDropFlags {
-	None = 0,
-	SourceNoPreviewTooltip = 1,
-	SourceNoDisableHover = 2,
-	SourceNoHoldToOpenOthers = 4,
-	SourceAllowNullID = 8,
-	SourceExtern = 16,
-	SourceAutoExpirePayload = 32,
-	AcceptBeforeDelivery = 1024,
-	AcceptNoDrawDefaultRect = 2048,
-	AcceptNoPreviewTooltip = 4096,
-	AcceptPeekOnly = 3072,
-}
+bitflags::bitflags!{pub struct DragDropFlags: i32 {
+	const None = 0;
+	const SourceNoPreviewTooltip = 1;
+	const SourceNoDisableHover = 2;
+	const SourceNoHoldToOpenOthers = 4;
+	const SourceAllowNullID = 8;
+	const SourceExtern = 16;
+	const SourceAutoExpirePayload = 32;
+	const AcceptBeforeDelivery = 1024;
+	const AcceptNoDrawDefaultRect = 2048;
+	const AcceptNoPreviewTooltip = 4096;
+	const AcceptPeekOnly = 3072;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum FocusedFlags {
-	None = 0,
-	ChildWindows = 1,
-	RootWindow = 2,
-	AnyWindow = 4,
-	RootAndChildWindows = 3,
-}
+bitflags::bitflags!{pub struct FocusedFlags: i32 {
+	const None = 0;
+	const ChildWindows = 1;
+	const RootWindow = 2;
+	const AnyWindow = 4;
+	const NoPopupHierarchy = 8;
+	const RootAndChildWindows = 3;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum HoveredFlags {
-	None = 0,
-	ChildWindows = 1,
-	RootWindow = 2,
-	AnyWindow = 4,
-	AllowWhenBlockedByPopup = 8,
-	AllowWhenBlockedByActiveItem = 32,
-	AllowWhenOverlapped = 64,
-	AllowWhenDisabled = 128,
-	RectOnly = 104,
-	RootAndChildWindows = 3,
-}
+bitflags::bitflags!{pub struct HoveredFlags: i32 {
+	const None = 0;
+	const ChildWindows = 1;
+	const RootWindow = 2;
+	const AnyWindow = 4;
+	const NoPopupHierarchy = 8;
+	const AllowWhenBlockedByPopup = 32;
+	const AllowWhenBlockedByActiveItem = 128;
+	const AllowWhenOverlapped = 256;
+	const AllowWhenDisabled = 512;
+	const NoNavOverride = 1024;
+	const RectOnly = 416;
+	const RootAndChildWindows = 3;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum InputTextFlags {
-	None = 0,
-	CharsDecimal = 1,
-	CharsHexadecimal = 2,
-	CharsUppercase = 4,
-	CharsNoBlank = 8,
-	AutoSelectAll = 16,
-	EnterReturnsTrue = 32,
-	CallbackCompletion = 64,
-	CallbackHistory = 128,
-	CallbackAlways = 256,
-	CallbackCharFilter = 512,
-	AllowTabInput = 1024,
-	CtrlEnterForNewLine = 2048,
-	NoHorizontalScroll = 4096,
-	AlwaysOverwrite = 8192,
-	ReadOnly = 16384,
-	Password = 32768,
-	NoUndoRedo = 65536,
-	CharsScientific = 131072,
-	CallbackResize = 262144,
-	CallbackEdit = 524288,
-}
+bitflags::bitflags!{pub struct InputTextFlags: i32 {
+	const None = 0;
+	const CharsDecimal = 1;
+	const CharsHexadecimal = 2;
+	const CharsUppercase = 4;
+	const CharsNoBlank = 8;
+	const AutoSelectAll = 16;
+	const EnterReturnsTrue = 32;
+	const CallbackCompletion = 64;
+	const CallbackHistory = 128;
+	const CallbackAlways = 256;
+	const CallbackCharFilter = 512;
+	const AllowTabInput = 1024;
+	const CtrlEnterForNewLine = 2048;
+	const NoHorizontalScroll = 4096;
+	const AlwaysOverwrite = 8192;
+	const ReadOnly = 16384;
+	const Password = 32768;
+	const NoUndoRedo = 65536;
+	const CharsScientific = 131072;
+	const CallbackResize = 262144;
+	const CallbackEdit = 524288;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum KeyModFlags {
-	None = 0,
-	Ctrl = 1,
-	Shift = 2,
-	Alt = 4,
-	Super = 8,
-}
+bitflags::bitflags!{pub struct ModFlags: i32 {
+	const None = 0;
+	const Ctrl = 1;
+	const Shift = 2;
+	const Alt = 4;
+	const Super = 8;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum PopupFlags {
-	MouseButtonLeft = 0,
-	MouseButtonRight = 1,
-	MouseButtonMiddle = 2,
-	NoOpenOverExistingPopup = 32,
-	NoOpenOverItems = 64,
-	AnyPopupId = 128,
-	AnyPopupLevel = 256,
-	AnyPopup = 384,
-}
+bitflags::bitflags!{pub struct PopupFlags: i32 {
+	const None = 0;
+	const MouseButtonLeft = 0;
+	const MouseButtonRight = 1;
+	const MouseButtonMiddle = 2;
+	const NoOpenOverExistingPopup = 32;
+	const NoOpenOverItems = 64;
+	const AnyPopupId = 128;
+	const AnyPopupLevel = 256;
+	const AnyPopup = 384;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum SelectableFlags {
-	None = 0,
-	DontClosePopups = 1,
-	SpanAllColumns = 2,
-	AllowDoubleClick = 4,
-	Disabled = 8,
-	AllowItemOverlap = 16,
-}
+bitflags::bitflags!{pub struct SelectableFlags: i32 {
+	const None = 0;
+	const DontClosePopups = 1;
+	const SpanAllColumns = 2;
+	const AllowDoubleClick = 4;
+	const Disabled = 8;
+	const AllowItemOverlap = 16;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum SliderFlags {
-	None = 0,
-	AlwaysClamp = 16,
-	Logarithmic = 32,
-	NoRoundToFormat = 64,
-	NoInput = 128,
-}
+bitflags::bitflags!{pub struct SliderFlags: i32 {
+	const None = 0;
+	const AlwaysClamp = 16;
+	const Logarithmic = 32;
+	const NoRoundToFormat = 64;
+	const NoInput = 128;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum TabBarFlags {
-	None = 0,
-	Reorderable = 1,
-	AutoSelectNewTabs = 2,
-	TabListPopupButton = 4,
-	NoCloseWithMiddleMouseButton = 8,
-	NoTabListScrollingButtons = 16,
-	NoTooltip = 32,
-	FittingPolicyResizeDown = 64,
-	FittingPolicyScroll = 128,
-}
+bitflags::bitflags!{pub struct TabBarFlags: i32 {
+	const None = 0;
+	const Reorderable = 1;
+	const AutoSelectNewTabs = 2;
+	const TabListPopupButton = 4;
+	const NoCloseWithMiddleMouseButton = 8;
+	const NoTabListScrollingButtons = 16;
+	const NoTooltip = 32;
+	const FittingPolicyResizeDown = 64;
+	const FittingPolicyScroll = 128;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum TabItemFlags {
-	None = 0,
-	UnsavedDocument = 1,
-	SetSelected = 2,
-	NoCloseWithMiddleMouseButton = 4,
-	NoPushId = 8,
-	NoTooltip = 16,
-	NoReorder = 32,
-	Leading = 64,
-	Trailing = 128,
-}
+bitflags::bitflags!{pub struct TabItemFlags: i32 {
+	const None = 0;
+	const UnsavedDocument = 1;
+	const SetSelected = 2;
+	const NoCloseWithMiddleMouseButton = 4;
+	const NoPushId = 8;
+	const NoTooltip = 16;
+	const NoReorder = 32;
+	const Leading = 64;
+	const Trailing = 128;
+}}
 
 bitflags::bitflags!{pub struct TableFlags: i32 {
 	const None = 0;
@@ -527,42 +571,36 @@ bitflags::bitflags!{pub struct TableColumnFlags: i32 {
 	const IsHovered = 134217728;
 }}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum TableRowFlags {
-	None = 0,
-	Headers = 1,
-}
+bitflags::bitflags!{pub struct TableRowFlags: i32 {
+	const None = 0;
+	const Headers = 1;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum TreeNodeFlags {
-	None = 0,
-	Selected = 1,
-	Framed = 2,
-	AllowItemOverlap = 4,
-	NoTreePushOnOpen = 8,
-	NoAutoOpenOnLog = 16,
-	DefaultOpen = 32,
-	OpenOnDoubleClick = 64,
-	OpenOnArrow = 128,
-	Leaf = 256,
-	Bullet = 512,
-	FramePadding = 1024,
-	SpanAvailWidth = 2048,
-	SpanFullWidth = 4096,
-	NavLeftJumpsBackHere = 8192,
-	CollapsingHeader = 26,
-}
+bitflags::bitflags!{pub struct TreeNodeFlags: i32 {
+	const None = 0;
+	const Selected = 1;
+	const Framed = 2;
+	const AllowItemOverlap = 4;
+	const NoTreePushOnOpen = 8;
+	const NoAutoOpenOnLog = 16;
+	const DefaultOpen = 32;
+	const OpenOnDoubleClick = 64;
+	const OpenOnArrow = 128;
+	const Leaf = 256;
+	const Bullet = 512;
+	const FramePadding = 1024;
+	const SpanAvailWidth = 2048;
+	const SpanFullWidth = 4096;
+	const NavLeftJumpsBackHere = 8192;
+	const CollapsingHeader = 26;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum ViewportFlags {
-	None = 0,
-	IsPlatformWindow = 1,
-	IsPlatformMonitor = 2,
-	OwnedByApp = 4,
-}
+bitflags::bitflags!{pub struct ViewportFlags: i32 {
+	const None = 0;
+	const IsPlatformWindow = 1;
+	const IsPlatformMonitor = 2;
+	const OwnedByApp = 4;
+}}
 
 bitflags::bitflags!{pub struct WindowFlags: i32 {
 	const None = 0;
@@ -598,220 +636,209 @@ bitflags::bitflags!{pub struct WindowFlags: i32 {
 }}
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum LayoutType {
 	Horizontal = 0,
 	Vertical = 1,
 }
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum ItemFlags {
-	None = 0,
-	NoTabStop = 1,
-	ButtonRepeat = 2,
-	Disabled = 4,
-	NoNav = 8,
-	NoNavDefaultFocus = 16,
-	SelectableDontClosePopup = 32,
-	MixedValue = 64,
-	ReadOnly = 128,
-}
+bitflags::bitflags!{pub struct ActivateFlags: i32 {
+	const None = 0;
+	const PreferInput = 1;
+	const PreferTweak = 2;
+	const TryToPreserveState = 4;
+}}
+
+bitflags::bitflags!{pub struct DebugLogFlags: i32 {
+	const None = 0;
+	const EventActiveId = 1;
+	const EventFocus = 2;
+	const EventPopup = 4;
+	const EventNav = 8;
+	const EventIO = 16;
+	const OutputToTTY = 1024;
+}}
+
+bitflags::bitflags!{pub struct ItemFlags: i32 {
+	const None = 0;
+	const NoTabStop = 1;
+	const ButtonRepeat = 2;
+	const Disabled = 4;
+	const NoNav = 8;
+	const NoNavDefaultFocus = 16;
+	const SelectableDontClosePopup = 32;
+	const MixedValue = 64;
+	const ReadOnly = 128;
+	const Inputable = 256;
+}}
+
+bitflags::bitflags!{pub struct ItemStatusFlags: i32 {
+	const None = 0;
+	const HoveredRect = 1;
+	const HasDisplayRect = 2;
+	const Edited = 4;
+	const ToggledSelection = 8;
+	const ToggledOpen = 16;
+	const HasDeactivated = 32;
+	const Deactivated = 64;
+	const HoveredWindow = 128;
+	const FocusedByTabbing = 256;
+}}
+
+bitflags::bitflags!{pub struct OldColumnFlags: i32 {
+	const None = 0;
+	const NoBorder = 1;
+	const NoResize = 2;
+	const NoPreserveWidths = 4;
+	const NoForceWithinWindow = 8;
+	const GrowParentContentsSize = 16;
+}}
+
+bitflags::bitflags!{pub struct NavHighlightFlags: i32 {
+	const None = 0;
+	const TypeDefault = 1;
+	const TypeThin = 2;
+	const AlwaysDraw = 4;
+	const NoRounding = 8;
+}}
+
+bitflags::bitflags!{pub struct NavDirSourceFlags: i32 {
+	const None = 0;
+	const RawKeyboard = 1;
+	const Keyboard = 2;
+	const PadDPad = 4;
+	const PadLStick = 8;
+}}
+
+bitflags::bitflags!{pub struct NavMoveFlags: i32 {
+	const None = 0;
+	const LoopX = 1;
+	const LoopY = 2;
+	const WrapX = 4;
+	const WrapY = 8;
+	const AllowCurrentNavId = 16;
+	const AlsoScoreVisibleSet = 32;
+	const ScrollToEdgeY = 64;
+	const Forwarded = 128;
+	const DebugNoResult = 256;
+	const FocusApi = 512;
+	const Tabbing = 1024;
+	const Activate = 2048;
+	const DontSetNavHighlight = 4096;
+}}
+
+bitflags::bitflags!{pub struct NextItemDataFlags: i32 {
+	const None = 0;
+	const HasWidth = 1;
+	const HasOpen = 2;
+}}
+
+bitflags::bitflags!{pub struct NextWindowDataFlags: i32 {
+	const None = 0;
+	const HasPos = 1;
+	const HasSize = 2;
+	const HasContentSize = 4;
+	const HasCollapsed = 8;
+	const HasSizeConstraint = 16;
+	const HasFocus = 32;
+	const HasBgAlpha = 64;
+	const HasScroll = 128;
+}}
+
+bitflags::bitflags!{pub struct ScrollFlags: i32 {
+	const None = 0;
+	const KeepVisibleEdgeX = 1;
+	const KeepVisibleEdgeY = 2;
+	const KeepVisibleCenterX = 4;
+	const KeepVisibleCenterY = 8;
+	const AlwaysCenterX = 16;
+	const AlwaysCenterY = 32;
+	const NoScrollParent = 64;
+}}
+
+bitflags::bitflags!{pub struct SeparatorFlags: i32 {
+	const None = 0;
+	const Horizontal = 1;
+	const Vertical = 2;
+	const SpanAllColumns = 4;
+}}
+
+bitflags::bitflags!{pub struct TextFlags: i32 {
+	const None = 0;
+	const NoWidthForLargeClippedText = 1;
+}}
+
+bitflags::bitflags!{pub struct TooltipFlags: i32 {
+	const None = 0;
+	const OverridePreviousTooltip = 1;
+}}
+
+bitflags::bitflags!{pub struct InputTextFlagsPrivate: i32 {
+	const Multiline = 67108864;
+	const NoMarkEdited = 134217728;
+	const MergedItem = 268435456;
+}}
+
+bitflags::bitflags!{pub struct ButtonFlagsPrivate: i32 {
+	const PressedOnClick = 16;
+	const PressedOnClickRelease = 32;
+	const PressedOnClickReleaseAnywhere = 64;
+	const PressedOnRelease = 128;
+	const PressedOnDoubleClick = 256;
+	const PressedOnDragDropHold = 512;
+	const Repeat = 1024;
+	const FlattenChildren = 2048;
+	const AllowItemOverlap = 4096;
+	const DontClosePopups = 8192;
+	const AlignTextBaseLine = 32768;
+	const NoKeyModifiers = 65536;
+	const NoHoldingActiveId = 131072;
+	const NoNavFocus = 262144;
+	const NoHoveredOnFocus = 524288;
+}}
+
+bitflags::bitflags!{pub struct ComboFlagsPrivate: i32 {
+	const CustomPreview = 1048576;
+}}
+
+bitflags::bitflags!{pub struct SliderFlagsPrivate: i32 {
+	const Vertical = 1048576;
+	const ReadOnly = 2097152;
+}}
+
+bitflags::bitflags!{pub struct SelectableFlagsPrivate: i32 {
+	const NoHoldingActiveID = 1048576;
+	const SelectOnNav = 2097152;
+	const SelectOnClick = 4194304;
+	const SelectOnRelease = 8388608;
+	const SpanAvailWidth = 16777216;
+	const DrawHoveredWhenHeld = 33554432;
+	const SetNavIdOnHover = 67108864;
+	const NoPadWithHalfSpacing = 134217728;
+}}
+
+bitflags::bitflags!{pub struct TreeNodeFlagsPrivate: i32 {
+	const ClipLabelForTrailingButton = 1048576;
+}}
 
 #[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum ItemAddFlags {
-	None = 0,
-	Focusable = 1,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum ItemStatusFlags {
-	None = 0,
-	HoveredRect = 1,
-	HasDisplayRect = 2,
-	Edited = 4,
-	ToggledSelection = 8,
-	ToggledOpen = 16,
-	HasDeactivated = 32,
-	Deactivated = 64,
-	HoveredWindow = 128,
-	FocusedByCode = 256,
-	FocusedByTabbing = 512,
-	Focused = 768,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum OldColumnFlags {
-	None = 0,
-	NoBorder = 1,
-	NoResize = 2,
-	NoPreserveWidths = 4,
-	NoForceWithinWindow = 8,
-	GrowParentContentsSize = 16,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum NavHighlightFlags {
-	None = 0,
-	TypeDefault = 1,
-	TypeThin = 2,
-	AlwaysDraw = 4,
-	NoRounding = 8,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum NavDirSourceFlags {
-	None = 0,
-	Keyboard = 1,
-	PadDPad = 2,
-	PadLStick = 4,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum NavMoveFlags {
-	None = 0,
-	LoopX = 1,
-	LoopY = 2,
-	WrapX = 4,
-	WrapY = 8,
-	AllowCurrentNavId = 16,
-	AlsoScoreVisibleSet = 32,
-	ScrollToEdge = 64,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum NextItemDataFlags {
-	None = 0,
-	HasWidth = 1,
-	HasOpen = 2,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum NextWindowDataFlags {
-	None = 0,
-	HasPos = 1,
-	HasSize = 2,
-	HasContentSize = 4,
-	HasCollapsed = 8,
-	HasSizeConstraint = 16,
-	HasFocus = 32,
-	HasBgAlpha = 64,
-	HasScroll = 128,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum SeparatorFlags {
-	None = 0,
-	Horizontal = 1,
-	Vertical = 2,
-	SpanAllColumns = 4,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum TextFlags {
-	None = 0,
-	NoWidthForLargeClippedText = 1,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum TooltipFlags {
-	None = 0,
-	OverridePreviousTooltip = 1,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum InputTextFlagsPrivate {
-	Multiline = 67108864,
-	NoMarkEdited = 134217728,
-	MergedItem = 268435456,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum ButtonFlagsPrivate {
-	PressedOnClick = 16,
-	PressedOnClickRelease = 32,
-	PressedOnClickReleaseAnywhere = 64,
-	PressedOnRelease = 128,
-	PressedOnDoubleClick = 256,
-	PressedOnDragDropHold = 512,
-	Repeat = 1024,
-	FlattenChildren = 2048,
-	AllowItemOverlap = 4096,
-	DontClosePopups = 8192,
-	AlignTextBaseLine = 32768,
-	NoKeyModifiers = 65536,
-	NoHoldingActiveId = 131072,
-	NoNavFocus = 262144,
-	NoHoveredOnFocus = 524288,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum ComboFlagsPrivate {
-	CustomPreview = 1048576,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum SliderFlagsPrivate {
-	Vertical = 1048576,
-	ReadOnly = 2097152,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum SelectableFlagsPrivate {
-	NoHoldingActiveID = 1048576,
-	SelectOnNav = 2097152,
-	SelectOnClick = 4194304,
-	SelectOnRelease = 8388608,
-	SpanAvailWidth = 16777216,
-	DrawHoveredWhenHeld = 33554432,
-	SetNavIdOnHover = 67108864,
-	NoPadWithHalfSpacing = 134217728,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum TreeNodeFlagsPrivate {
-	ClipLabelForTrailingButton = 1048576,
-}
-
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum DataTypePrivate {
 	String = 11,
 	Pointer = 12,
 	ID = 13,
 }
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum TabBarFlagsPrivate {
-	DockNode = 1048576,
-	IsFocused = 2097152,
-	SaveSettings = 4194304,
-}
+bitflags::bitflags!{pub struct TabBarFlagsPrivate: i32 {
+	const DockNode = 1048576;
+	const IsFocused = 2097152;
+	const SaveSettings = 4194304;
+}}
 
-#[repr(i32)]
-#[derive(Debug, Copy, Clone)]
-pub enum TabItemFlagsPrivate {
-	NoCloseButton = 1048576,
-	Button = 2097152,
-}
+bitflags::bitflags!{pub struct TabItemFlagsPrivate: i32 {
+	const NoCloseButton = 1048576;
+	const Button = 2097152;
+}}
 
 pub fn create_context(shared_font_atlas: &mut sys::ImFontAtlas) -> *mut sys::ImGuiContext {
 	unsafe{sys::igCreateContext(shared_font_atlas)}
@@ -833,8 +860,8 @@ pub fn get_io() -> *mut sys::ImGuiIO {
 	unsafe{sys::igGetIO()}
 }
 
-pub fn get_style() -> sys::ImGuiStyle {
-	unsafe{*sys::igGetStyle()}
+pub fn get_style() -> &'static mut sys::ImGuiStyle {
+	unsafe{&mut *sys::igGetStyle()}
 }
 
 pub fn new_frame() {
@@ -930,11 +957,11 @@ pub fn is_window_collapsed() -> bool {
 }
 
 pub fn is_window_focused(flags: FocusedFlags) -> bool {
-	unsafe{sys::igIsWindowFocused(flags as i32)}
+	unsafe{sys::igIsWindowFocused(flags.bits)}
 }
 
 pub fn is_window_hovered(flags: HoveredFlags) -> bool {
-	unsafe{sys::igIsWindowHovered(flags as i32)}
+	unsafe{sys::igIsWindowHovered(flags.bits)}
 }
 
 pub fn get_window_draw_list() -> DrawList {
@@ -1422,7 +1449,7 @@ pub fn small_button(label: &str) -> bool {
 
 pub fn invisible_button(str_id: &str, size: [f32; 2], flags: ButtonFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
-	unsafe{sys::igInvisibleButton(str_id_.as_ptr(), size, flags as i32)}
+	unsafe{sys::igInvisibleButton(str_id_.as_ptr(), size, flags.bits)}
 }
 
 pub fn arrow_button(str_id: &str, dir: Dir) -> bool {
@@ -1475,7 +1502,7 @@ pub fn bullet() {
 pub fn begin_combo(label: &str, preview_value: &str, flags: ComboFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let preview_value_ = CString::new(preview_value).unwrap();
-	unsafe{sys::igBeginCombo(label_.as_ptr(), preview_value_.as_ptr(), flags as i32)}
+	unsafe{sys::igBeginCombo(label_.as_ptr(), preview_value_.as_ptr(), flags.bits)}
 }
 
 pub fn end_combo() {
@@ -1496,165 +1523,165 @@ pub fn combo__str(label: &str, current_item: &mut i32, items_separated_by_zeros:
 pub fn drag_float(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragFloat(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igDragFloat(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn drag_float2(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragFloat2(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igDragFloat2(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn drag_float3(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragFloat3(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igDragFloat3(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn drag_float4(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragFloat4(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igDragFloat4(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn drag_float_range2(label: &str, v_current_min: &mut f32, v_current_max: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, format_max: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	let format_max_ = CString::new(format_max).unwrap();
-	unsafe{sys::igDragFloatRange2(label_.as_ptr(), v_current_min, v_current_max, v_speed, v_min, v_max, format_.as_ptr(), format_max_.as_ptr(), flags as i32)}
+	unsafe{sys::igDragFloatRange2(label_.as_ptr(), v_current_min, v_current_max, v_speed, v_min, v_max, format_.as_ptr(), format_max_.as_ptr(), flags.bits)}
 }
 
 pub fn drag_int(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragInt(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igDragInt(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn drag_int2(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragInt2(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igDragInt2(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn drag_int3(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragInt3(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igDragInt3(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn drag_int4(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragInt4(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igDragInt4(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn drag_int_range2(label: &str, v_current_min: &mut i32, v_current_max: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, format_max: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
 	let format_max_ = CString::new(format_max).unwrap();
-	unsafe{sys::igDragIntRange2(label_.as_ptr(), v_current_min, v_current_max, v_speed, v_min, v_max, format_.as_ptr(), format_max_.as_ptr(), flags as i32)}
+	unsafe{sys::igDragIntRange2(label_.as_ptr(), v_current_min, v_current_max, v_speed, v_min, v_max, format_.as_ptr(), format_max_.as_ptr(), flags.bits)}
 }
 
 pub fn drag_scalar(label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, v_speed: f32, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragScalar(label_.as_ptr(), data_type as i32, p_data, v_speed, p_min, p_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igDragScalar(label_.as_ptr(), data_type as i32, p_data, v_speed, p_min, p_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn drag_scalar_n(label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, components: i32, v_speed: f32, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragScalarN(label_.as_ptr(), data_type as i32, p_data, components, v_speed, p_min, p_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igDragScalarN(label_.as_ptr(), data_type as i32, p_data, components, v_speed, p_min, p_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_float(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderFloat(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igSliderFloat(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_float2(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderFloat2(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igSliderFloat2(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_float3(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderFloat3(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igSliderFloat3(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_float4(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderFloat4(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igSliderFloat4(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_angle(label: &str, v_rad: &mut f32, v_degrees_min: f32, v_degrees_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderAngle(label_.as_ptr(), v_rad, v_degrees_min, v_degrees_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igSliderAngle(label_.as_ptr(), v_rad, v_degrees_min, v_degrees_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_int(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderInt(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igSliderInt(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_int2(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderInt2(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igSliderInt2(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_int3(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderInt3(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igSliderInt3(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_int4(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderInt4(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igSliderInt4(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_scalar(label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderScalar(label_.as_ptr(), data_type as i32, p_data, p_min, p_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igSliderScalar(label_.as_ptr(), data_type as i32, p_data, p_min, p_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_scalar_n(label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, components: i32, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderScalarN(label_.as_ptr(), data_type as i32, p_data, components, p_min, p_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igSliderScalarN(label_.as_ptr(), data_type as i32, p_data, components, p_min, p_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn v_slider_float(label: &str, size: [f32; 2], v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igVSliderFloat(label_.as_ptr(), size, v, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igVSliderFloat(label_.as_ptr(), size, v, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn v_slider_int(label: &str, size: [f32; 2], v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igVSliderInt(label_.as_ptr(), size, v, v_min, v_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igVSliderInt(label_.as_ptr(), size, v, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn v_slider_scalar(label: &str, size: [f32; 2], data_type: DataType, p_data: &mut ::std::os::raw::c_void, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igVSliderScalar(label_.as_ptr(), size, data_type as i32, p_data, p_min, p_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igVSliderScalar(label_.as_ptr(), size, data_type as i32, p_data, p_min, p_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn input_text(label: &str, entry: &mut String, flags: InputTextFlags) -> bool {
 	entry.push('\0');
 	let label_ = CString::new(label).unwrap();
-	let r = unsafe{sys::igInputText(label_.as_ptr(), entry.as_mut_ptr() as *mut _, entry.capacity() as u64, flags as i32, None, std::ptr::null::<*mut i8>() as *mut _)};
+	let r = unsafe{sys::igInputText(label_.as_ptr(), entry.as_mut_ptr() as *mut _, entry.capacity() as u64, flags.bits, None, std::ptr::null::<*mut i8>() as *mut _)};
 	if let Some(p) = entry.find('\0') {entry.truncate(p);}
 	r
 }
@@ -1662,7 +1689,7 @@ pub fn input_text(label: &str, entry: &mut String, flags: InputTextFlags) -> boo
 pub fn input_text_multiline(label: &str, entry: &mut String, size: [f32; 2], flags: InputTextFlags) -> bool {
 	entry.push('\0');
 	let label_ = CString::new(label).unwrap();
-	let r = unsafe{sys::igInputTextMultiline(label_.as_ptr(), entry.as_mut_ptr() as *mut _, entry.capacity() as u64, size, flags as i32, None, std::ptr::null::<*mut i8>() as *mut _)};
+	let r = unsafe{sys::igInputTextMultiline(label_.as_ptr(), entry.as_mut_ptr() as *mut _, entry.capacity() as u64, size, flags.bits, None, std::ptr::null::<*mut i8>() as *mut _)};
 	if let Some(p) = entry.find('\0') {entry.truncate(p);}
 	r
 }
@@ -1671,7 +1698,7 @@ pub fn input_text_with_hint(label: &str, hint: &str, entry: &mut String, flags: 
 	entry.push('\0');
 	let label_ = CString::new(label).unwrap();
 	let hint_ = CString::new(hint).unwrap();
-	let r = unsafe{sys::igInputTextWithHint(label_.as_ptr(), hint_.as_ptr(), entry.as_mut_ptr() as *mut _, entry.capacity() as u64, flags as i32, None, std::ptr::null::<*mut i8>() as *mut _)};
+	let r = unsafe{sys::igInputTextWithHint(label_.as_ptr(), hint_.as_ptr(), entry.as_mut_ptr() as *mut _, entry.capacity() as u64, flags.bits, None, std::ptr::null::<*mut i8>() as *mut _)};
 	if let Some(p) = entry.find('\0') {entry.truncate(p);}
 	r
 }
@@ -1679,63 +1706,63 @@ pub fn input_text_with_hint(label: &str, hint: &str, entry: &mut String, flags: 
 pub fn input_float(label: &str, v: &mut f32, step: f32, step_fast: f32, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igInputFloat(label_.as_ptr(), v, step, step_fast, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igInputFloat(label_.as_ptr(), v, step, step_fast, format_.as_ptr(), flags.bits)}
 }
 
 pub fn input_float2(label: &str, v: &mut f32, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igInputFloat2(label_.as_ptr(), v, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igInputFloat2(label_.as_ptr(), v, format_.as_ptr(), flags.bits)}
 }
 
 pub fn input_float3(label: &str, v: &mut f32, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igInputFloat3(label_.as_ptr(), v, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igInputFloat3(label_.as_ptr(), v, format_.as_ptr(), flags.bits)}
 }
 
 pub fn input_float4(label: &str, v: &mut f32, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igInputFloat4(label_.as_ptr(), v, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igInputFloat4(label_.as_ptr(), v, format_.as_ptr(), flags.bits)}
 }
 
 pub fn input_int(label: &str, v: &mut i32, step: i32, step_fast: i32, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igInputInt(label_.as_ptr(), v, step, step_fast, flags as i32)}
+	unsafe{sys::igInputInt(label_.as_ptr(), v, step, step_fast, flags.bits)}
 }
 
 pub fn input_int2(label: &str, v: &mut i32, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igInputInt2(label_.as_ptr(), v, flags as i32)}
+	unsafe{sys::igInputInt2(label_.as_ptr(), v, flags.bits)}
 }
 
 pub fn input_int3(label: &str, v: &mut i32, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igInputInt3(label_.as_ptr(), v, flags as i32)}
+	unsafe{sys::igInputInt3(label_.as_ptr(), v, flags.bits)}
 }
 
 pub fn input_int4(label: &str, v: &mut i32, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igInputInt4(label_.as_ptr(), v, flags as i32)}
+	unsafe{sys::igInputInt4(label_.as_ptr(), v, flags.bits)}
 }
 
 pub fn input_double(label: &str, v: &mut f64, step: f64, step_fast: f64, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igInputDouble(label_.as_ptr(), v, step, step_fast, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igInputDouble(label_.as_ptr(), v, step, step_fast, format_.as_ptr(), flags.bits)}
 }
 
 pub fn input_scalar(label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, p_step: *const ::std::os::raw::c_void, p_step_fast: *const ::std::os::raw::c_void, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igInputScalar(label_.as_ptr(), data_type as i32, p_data, p_step, p_step_fast, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igInputScalar(label_.as_ptr(), data_type as i32, p_data, p_step, p_step_fast, format_.as_ptr(), flags.bits)}
 }
 
 pub fn input_scalar_n(label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, components: i32, p_step: *const ::std::os::raw::c_void, p_step_fast: *const ::std::os::raw::c_void, format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igInputScalarN(label_.as_ptr(), data_type as i32, p_data, components, p_step, p_step_fast, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igInputScalarN(label_.as_ptr(), data_type as i32, p_data, components, p_step, p_step_fast, format_.as_ptr(), flags.bits)}
 }
 
 pub fn color_edit3(label: &str, col: &mut [f32; 3], flags: ColorEditFlags) -> bool {
@@ -1796,29 +1823,29 @@ pub fn tree_node_v__ptr(ptr_id: *const ::std::os::raw::c_void, fmt: &str, args: 
 
 pub fn tree_node_ex__str(label: &str, flags: TreeNodeFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igTreeNodeEx_Str(label_.as_ptr(), flags as i32)}
+	unsafe{sys::igTreeNodeEx_Str(label_.as_ptr(), flags.bits)}
 }
 
 pub fn tree_node_ex__str_str(str_id: &str, flags: TreeNodeFlags, fmt: &str) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
 	let fmt_ = CString::new(fmt).unwrap();
-	unsafe{sys::igTreeNodeEx_StrStr(str_id_.as_ptr(), flags as i32, fmt_.as_ptr())}
+	unsafe{sys::igTreeNodeEx_StrStr(str_id_.as_ptr(), flags.bits, fmt_.as_ptr())}
 }
 
 pub fn tree_node_ex__ptr(ptr_id: *const ::std::os::raw::c_void, flags: TreeNodeFlags, fmt: &str) -> bool {
 	let fmt_ = CString::new(fmt).unwrap();
-	unsafe{sys::igTreeNodeEx_Ptr(ptr_id, flags as i32, fmt_.as_ptr())}
+	unsafe{sys::igTreeNodeEx_Ptr(ptr_id, flags.bits, fmt_.as_ptr())}
 }
 
 pub fn tree_node_ex_v__str(str_id: &str, flags: TreeNodeFlags, fmt: &str, args: sys::va_list) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
 	let fmt_ = CString::new(fmt).unwrap();
-	unsafe{sys::igTreeNodeExV_Str(str_id_.as_ptr(), flags as i32, fmt_.as_ptr(), args)}
+	unsafe{sys::igTreeNodeExV_Str(str_id_.as_ptr(), flags.bits, fmt_.as_ptr(), args)}
 }
 
 pub fn tree_node_ex_v__ptr(ptr_id: *const ::std::os::raw::c_void, flags: TreeNodeFlags, fmt: &str, args: sys::va_list) -> bool {
 	let fmt_ = CString::new(fmt).unwrap();
-	unsafe{sys::igTreeNodeExV_Ptr(ptr_id, flags as i32, fmt_.as_ptr(), args)}
+	unsafe{sys::igTreeNodeExV_Ptr(ptr_id, flags.bits, fmt_.as_ptr(), args)}
 }
 
 pub fn tree_push__str(str_id: &str) {
@@ -1840,12 +1867,12 @@ pub fn get_tree_node_to_label_spacing() -> f32 {
 
 pub fn collapsing_header__tree_node_flags(label: &str, flags: TreeNodeFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igCollapsingHeader_TreeNodeFlags(label_.as_ptr(), flags as i32)}
+	unsafe{sys::igCollapsingHeader_TreeNodeFlags(label_.as_ptr(), flags.bits)}
 }
 
 pub fn collapsing_header__bool_ptr(label: &str, p_visible: &mut bool, flags: TreeNodeFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igCollapsingHeader_BoolPtr(label_.as_ptr(), p_visible, flags as i32)}
+	unsafe{sys::igCollapsingHeader_BoolPtr(label_.as_ptr(), p_visible, flags.bits)}
 }
 
 pub fn set_next_item_open(is_open: bool, cond: Cond) {
@@ -1854,12 +1881,12 @@ pub fn set_next_item_open(is_open: bool, cond: Cond) {
 
 pub fn selectable(label: &str, selected: bool, flags: SelectableFlags, size: [f32; 2]) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igSelectable_Bool(label_.as_ptr(), selected, flags as i32, size)}
+	unsafe{sys::igSelectable_Bool(label_.as_ptr(), selected, flags.bits, size)}
 }
 
 pub fn selectable__bool_ptr(label: &str, p_selected: &mut bool, flags: SelectableFlags, size: [f32; 2]) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igSelectable_BoolPtr(label_.as_ptr(), p_selected, flags as i32, size)}
+	unsafe{sys::igSelectable_BoolPtr(label_.as_ptr(), p_selected, flags.bits, size)}
 }
 
 pub fn begin_list_box(label: &str, size: [f32; 2]) -> bool {
@@ -1980,16 +2007,16 @@ pub fn end_popup() {
 
 pub fn open_popup(str_id: &str, popup_flags: PopupFlags) {
 	let str_id_ = CString::new(str_id).unwrap();
-	unsafe{sys::igOpenPopup_Str(str_id_.as_ptr(), popup_flags as i32)}
+	unsafe{sys::igOpenPopup_Str(str_id_.as_ptr(), popup_flags.bits)}
 }
 
 pub fn open_popup_u32(id: sys::ImGuiID, popup_flags: PopupFlags) {
-	unsafe{sys::igOpenPopup_ID(id, popup_flags as i32)}
+	unsafe{sys::igOpenPopup_ID(id, popup_flags.bits)}
 }
 
 pub fn open_popup_on_item_click(str_id: &str, popup_flags: PopupFlags) {
 	let str_id_ = CString::new(str_id).unwrap();
-	unsafe{sys::igOpenPopupOnItemClick(str_id_.as_ptr(), popup_flags as i32)}
+	unsafe{sys::igOpenPopupOnItemClick(str_id_.as_ptr(), popup_flags.bits)}
 }
 
 pub fn close_current_popup() {
@@ -1998,22 +2025,22 @@ pub fn close_current_popup() {
 
 pub fn begin_popup_context_item(str_id: &str, popup_flags: PopupFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
-	unsafe{sys::igBeginPopupContextItem(str_id_.as_ptr(), popup_flags as i32)}
+	unsafe{sys::igBeginPopupContextItem(str_id_.as_ptr(), popup_flags.bits)}
 }
 
 pub fn begin_popup_context_window(str_id: &str, popup_flags: PopupFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
-	unsafe{sys::igBeginPopupContextWindow(str_id_.as_ptr(), popup_flags as i32)}
+	unsafe{sys::igBeginPopupContextWindow(str_id_.as_ptr(), popup_flags.bits)}
 }
 
 pub fn begin_popup_context_void(str_id: &str, popup_flags: PopupFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
-	unsafe{sys::igBeginPopupContextVoid(str_id_.as_ptr(), popup_flags as i32)}
+	unsafe{sys::igBeginPopupContextVoid(str_id_.as_ptr(), popup_flags.bits)}
 }
 
 pub fn is_popup_open__str(str_id: &str, flags: PopupFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
-	unsafe{sys::igIsPopupOpen_Str(str_id_.as_ptr(), flags as i32)}
+	unsafe{sys::igIsPopupOpen_Str(str_id_.as_ptr(), flags.bits)}
 }
 
 pub fn begin_table(str_id: &str, column: i32, flags: TableFlags, outer_size: [f32; 2], inner_width: f32) -> bool {
@@ -2026,7 +2053,7 @@ pub fn end_table() {
 }
 
 pub fn table_next_row(row_flags: TableRowFlags, min_row_height: f32) {
-	unsafe{sys::igTableNextRow(row_flags as i32, min_row_height)}
+	unsafe{sys::igTableNextRow(row_flags.bits, min_row_height)}
 }
 
 pub fn table_next_column() -> bool {
@@ -2122,7 +2149,7 @@ pub fn get_columns_count() -> i32 {
 
 pub fn begin_tab_bar(str_id: &str, flags: TabBarFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
-	unsafe{sys::igBeginTabBar(str_id_.as_ptr(), flags as i32)}
+	unsafe{sys::igBeginTabBar(str_id_.as_ptr(), flags.bits)}
 }
 
 pub fn end_tab_bar() {
@@ -2131,7 +2158,7 @@ pub fn end_tab_bar() {
 
 pub fn begin_tab_item(label: &str, p_open: &mut bool, flags: TabItemFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igBeginTabItem(label_.as_ptr(), p_open, flags as i32)}
+	unsafe{sys::igBeginTabItem(label_.as_ptr(), p_open, flags.bits)}
 }
 
 pub fn end_tab_item() {
@@ -2140,7 +2167,7 @@ pub fn end_tab_item() {
 
 pub fn tab_item_button(label: &str, flags: TabItemFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igTabItemButton(label_.as_ptr(), flags as i32)}
+	unsafe{sys::igTabItemButton(label_.as_ptr(), flags.bits)}
 }
 
 pub fn set_tab_item_closed(tab_or_docked_window_label: &str) {
@@ -2175,7 +2202,7 @@ pub fn log_text_v(fmt: &str, args: sys::va_list) {
 }
 
 pub fn begin_drag_drop_source(flags: DragDropFlags) -> bool {
-	unsafe{sys::igBeginDragDropSource(flags as i32)}
+	unsafe{sys::igBeginDragDropSource(flags.bits)}
 }
 
 pub fn set_drag_drop_payload(type_: &str, data: *const ::std::os::raw::c_void, sz: sys::size_t, cond: Cond) -> bool {
@@ -2193,7 +2220,7 @@ pub fn begin_drag_drop_target() -> bool {
 
 pub fn accept_drag_drop_payload(type_: &str, flags: DragDropFlags) -> *const sys::ImGuiPayload {
 	let type__ = CString::new(type_).unwrap();
-	unsafe{sys::igAcceptDragDropPayload(type__.as_ptr(), flags as i32)}
+	unsafe{sys::igAcceptDragDropPayload(type__.as_ptr(), flags.bits)}
 }
 
 pub fn end_drag_drop_target() {
@@ -2233,7 +2260,7 @@ pub fn is_item_hovered() -> bool {
 }
 
 pub fn is_item_hovered2(flags: HoveredFlags) -> bool {
-	unsafe{sys::igIsItemHovered(flags as i32)}
+	unsafe{sys::igIsItemHovered(flags.bits)}
 }
 
 pub fn is_item_active() -> bool {
@@ -2652,11 +2679,11 @@ impl DrawList {
 	}
 	
 	pub fn add_rect(&self, p_min: [f32; 2], p_max: [f32; 2], col: u32, rounding: f32, flags: DrawFlags, thickness: f32) {
-		unsafe{sys::ImDrawList_AddRect(self.drawlist, p_min, p_max, col, rounding, flags as i32, thickness)}
+		unsafe{sys::ImDrawList_AddRect(self.drawlist, p_min, p_max, col, rounding, flags.bits, thickness)}
 	}
 	
 	pub fn add_rect_filled(&self, p_min: [f32; 2], p_max: [f32; 2], col: u32, rounding: f32, flags: DrawFlags) {
-		unsafe{sys::ImDrawList_AddRectFilled(self.drawlist, p_min, p_max, col, rounding, flags as i32)}
+		unsafe{sys::ImDrawList_AddRectFilled(self.drawlist, p_min, p_max, col, rounding, flags.bits)}
 	}
 	
 	pub fn add_rect_filled_multi_color(&self, p_min: [f32; 2], p_max: [f32; 2], col_upr_left: u32, col_upr_right: u32, col_bot_right: u32, col_bot_left: u32) {
@@ -2713,7 +2740,7 @@ impl DrawList {
 	}
 	
 	pub fn add_polyline(&self, points: *const [f32; 2], num_points: i32, col: u32, flags: DrawFlags, thickness: f32) {
-		unsafe{sys::ImDrawList_AddPolyline(self.drawlist, points, num_points, col, flags as i32, thickness)}
+		unsafe{sys::ImDrawList_AddPolyline(self.drawlist, points, num_points, col, flags.bits, thickness)}
 	}
 	
 	pub fn add_convex_poly_filled(&self, points: *const [f32; 2], num_points: i32, col: u32) {
@@ -2737,7 +2764,7 @@ impl DrawList {
 	}
 	
 	pub fn add_image_rounded(&self, user_texture_id: usize, p_min: [f32; 2], p_max: [f32; 2], uv_min: [f32; 2], uv_max: [f32; 2], col: u32, rounding: f32, flags: DrawFlags) {
-		unsafe{sys::ImDrawList_AddImageRounded(self.drawlist, user_texture_id as *mut _, p_min, p_max, uv_min, uv_max, col, rounding, flags as i32)}
+		unsafe{sys::ImDrawList_AddImageRounded(self.drawlist, user_texture_id as *mut _, p_min, p_max, uv_min, uv_max, col, rounding, flags.bits)}
 	}
 	
 	pub fn path_clear(&self) {
@@ -2757,7 +2784,7 @@ impl DrawList {
 	}
 	
 	pub fn path_stroke(&self, col: u32, flags: DrawFlags, thickness: f32) {
-		unsafe{sys::ImDrawList_PathStroke(self.drawlist, col, flags as i32, thickness)}
+		unsafe{sys::ImDrawList_PathStroke(self.drawlist, col, flags.bits, thickness)}
 	}
 	
 	pub fn path_arc_to(&self, center: [f32; 2], radius: f32, a_min: f32, a_max: f32, num_segments: i32) {
@@ -2777,7 +2804,7 @@ impl DrawList {
 	}
 	
 	pub fn path_rect(&self, rect_min: [f32; 2], rect_max: [f32; 2], rounding: f32, flags: DrawFlags) {
-		unsafe{sys::ImDrawList_PathRect(self.drawlist, rect_min, rect_max, rounding, flags as i32)}
+		unsafe{sys::ImDrawList_PathRect(self.drawlist, rect_min, rect_max, rounding, flags.bits)}
 	}
 	
 	pub fn add_callback(&self, callback: sys::ImDrawCallback, callback_data: &mut ::std::os::raw::c_void) {
@@ -3502,8 +3529,8 @@ pub fn item_size__rect(bb: sys::ImRect, text_baseline_y: f32) {
 	unsafe{sys::igItemSize_Rect(bb, text_baseline_y)}
 }
 
-pub fn item_add(bb: sys::ImRect, id: sys::ImGuiID, nav_bb: *const sys::ImRect, flags: ItemAddFlags) -> bool {
-	unsafe{sys::igItemAdd(bb, id, nav_bb, flags as i32)}
+pub fn item_add(bb: sys::ImRect, id: sys::ImGuiID, nav_bb: *const sys::ImRect, flags: ItemFlags) -> bool {
+	unsafe{sys::igItemAdd(bb, id, nav_bb, flags.bits)}
 }
 
 pub fn item_hoverable(bb: sys::ImRect, id: sys::ImGuiID) -> bool {
@@ -3547,7 +3574,7 @@ pub fn shrink_widths(items: &mut sys::ImGuiShrinkWidthItem, count: i32, width_ex
 }
 
 pub fn push_item_flag(option: ItemFlags, enabled: bool) {
-	unsafe{sys::igPushItemFlag(option as i32, enabled)}
+	unsafe{sys::igPushItemFlag(option.bits, enabled)}
 }
 
 pub fn pop_item_flag() {
@@ -3580,7 +3607,7 @@ pub fn begin_child_ex(name: &str, id: sys::ImGuiID, size_arg: [f32; 2], border: 
 }
 
 pub fn open_popup_ex(id: sys::ImGuiID, popup_flags: PopupFlags) {
-	unsafe{sys::igOpenPopupEx(id, popup_flags as i32)}
+	unsafe{sys::igOpenPopupEx(id, popup_flags.bits)}
 }
 
 pub fn close_popup_to_level(remaining: i32, restore_focus_to_window_under_popup: bool) {
@@ -3592,7 +3619,7 @@ pub fn close_popups_over_window(ref_window: &mut sys::ImGuiWindow, restore_focus
 }
 
 pub fn is_popup_open__id(id: sys::ImGuiID, popup_flags: PopupFlags) -> bool {
-	unsafe{sys::igIsPopupOpen_ID(id, popup_flags as i32)}
+	unsafe{sys::igIsPopupOpen_ID(id, popup_flags.bits)}
 }
 
 pub fn begin_popup_ex(id: sys::ImGuiID, extra_flags: WindowFlags) -> bool {
@@ -3600,7 +3627,7 @@ pub fn begin_popup_ex(id: sys::ImGuiID, extra_flags: WindowFlags) -> bool {
 }
 
 pub fn begin_tooltip_ex(extra_flags: WindowFlags, tooltip_flags: TooltipFlags) {
-	unsafe{sys::igBeginTooltipEx(extra_flags.bits, tooltip_flags as i32)}
+	unsafe{sys::igBeginTooltipEx(extra_flags.bits, tooltip_flags.bits)}
 }
 
 pub fn get_popup_allowed_extent_rect(pOut: &mut sys::ImRect, window: &mut sys::ImGuiWindow) {
@@ -3632,7 +3659,7 @@ pub fn menu_item_ex(label: &str, icon: &str, shortcut: &str, selected: bool, ena
 }
 
 pub fn begin_combo_popup(popup_id: sys::ImGuiID, bb: sys::ImRect, flags: ComboFlags) -> bool {
-	unsafe{sys::igBeginComboPopup(popup_id, bb, flags as i32)}
+	unsafe{sys::igBeginComboPopup(popup_id, bb, flags.bits)}
 }
 
 pub fn begin_combo_preview() -> bool {
@@ -3656,11 +3683,11 @@ pub fn nav_move_request_cancel() {
 }
 
 // pub fn nav_move_request_forward(move_dir: Dir, clip_dir: Dir, bb_rel: sys::ImRect, move_flags: NavMoveFlags) {
-// 	unsafe{sys::igNavMoveRequestForward(move_dir as i32, clip_dir as i32, bb_rel, move_flags as i32)}
+// 	unsafe{sys::igNavMoveRequestForward(move_dir as i32, clip_dir as i32, bb_rel, move_flags.bits)}
 // }
 
 pub fn nav_move_request_try_wrapping(window: &mut sys::ImGuiWindow, move_flags: NavMoveFlags) {
-	unsafe{sys::igNavMoveRequestTryWrapping(window, move_flags as i32)}
+	unsafe{sys::igNavMoveRequestTryWrapping(window, move_flags.bits)}
 }
 
 // pub fn get_nav_input_amount(n: NavInput, mode: sys::ImGuiInputReadMode) -> f32 {
@@ -3757,7 +3784,7 @@ pub fn set_window_clip_rect_before_set_channel(window: &mut sys::ImGuiWindow, cl
 
 pub fn begin_columns(str_id: &str, count: i32, flags: OldColumnFlags) {
 	let str_id_ = CString::new(str_id).unwrap();
-	unsafe{sys::igBeginColumns(str_id_.as_ptr(), count, flags as i32)}
+	unsafe{sys::igBeginColumns(str_id_.as_ptr(), count, flags.bits)}
 }
 
 pub fn end_columns() {
@@ -3975,7 +4002,7 @@ pub fn table_settings_find_by_id(id: sys::ImGuiID) -> *mut sys::ImGuiTableSettin
 }
 
 pub fn begin_tab_bar_ex(tab_bar: &mut sys::ImGuiTabBar, bb: sys::ImRect, flags: TabBarFlags) -> bool {
-	unsafe{sys::igBeginTabBarEx(tab_bar, bb, flags as i32)}
+	unsafe{sys::igBeginTabBarEx(tab_bar, bb, flags.bits)}
 }
 
 pub fn tab_bar_find_tab_by_id(tab_bar: &mut sys::ImGuiTabBar, tab_id: sys::ImGuiID) -> *mut sys::ImGuiTabItem {
@@ -4004,7 +4031,7 @@ pub fn tab_bar_process_reorder(tab_bar: &mut sys::ImGuiTabBar) -> bool {
 
 pub fn tab_item_ex(tab_bar: &mut sys::ImGuiTabBar, label: &str, p_open: &mut bool, flags: TabItemFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igTabItemEx(tab_bar, label_.as_ptr(), p_open, flags as i32)}
+	unsafe{sys::igTabItemEx(tab_bar, label_.as_ptr(), p_open, flags.bits)}
 }
 
 pub fn tab_item_calc_size(pOut: &mut [f32; 2], label: &str, has_close_button: bool) {
@@ -4013,12 +4040,12 @@ pub fn tab_item_calc_size(pOut: &mut [f32; 2], label: &str, has_close_button: bo
 }
 
 pub fn tab_item_background(draw_list: &mut sys::ImDrawList, bb: sys::ImRect, flags: TabItemFlags, col: u32) {
-	unsafe{sys::igTabItemBackground(draw_list, bb, flags as i32, col)}
+	unsafe{sys::igTabItemBackground(draw_list, bb, flags.bits, col)}
 }
 
 pub fn tab_item_label_and_close_button(draw_list: &mut sys::ImDrawList, bb: sys::ImRect, flags: TabItemFlags, frame_padding: [f32; 2], label: &str, tab_id: sys::ImGuiID, close_button_id: sys::ImGuiID, is_contents_visible: bool, out_just_closed: &mut bool, out_text_clipped: &mut bool) {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igTabItemLabelAndCloseButton(draw_list, bb, flags as i32, frame_padding, label_.as_ptr(), tab_id, close_button_id, is_contents_visible, out_just_closed, out_text_clipped)}
+	unsafe{sys::igTabItemLabelAndCloseButton(draw_list, bb, flags.bits, frame_padding, label_.as_ptr(), tab_id, close_button_id, is_contents_visible, out_just_closed, out_text_clipped)}
 }
 
 pub fn render_text(pos: [f32; 2], text: &str, text_end: &str, hide_text_after_hash: bool) {
@@ -4060,11 +4087,11 @@ pub fn render_frame_border(p_min: [f32; 2], p_max: [f32; 2], rounding: f32) {
 }
 
 pub fn render_color_rect_with_alpha_checkerboard(draw_list: &mut sys::ImDrawList, p_min: [f32; 2], p_max: [f32; 2], fill_col: u32, grid_step: f32, grid_off: [f32; 2], rounding: f32, flags: DrawFlags) {
-	unsafe{sys::igRenderColorRectWithAlphaCheckerboard(draw_list, p_min, p_max, fill_col, grid_step, grid_off, rounding, flags as i32)}
+	unsafe{sys::igRenderColorRectWithAlphaCheckerboard(draw_list, p_min, p_max, fill_col, grid_step, grid_off, rounding, flags.bits)}
 }
 
 pub fn render_nav_highlight(bb: sys::ImRect, id: sys::ImGuiID, flags: NavHighlightFlags) {
-	unsafe{sys::igRenderNavHighlight(bb, id, flags as i32)}
+	unsafe{sys::igRenderNavHighlight(bb, id, flags.bits)}
 }
 
 pub fn find_rendered_text_end(text: &str, text_end: &str) -> *const ::std::os::raw::c_char {
@@ -4104,12 +4131,12 @@ pub fn render_rect_filled_with_hole(draw_list: &mut sys::ImDrawList, outer: sys:
 pub fn text_ex(text: &str, text_end: &str, flags: TextFlags) {
 	let text_ = CString::new(text).unwrap();
 	let text_end_ = CString::new(text_end).unwrap();
-	unsafe{sys::igTextEx(text_.as_ptr(), text_end_.as_ptr(), flags as i32)}
+	unsafe{sys::igTextEx(text_.as_ptr(), text_end_.as_ptr(), flags.bits)}
 }
 
 pub fn button_ex(label: &str, size_arg: [f32; 2], flags: ButtonFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igButtonEx(label_.as_ptr(), size_arg, flags as i32)}
+	unsafe{sys::igButtonEx(label_.as_ptr(), size_arg, flags.bits)}
 }
 
 pub fn close_button(id: sys::ImGuiID, pos: [f32; 2]) -> bool {
@@ -4122,7 +4149,7 @@ pub fn collapse_button(id: sys::ImGuiID, pos: [f32; 2]) -> bool {
 
 pub fn arrow_button_ex(str_id: &str, dir: Dir, size_arg: [f32; 2], flags: ButtonFlags) -> bool {
 	let str_id_ = CString::new(str_id).unwrap();
-	unsafe{sys::igArrowButtonEx(str_id_.as_ptr(), dir as i32, size_arg, flags as i32)}
+	unsafe{sys::igArrowButtonEx(str_id_.as_ptr(), dir as i32, size_arg, flags.bits)}
 }
 
 pub fn scrollbar(axis: sys::ImGuiAxis) {
@@ -4130,7 +4157,7 @@ pub fn scrollbar(axis: sys::ImGuiAxis) {
 }
 
 // pub fn scrollbar_ex(bb: sys::ImRect, id: sys::ImGuiID, axis: sys::ImGuiAxis, p_scroll_v: &mut f32, avail_v: f32, contents_v: f32, flags: DrawFlags) -> bool {
-// 	unsafe{sys::igScrollbarEx(bb, id, axis, p_scroll_v, avail_v, contents_v, flags as i32)}
+// 	unsafe{sys::igScrollbarEx(bb, id, axis, p_scroll_v, avail_v, contents_v, flags.bits)}
 // }
 
 pub fn image_button_ex(id: sys::ImGuiID, texture_id: usize, size: [f32; 2], uv0: [f32; 2], uv1: [f32; 2], padding: [f32; 2], bg_col: [f32; 4], tint_col: [f32; 4]) -> bool {
@@ -4154,7 +4181,7 @@ pub fn get_window_resize_border_id(window: &mut sys::ImGuiWindow, dir: Dir) -> s
 }
 
 pub fn separator_ex(flags: SeparatorFlags) {
-	unsafe{sys::igSeparatorEx(flags as i32)}
+	unsafe{sys::igSeparatorEx(flags.bits)}
 }
 
 pub fn checkbox_flags__s64_ptr(label: &str, flags: &mut sys::ImS64, flags_value: sys::ImS64) -> bool {
@@ -4168,17 +4195,17 @@ pub fn checkbox_flags__u64_ptr(label: &str, flags: &mut sys::ImU64, flags_value:
 }
 
 pub fn button_behavior(bb: sys::ImRect, id: sys::ImGuiID, out_hovered: &mut bool, out_held: &mut bool, flags: ButtonFlags) -> bool {
-	unsafe{sys::igButtonBehavior(bb, id, out_hovered, out_held, flags as i32)}
+	unsafe{sys::igButtonBehavior(bb, id, out_hovered, out_held, flags.bits)}
 }
 
 pub fn drag_behavior(id: sys::ImGuiID, data_type: DataType, p_v: &mut ::std::os::raw::c_void, v_speed: f32, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags) -> bool {
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragBehavior(id, data_type as i32, p_v, v_speed, p_min, p_max, format_.as_ptr(), flags as i32)}
+	unsafe{sys::igDragBehavior(id, data_type as i32, p_v, v_speed, p_min, p_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_behavior(bb: sys::ImRect, id: sys::ImGuiID, data_type: DataType, p_v: &mut ::std::os::raw::c_void, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags, out_grab_bb: &mut sys::ImRect) -> bool {
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderBehavior(bb, id, data_type as i32, p_v, p_min, p_max, format_.as_ptr(), flags as i32, out_grab_bb)}
+	unsafe{sys::igSliderBehavior(bb, id, data_type as i32, p_v, p_min, p_max, format_.as_ptr(), flags.bits, out_grab_bb)}
 }
 
 pub fn splitter_behavior(bb: sys::ImRect, id: sys::ImGuiID, axis: sys::ImGuiAxis, size1: &mut f32, size2: &mut f32, min_size1: f32, min_size2: f32, hover_extend: f32, hover_visibility_delay: f32) -> bool {
@@ -4188,11 +4215,11 @@ pub fn splitter_behavior(bb: sys::ImRect, id: sys::ImGuiID, axis: sys::ImGuiAxis
 pub fn tree_node_behavior(id: sys::ImGuiID, flags: TreeNodeFlags, label: &str, label_end: &str) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let label_end_ = CString::new(label_end).unwrap();
-	unsafe{sys::igTreeNodeBehavior(id, flags as i32, label_.as_ptr(), label_end_.as_ptr())}
+	unsafe{sys::igTreeNodeBehavior(id, flags.bits, label_.as_ptr(), label_end_.as_ptr())}
 }
 
 pub fn tree_node_behavior_is_open(id: sys::ImGuiID, flags: TreeNodeFlags) -> bool {
-	unsafe{sys::igTreeNodeBehaviorIsOpen(id, flags as i32)}
+	unsafe{sys::igTreeNodeBehaviorIsOpen(id, flags.bits)}
 }
 
 pub fn tree_push_override_id(id: sys::ImGuiID) {
@@ -4230,12 +4257,12 @@ pub fn data_type_clamp(data_type: DataType, p_data: &mut ::std::os::raw::c_void,
 pub fn input_text_ex(label: &str, hint: &str, buf: &mut ::std::os::raw::c_char, buf_size: i32, size_arg: [f32; 2], flags: InputTextFlags, callback: sys::ImGuiInputTextCallback, user_data: &mut ::std::os::raw::c_void) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let hint_ = CString::new(hint).unwrap();
-	unsafe{sys::igInputTextEx(label_.as_ptr(), hint_.as_ptr(), buf, buf_size, size_arg, flags as i32, callback, user_data)}
+	unsafe{sys::igInputTextEx(label_.as_ptr(), hint_.as_ptr(), buf, buf_size, size_arg, flags.bits, callback, user_data)}
 }
 
 pub fn temp_input_text(bb: sys::ImRect, id: sys::ImGuiID, label: &str, buf: &mut ::std::os::raw::c_char, buf_size: i32, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igTempInputText(bb, id, label_.as_ptr(), buf, buf_size, flags as i32)}
+	unsafe{sys::igTempInputText(bb, id, label_.as_ptr(), buf, buf_size, flags.bits)}
 }
 
 pub fn temp_input_scalar(bb: sys::ImRect, id: sys::ImGuiID, label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, format: &str, p_clamp_min: *const ::std::os::raw::c_void, p_clamp_max: *const ::std::os::raw::c_void) -> bool {

@@ -56,6 +56,11 @@ fn generate_bindings() {
 		}
 	};
 	
+	let re_enumname = Regex::new(r"Im[A-Z][a-z]+([a-zA-Z0-9]+)").unwrap();
+	let enumname = |s: &str| -> String {
+		re_enumname.captures(s).unwrap().get(1).unwrap().as_str().to_owned()
+	};
+	
 	let mut f = File::create("./src/gui/imgui/mod.rs").unwrap();
 	f.write_all("#![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
@@ -71,7 +76,9 @@ pub mod sys;\n".as_bytes()).unwrap();
 	// enums
 	let mut enums = HashMap::new();
 	for cap in Regex::new(r"pub const [a-zA-Z]+_(?P<name>[a-zA-Z]+): (?P<enum>[a-zA-Z]+)[a-zA-Z_]+ =\s+(?P<value>\d+)").unwrap().captures_iter(b) {
-		enums.entry(cap["enum"].to_owned()).or_insert(Vec::new()).push(format!("\t{} = {},", &cap["name"], &cap["value"]));
+		let n = cap["enum"].to_owned();
+		let l = if n.contains("Flags") {format!("\tconst {} = {};", &cap["name"], &cap["value"])} else {format!("\t{} = {},", &cap["name"], &cap["value"])};
+		enums.entry(n).or_insert(Vec::new()).push(l);
 	}
 	
 	let mut types = HashSet::new();
@@ -82,7 +89,11 @@ pub mod sys;\n".as_bytes()).unwrap();
 		}
 		
 		if let Some(e) = enums.get(&cap["name"]) {
-			f.write_all(format!("\n#[repr({})]\npub enum {} {{\n{}\n}}\n", fix_type(&cap["type"]), &cap["name"], e.join("\n")).as_bytes()).unwrap();
+			if cap["name"].contains("Flags") {
+				f.write_all(format!("\nbitflags::bitflags!{{pub struct {}: {} {{\n{}\n}}}}\n", enumname(&cap["name"]), fix_type(&cap["type"]), e.join("\n")).as_bytes()).unwrap();
+			} else {
+				f.write_all(format!("\n#[repr({})]\n#[derive(Debug, Copy, Clone, PartialEq, Eq)]\npub enum {} {{\n{}\n}}\n", fix_type(&cap["type"]), enumname(&cap["name"]), e.join("\n")).as_bytes()).unwrap();
+			}
 		} else {
 			types.insert(format!("{}{}", &cap["name"], &cap["name2"]));
 		}
@@ -118,8 +129,9 @@ pub mod sys;\n".as_bytes()).unwrap();
 				name = format!("{}_.as_ptr()", name);
 				"&str".to_owned()
 			} else if enums.contains_key(typ) {
-				name = format!("{} as i32", name);
-				typ.to_owned()
+				name = if typ.contains("Flags") {format!("{}.bits", name)} else {format!("{} as i32", name)};
+				// typ.to_owned()
+				enumname(typ)
 			} else {
 				let s = re_prefix.captures(typ).unwrap();
 				let pre = &s["pre"].replace("*mut", "&mut");
@@ -134,7 +146,6 @@ pub mod sys;\n".as_bytes()).unwrap();
 					if enums.contains_key(t) {
 						name = format!("{} as {}i32", name, pre);
 					}
-					
 					format!("{}{}", pre, fix_type(t))
 				}
 			};

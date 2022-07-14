@@ -242,9 +242,7 @@ impl Viewer for Tex {
 				
 				imgui::push_id_i32(i as i32);
 				// TODO: make custom element sortable list?
-				imgui::push_font(state.fa5);
-				imgui::button("", [h; 2]); // fa-bars
-				imgui::pop_font();
+				aeth::button_icon("", state.fa5); // fa-bars
 				imgui::same_line();
 				
 				if imgui::is_item_active() {
@@ -303,9 +301,7 @@ impl Viewer for Tex {
 					self.moving_layer = None;
 					changed = true;
 				} else {
-					imgui::push_font(state.fa5);
-					imgui::button("", [aeth::frame_height(); 2]); // fa-bars
-					imgui::pop_font();
+					aeth::button_icon("", state.fa5); // fa-bars
 					imgui::same_line();
 					
 					let layer = self.layers.get_mut(ml.0).unwrap();
@@ -316,9 +312,7 @@ impl Viewer for Tex {
 					}
 				}
 			} else {
-				imgui::push_font(state.fa5);
-				imgui::button("", [aeth::frame_height(); 2]); // fa-plus
-				imgui::pop_font();
+				aeth::button_icon("", state.fa5); // fa-plus
 			}
 			
 			if self.highlighted_layer != hl {

@@ -16,6 +16,8 @@ pub struct Tab {
 	populated_modselect: bool,
 	mod_entries: Vec<String>,
 	
+	newopt: String,
+	
 	gametree: Tree,
 	viewer: Option<Arc<Mutex<dyn Viewer + Send>>>,
 	path: String,
@@ -31,6 +33,8 @@ impl Tab {
 			
 			populated_modselect: false,
 			mod_entries: Vec::new(),
+			
+			newopt: String::with_capacity(32),
 			
 			gametree: Tree::from_file("Game Files", state.binary_path.join("assets").join("paths")).unwrap(),
 			viewer: None,
@@ -65,7 +69,7 @@ impl Tab {
 					});
 					
 					if let Some((button, path)) = m.tree.draw() {
-						if matches!(button, imgui::MouseButton::Right) {
+						if button == imgui::MouseButton::Right {
 							imgui::open_popup("modfilecontext", imgui::PopupFlags::MouseButtonRight);
 						} else {
 							self.open_file_mod(path);
@@ -79,26 +83,71 @@ impl Tab {
 			});
 			
 			if let Some(m) = &self.curmod {
-				imgui::set_next_item_width(aeth::width_left());
+				aeth::next_max_width();
 				// aeth::combo("##optionselect", &format!("{}/{}", m.opt, m.subopt), imgui::ComboFlags::None, || {
 				if imgui::begin_combo("##optionselect", &format!("{}/{}", m.opt, m.subopt), imgui::ComboFlags::None) { // scoped kinda sucks cuz closures suck
 					let mut a = if imgui::selectable("Default", m.opt == "" && m.subopt == "", imgui::SelectableFlags::None, [0.0, 0.0]) {Some(("".to_owned(), "".to_owned()))} else {None};
-					m.datas.lock().unwrap().penumbra.options.iter().for_each(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o {
+					m.datas.lock().unwrap().penumbra.options.iter_mut().for_each(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o {
 						aeth::tree(&opt.name, || {
 							opt.options.iter().for_each(|o2| if imgui::selectable(&o2.name, m.opt == opt.name && m.subopt == o2.name, imgui::SelectableFlags::None, [0.0, 0.0]) {
 								a = Some((opt.name.clone(), o2.name.clone()));
 							});
+							
+							if aeth::button_icon("", state.fa5) { // fa-plus
+								opt.options.push(apply::penumbra::PenumbraOption {
+									name: self.newopt.clone(),
+									files: HashMap::new(),
+									swaps: HashMap::new(),
+									manipulations: Vec::new(),
+								});
+								self.newopt.clear();
+								*self.refresh_mod.lock().unwrap() = true;
+							}
+							imgui::same_line();
+							aeth::next_max_width();
+							imgui::input_text_with_hint("##newopt", "New Sub Option", &mut self.newopt, imgui::InputTextFlags::None);
 						});
 					});
-					if let Some(o) = a {
-						self.set_mod_option(o.0, o.1);
+					
+					aeth::popup("addoptselect", imgui::WindowFlags::None, || {
+						if imgui::button("Single", [0.0, 0.0]) {
+							m.datas.lock().unwrap().penumbra.options.push(ConfOption::Single(apply::penumbra::TypPenumbra {
+								name: self.newopt.clone(),
+								description: "".to_owned(), // TODO: editable in mod overview or smth
+								options: Vec::new(),
+							}));
+							self.newopt.clear();
+							*self.refresh_mod.lock().unwrap() = true;
+							imgui::close_current_popup();
+						}
+						
+						if imgui::button("Multi", [0.0, 0.0]) {
+							m.datas.lock().unwrap().penumbra.options.push(ConfOption::Multi(apply::penumbra::TypPenumbra {
+								name: self.newopt.clone(),
+								description: "".to_owned(), // TODO: editable in mod overview or smth
+								options: Vec::new(),
+							}));
+							self.newopt.clear();
+							*self.refresh_mod.lock().unwrap() = true;
+							imgui::close_current_popup();
+						}
+					});
+					
+					if aeth::button_icon("", state.fa5) && self.newopt.len() > 0 { // fa-plus
+						imgui::open_popup("addoptselect", imgui::PopupFlags::MouseButtonLeft);
 					}
+					imgui::same_line();
+					aeth::next_max_width();
+					imgui::input_text_with_hint("##newopt", "New Option", &mut self.newopt, imgui::InputTextFlags::None);
+					
+					if let Some(o) = a {self.set_mod_option(o.0, o.1);}
+					
 					imgui::end_combo();
 				}
 				// });
 			}
 			
-			imgui::set_next_item_width(aeth::width_left());
+			aeth::next_max_width();
 			self.populated_modselect = aeth::combo("##modselect", &self.selected_mod.clone(), imgui::ComboFlags::None, || {
 				if !self.populated_modselect {
 					self.mod_entries = std::fs::read_dir(&state.config.local_path)
@@ -290,22 +339,6 @@ impl Tab {
 					paths: vec![format!("files/{}", &hash)],
 				}]);
 				datas.lock().unwrap().penumbra.update_file(&opt, &subopt, &gamepath, Some(file));
-				// if opt == "" { // No option
-				// 	datas.penumbra.files.entry(gamepath)
-				// 		.and_modify(|p| *p = file.clone())
-				// 		.or_insert(file);
-				// } else {
-				// 	// if !datas.penumbra.options.iter().any(|o| o.name() == &opt) {}
-				// 	match datas.penumbra.options.iter_mut().find(|o| o.name() == &opt).unwrap() {
-				// 		ConfOption::Single(v) | ConfOption::Multi(v) => {
-				// 			v.options.iter_mut().find(|o| &o.name == &subopt).unwrap().files.entry(gamepath)
-				// 				.and_modify(|p| *p = file.clone())
-				// 				.or_insert(file);
-				// 		}
-				// 		_ => {},
-				// 	}
-				// }
-				File::create(modpath.join("datas.json")).unwrap().write_all(crate::serialize_json(json!(*datas)).as_bytes()).unwrap();
 				*refresh_mod.lock().unwrap() = true;
 			}
 		});

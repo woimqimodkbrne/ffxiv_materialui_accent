@@ -81,7 +81,7 @@ public class Aetherment : IDalamudPlugin {
 			watcher.NotifyFilter = NotifyFilters.LastWrite;
 			watcher.Changed += (object _, FileSystemEventArgs e) => {
 				watcher.EnableRaisingEvents = false;
-				Task.Run(()=> {
+				Task.Run(() => {
 					Task.Delay(1000);
 					ReloadPlugin();
 				});
@@ -148,12 +148,12 @@ public class Aetherment : IDalamudPlugin {
 			.Invoke(GetPluginInstance(), BindingFlags.Default, null, new object[] {}, null);
 	}
 	
-	private void ReloadPlugin() {
+	private async void ReloadPlugin() {
 		var typeplugin = typeof(Dalamud.ClientLanguage).Assembly
 			.GetType("Dalamud.Plugin.Internal.Types.LocalPlugin");
 		
-		typeplugin.GetMethod("Reload")
-			.Invoke(GetPluginInstance(), BindingFlags.Default, null, new object[] {}, null);
+		await ((Task)typeplugin.GetMethod("ReloadAsync")
+			.Invoke(GetPluginInstance(), BindingFlags.Default, null, new object[] {}, null)).ConfigureAwait(false);
 	}
 	#pragma warning restore CS8600,CS8602,CS8603,CS8604
 	
