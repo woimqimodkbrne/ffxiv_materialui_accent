@@ -10,54 +10,65 @@ using Dialog = Dalamud.Interface.ImGuiFileDialog.FileDialog;
 namespace Aetherment;
 
 public class FileDialog {
-	private Dialog? dialog;
-	private string? result;
+	private Dictionary<string, (Dialog?, string?)> dialogs;
 	
 	public FileDialog() {
+		dialogs = new();
 		openFileDialogDelegate = OpenFileDialog;
 	}
 	
 	public void Draw() {
-		// PluginLog.Log($"{dialog != null}");
-		if(dialog != null && dialog.Draw()) {
-			result = dialog.GetIsOk() ? dialog.GetResults()[0] : null;
-			dialog = null;
+		var n = new Dictionary<string, (Dialog?, string?)>();
+		foreach(var val in dialogs) {
+			var dialog = val.Value.Item1;
+			if(dialog != null && dialog.Draw())
+				n[val.Key] = (null, dialog.GetIsOk() ? dialog.GetResults()[0] : null);
+			else
+				n[val.Key] = val.Value;
 		}
+		dialogs = n;
 	}
 	
-	// this will break if its called with one still active, too bad!
 	public OpenFileDialogDelegate openFileDialogDelegate;
-	public delegate byte OpenFileDialogDelegate(byte mode, FFI.String title, FFI.String filter, FFI.String name, IntPtr outpath);
-	public byte OpenFileDialog(byte mode, FFI.String title, FFI.String filter, FFI.String name, IntPtr outpath) {
-		// TOOD: save path and selected extension somewhere
+	public delegate byte OpenFileDialogDelegate(byte mode, FFI.String title, FFI.String name, FFI.String filter, IntPtr outpath);
+	public byte OpenFileDialog(byte mode, FFI.String title, FFI.String name, FFI.String filter, IntPtr outpath) {
+		var id = $"{mode}\0{title}\0{filter}\0{name}"; // cba making a better way
+		if(dialogs.TryGetValue(id, out var val)) {
+			if(val.Item1 != null)
+				return 2;
+			
+			if(val.Item2 == null) {
+				dialogs.Remove(id);
+				return 0;
+			}
+			
+			var length = Encoding.UTF8.GetByteCount(val.Item2);
+			if(length > (int)Marshal.PtrToStructure<ulong>(outpath + 8)) {
+				dialogs.Remove(id);
+				return 0;
+			}
+			
+			unsafe {
+				fixed(char* chars = val.Item2) {
+					Encoding.UTF8.GetBytes(chars, val.Item2.Length, (byte*)Marshal.ReadIntPtr(outpath), length);
+				}
+				Marshal.StructureToPtr((ulong)length, outpath + 16, false);
+			}
+			
+			dialogs.Remove(id);
+			return 1;
+		}
+		
 		var dir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
 		var nameS = (string)name;
 		if(mode == 0)
-			dialog = new Dialog("OpenFileDialog", title, filter, dir, nameS, nameS.Split(".").Last(), 1, false, ImGuiFileDialogFlags.None);
+			dialogs[id] = (new Dialog("OpenFileDialog", title, filter, dir, nameS, nameS.Split(".").Last(), 1, false, ImGuiFileDialogFlags.None), null);
 		else if(mode == 1)
-			dialog = new Dialog("SaveFileDialog", title, filter, dir, nameS, nameS.Split(".").Last(), 1, false, ImGuiFileDialogFlags.ConfirmOverwrite);
+			dialogs[id] = (new Dialog("SaveFileDialog", title, filter, dir, nameS, nameS.Split(".").Last(), 1, false, ImGuiFileDialogFlags.ConfirmOverwrite), null);
 		else
 			return 0;
 		
-		dialog.Show();
-		
-		while(dialog != null)
-			Thread.Sleep(100);
-		
-		if(result == null)
-			return 0;
-		
-		var length = Encoding.UTF8.GetByteCount(result);
-		if(length > (int)Marshal.PtrToStructure<ulong>(outpath + 8))
-			return 0;
-		
-		unsafe {
-			fixed(char* chars = result) {
-				Encoding.UTF8.GetBytes(chars, result.Length, (byte*)Marshal.ReadIntPtr(outpath), length);
-			}
-			Marshal.StructureToPtr((ulong)length, outpath + 16, false);
-		}
-		
-		return 1;
+		dialogs[id].Item1!.Show();
+		return 2;
 	}
 }

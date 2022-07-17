@@ -1,21 +1,19 @@
 // TODO: save the changes to layers
 
-use std::{collections::HashMap,  path::PathBuf, io::Write};
-use crate::{apply::penumbra::{ConfSetting, Config, PenumbraFile}, GAME};
+use std::{collections::HashMap,  io::Write};
+use crate::{apply::penumbra::ConfSetting, GAME};
 use super::Viewer;
 
 pub struct Generic {
 	ext: String,
 	gamepath: String,
-	#[allow(dead_code)] rootpath: Option<PathBuf>,
 }
 
 impl Generic {
-	pub fn new(gamepath: String, rootpath: Option<PathBuf>, _realpaths: Option<PenumbraFile>, _settings: Option<HashMap<String, ConfSetting>>) -> Self {
+	pub fn new(gamepath: String, _conf: Option<super::Conf>, _settings: Option<HashMap<String, ConfSetting>>) -> Self {
 		Generic {
 			ext: format!(".{}", gamepath.split('.').last().unwrap()),
 			gamepath,
-			rootpath,
 		}
 	}
 }
@@ -29,7 +27,7 @@ impl Viewer for Generic {
 		vec![self.ext.to_owned()]
 	}
 	
-	fn draw(&mut self, _state: &mut crate::Data, _conf: Option<&mut Config>) {
+	fn draw(&mut self, _state: &mut crate::Data, _conf: Option<super::Conf>) {
 		imgui::text("generic");
 	}
 	

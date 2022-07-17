@@ -1,12 +1,16 @@
 pub(crate) mod texture;
+pub(crate) mod file_dialog;
 mod scoped;
 mod tabbar;
 mod divider;
+mod orderable_list;
 
 pub use self::texture::{Texture, TextureOptions};
+pub use self::file_dialog::{FileDialogMode, FileDialogResult, FileDialogStatus, file_dialog, file_picker};
 pub use self::scoped::*;
 pub use self::tabbar::*;
 pub use self::divider::*;
+pub use self::orderable_list::*;
 
 pub trait F2 {
 	fn add(&self, a: [f32; 2]) -> [f32; 2];
@@ -45,6 +49,11 @@ impl F2 for [f32; 2] {
 	fn y(&self) -> f32 {
 		self[1]
 	}
+}
+
+pub(in crate) static mut FA5: *mut imgui::sys::ImFont = std::ptr::null_mut::<imgui::sys::ImFont>();
+pub fn fa5() -> &'static mut imgui::sys::ImFont {
+	unsafe{&mut *FA5}
 }
 
 pub fn frame_height() -> f32 {

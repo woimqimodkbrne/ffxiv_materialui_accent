@@ -30,15 +30,6 @@ macro_rules! log {
 	($($e:tt)*) => {unsafe{crate::LOG(0,   format!($($e)*))}};
 }
 
-static mut FILEDIALOG: fn(u8, String, String, String, &mut String) -> bool = |_, _, _, _, _| {false};
-pub fn file_dialog(mode: u8, title: String, extensions: Vec<String>, name: String) -> Option<PathBuf> {
-	let mut path = String::with_capacity(256);
-	match unsafe{FILEDIALOG(mode, title, extensions.join(","), name, &mut path)} {
-		true => Some(path.into()),
-		false => None,
-	}
-}
-
 // ---------------------------------------- //
 
 #[macro_use]
@@ -74,7 +65,6 @@ struct State {
 pub struct Data {
 	binary_path: PathBuf,
 	#[allow(dead_code)] config_path: PathBuf,
-	fa5: &'static mut imgui::sys::ImFont,
 	
 	config: config::Config,
 }
@@ -84,7 +74,7 @@ struct Initializers<'a> {
 	binary_path: &'a str,
 	config_path: &'a str,
 	log: fn(u8, String),
-	file_dialog: fn(u8, String, String, String, &mut String) -> bool,
+	file_dialog: fn(gui::aeth::FileDialogMode, String, String, String, &mut String) -> gui::aeth::FileDialogStatus,
 	create_texture: fn(gui::aeth::TextureOptions) -> usize,
 	create_texture_data: fn(gui::aeth::TextureOptions, Vec<u8>) -> usize,
 	drop_texture: fn(usize),
@@ -99,12 +89,13 @@ extern fn initialize(init: Initializers) -> *mut State {
 	
 	unsafe {
 		LOG = init.log;
-		FILEDIALOG = init.file_dialog;
+		gui::aeth::file_dialog::FILEDIALOG = init.file_dialog;
 		texture::CREATE = init.create_texture;
 		texture::CREATEDATA = init.create_texture_data;
 		texture::DROP = init.drop_texture;
 		texture::PIN = init.pin_texture;
 		texture::UNPIN = init.unpin_texture;
+		gui::aeth::FA5 = &mut *init.fa5;
 	}
 	
 	std::panic::set_backtrace_style(BacktraceStyle::Short);
@@ -117,7 +108,6 @@ extern fn initialize(init: Initializers) -> *mut State {
 	
 	let mut data = Data {
 		config: config::Config::load(config_path.join("config.json")),
-		fa5: unsafe{&mut *init.fa5},
 		
 		binary_path: init.binary_path.into(),
 		config_path: config_path,
@@ -135,22 +125,25 @@ extern fn destroy(state: *mut State) {
 }
 
 #[no_mangle]
-extern fn update_resources(state: *mut State, fa5: *mut imgui::sys::ImFont) {
-	let state = unsafe{&mut *state};
-	
-	state.data.fa5 = unsafe{&mut *fa5};
+extern fn update_resources(_state: *mut State, fa5: *mut imgui::sys::ImFont) {
+	// let state = unsafe{&mut *state};
+	unsafe{gui::aeth::FA5 = &mut *fa5}
 }
 
 #[no_mangle]
 extern fn draw(state: *mut State) {
-	let state = unsafe{&mut *state};
+	// let state = unsafe{&mut *state};
+	let state = state as usize;
 	
-	if state.win_aetherment.visible {
-		imgui::set_next_window_size([1100.0, 600.0], imgui::Cond::FirstUseEver);
-		imgui::begin("Aetherment", &mut state.win_aetherment.visible, imgui::WindowFlags::None);
-		if let Err(e) = state.win_aetherment.draw(&mut state.data) {log!(err, "{:?}", e);}
-		imgui::end();
-	}
+	std::panic::catch_unwind(|| {
+		let state = unsafe{&mut *(state as *mut State)};
+		if state.win_aetherment.visible {
+			imgui::set_next_window_size([1100.0, 600.0], imgui::Cond::FirstUseEver);
+			imgui::begin("Aetherment", &mut state.win_aetherment.visible, imgui::WindowFlags::None);
+			if let Err(e) = state.win_aetherment.draw(&mut state.data) {log!(err, "{:?}", e);}
+			imgui::end();
+		}
+	}).ok();
 }
 
 #[no_mangle]

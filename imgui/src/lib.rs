@@ -3279,12 +3279,12 @@ pub fn im_draw_list_shared_data__set_circle_tessellation_max_error(self_: &mut s
 	unsafe{sys::ImDrawListSharedData_SetCircleTessellationMaxError(self_, max_error)}
 }
 
-pub fn get_current_window_read() -> *mut sys::ImGuiWindow {
-	unsafe{sys::igGetCurrentWindowRead()}
+pub fn get_current_window_read() -> &'static mut sys::ImGuiWindow {
+	unsafe{&mut *sys::igGetCurrentWindowRead()}
 }
 
-pub fn get_current_window() -> *mut sys::ImGuiWindow {
-	unsafe{sys::igGetCurrentWindow()}
+pub fn get_current_window() -> &'static mut sys::ImGuiWindow {
+	unsafe{&mut *sys::igGetCurrentWindow()}
 }
 
 pub fn find_window_by_id(id: sys::ImGuiID) -> *mut sys::ImGuiWindow {

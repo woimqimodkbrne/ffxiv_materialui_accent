@@ -1,4 +1,4 @@
-use std::{fs::File, path::PathBuf, collections::HashMap, sync::{Arc, Mutex}, io::{Write, Cursor}};
+use std::{fs::File, path::PathBuf, collections::HashMap, io::{Write, Cursor, BufReader, BufRead}};
 use crate::{gui::aeth::{self, F2}, GAME, apply::{self, penumbra::{ConfOption, ConfSetting, PenumbraFile, FileLayer}}};
 
 mod tree;
@@ -6,10 +6,11 @@ mod viewer;
 use serde_json::json;
 use tree::Tree;
 
-use self::viewer::Viewer;
+use self::viewer::{Viewer, Conf};
 
 pub struct Tab {
-	refresh_mod: Arc<Mutex<bool>>,
+	first_draw: bool,
+	refresh_mod: bool,
 	curmod: Option<Mod>,
 	selected_mod: String,
 	
@@ -17,17 +18,20 @@ pub struct Tab {
 	mod_entries: Vec<String>,
 	
 	newopt: String,
+	importing: bool,
+	exporting: bool,
 	
 	gametree: Tree,
-	viewer: Option<Arc<Mutex<dyn Viewer + Send>>>,
+	viewer: Option<Box<dyn Viewer + Send>>,
 	path: String,
 	valid_path: bool,
 }
 
 impl Tab {
-	pub fn new(state: &mut crate::Data) -> Self {
+	pub fn new(_state: &mut crate::Data) -> Self {
 		Tab {
-			refresh_mod: Arc::new(Mutex::new(false)),
+			first_draw: true,
+			refresh_mod: false,
 			curmod: None,
 			selected_mod: "".to_owned(),
 			
@@ -35,9 +39,9 @@ impl Tab {
 			mod_entries: Vec::new(),
 			
 			newopt: String::with_capacity(32),
+			importing: false,
+			exporting: false,
 			
-			// TODO: thread it or smth, its super slow
-			// gametree: Tree::from_file("Game Files", state.binary_path.join("assets").join("paths")).unwrap(),
 			gametree: Tree::new("Game Files"),
 			viewer: None,
 			path: String::with_capacity(128),
@@ -46,16 +50,21 @@ impl Tab {
 	}
 	
 	pub fn draw(&mut self, state: &mut crate::Data) {
-		let mut refresh = self.refresh_mod.lock().unwrap();
-		if *refresh {
-			// refresh mod, probably wanna simply add tree entry and refresh viewer instead. TODO: this
-			*refresh = false;
-			drop(refresh);
+		if self.first_draw {
+			let path = state.binary_path.join("assets").join("paths");
+			let reader = BufReader::new(File::open(path).unwrap());
+			for path in reader.lines() {
+				self.gametree.add_node(&path.unwrap());
+			}
+			
+			self.first_draw = false;
+		}
+		
+		if self.refresh_mod {
+			self.refresh_mod = false;
 			let m = self.curmod.as_ref().unwrap();
-			File::create(m.path.join("datas.json")).unwrap().write_all(crate::serialize_json(json!(*m.datas.lock().unwrap())).as_bytes()).unwrap();
+			File::create(m.path.join("datas.json")).unwrap().write_all(crate::serialize_json(json!(&m.datas)).as_bytes()).unwrap();
 			self.load_mod(&self.selected_mod.clone(), m.path.clone());
-		} else {
-			drop(refresh);
 		}
 		
 		aeth::divider("explorer_div", false)
@@ -64,8 +73,8 @@ impl Tab {
 				if let Some(m) = self.curmod.as_mut() {
 					aeth::popup("modfilecontext", imgui::WindowFlags::None, || {
 						if imgui::button("Remove", [0.0, 0.0]) {
-							m.datas.lock().unwrap().penumbra.update_file(&m.opt, &m.subopt, &self.path, None);
-							*self.refresh_mod.lock().unwrap() = true;
+							m.datas.penumbra.update_file(&m.opt, &m.subopt, &self.path, None);
+							self.refresh_mod = true;
 							imgui::close_current_popup();
 						}
 					});
@@ -84,18 +93,18 @@ impl Tab {
 				}
 			});
 			
-			if let Some(m) = &self.curmod {
+			if let Some(m) = &mut self.curmod {
 				aeth::next_max_width();
 				// aeth::combo("##optionselect", &format!("{}/{}", m.opt, m.subopt), imgui::ComboFlags::None, || {
 				if imgui::begin_combo("##optionselect", &format!("{}/{}", m.opt, m.subopt), imgui::ComboFlags::None) { // scoped kinda sucks cuz closures suck
 					let mut a = if imgui::selectable("Default", m.opt == "" && m.subopt == "", imgui::SelectableFlags::None, [0.0, 0.0]) {Some(("".to_owned(), "".to_owned()))} else {None};
-					m.datas.lock().unwrap().penumbra.options.iter_mut().for_each(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o {
+					m.datas.penumbra.options.iter_mut().for_each(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o {
 						aeth::tree(&opt.name, || {
 							opt.options.iter().for_each(|o2| if imgui::selectable(&o2.name, m.opt == opt.name && m.subopt == o2.name, imgui::SelectableFlags::None, [0.0, 0.0]) {
 								a = Some((opt.name.clone(), o2.name.clone()));
 							});
 							
-							if aeth::button_icon("", state.fa5) { // fa-plus
+							if aeth::button_icon("", aeth::fa5()) { // fa-plus
 								opt.options.push(apply::penumbra::PenumbraOption {
 									name: self.newopt.clone(),
 									files: HashMap::new(),
@@ -103,7 +112,7 @@ impl Tab {
 									manipulations: Vec::new(),
 								});
 								self.newopt.clear();
-								*self.refresh_mod.lock().unwrap() = true;
+								self.refresh_mod = true;
 							}
 							imgui::same_line();
 							aeth::next_max_width();
@@ -113,29 +122,29 @@ impl Tab {
 					
 					aeth::popup("addoptselect", imgui::WindowFlags::None, || {
 						if imgui::button("Single", [0.0, 0.0]) {
-							m.datas.lock().unwrap().penumbra.options.push(ConfOption::Single(apply::penumbra::TypPenumbra {
+							m.datas.penumbra.options.push(ConfOption::Single(apply::penumbra::TypPenumbra {
 								name: self.newopt.clone(),
 								description: "".to_owned(), // TODO: editable in mod overview or smth
 								options: Vec::new(),
 							}));
 							self.newopt.clear();
-							*self.refresh_mod.lock().unwrap() = true;
+							self.refresh_mod = true;
 							imgui::close_current_popup();
 						}
 						
 						if imgui::button("Multi", [0.0, 0.0]) {
-							m.datas.lock().unwrap().penumbra.options.push(ConfOption::Multi(apply::penumbra::TypPenumbra {
+							m.datas.penumbra.options.push(ConfOption::Multi(apply::penumbra::TypPenumbra {
 								name: self.newopt.clone(),
 								description: "".to_owned(), // TODO: editable in mod overview or smth
 								options: Vec::new(),
 							}));
 							self.newopt.clear();
-							*self.refresh_mod.lock().unwrap() = true;
+							self.refresh_mod = true;
 							imgui::close_current_popup();
 						}
 					});
 					
-					if aeth::button_icon("", state.fa5) && self.newopt.len() > 0 { // fa-plus
+					if aeth::button_icon("", aeth::fa5()) && self.newopt.len() > 0 { // fa-plus
 						imgui::open_popup("addoptselect", imgui::PopupFlags::MouseButtonLeft);
 					}
 					imgui::same_line();
@@ -171,20 +180,67 @@ impl Tab {
 		}).right(400.0, || {
 			aeth::child("viewer", [0.0, -aeth::frame_height() - imgui::get_style().item_spacing.y()], false, imgui::WindowFlags::None, || {
 				if let Some(viewer) = self.viewer.as_mut() {
-					match &self.curmod {
-						Some(m) => viewer.lock().unwrap().draw(state, Some(&mut m.datas.lock().unwrap().penumbra)),
-						None => viewer.lock().unwrap().draw(state, None),
+					match &mut self.curmod {
+						Some(m) => viewer.draw(state, Some(Conf {
+							path: m.path.join("datas.json"),
+							datas: &mut m.datas,
+							// config: &mut m.datas.lock().unwrap().penumbra,
+							option: &mut m.opt,
+							sub_option: &mut m.subopt,
+						})),
+						None => viewer.draw(state, None),
 					}
 				}
 			});
 			
-			if self.viewer.is_some() {
-				if self.curmod.is_some() {
-					if imgui::button("Import", [0.0, 0.0]) {self.import()}
+			if let Some(viewer) = self.viewer.as_ref() {
+				if let Some(m) = self.curmod.as_mut() {
+					if imgui::button("Import", [0.0, 0.0]) {self.importing = true}
+					if self.importing {
+						let filename = &self.path[self.path.rfind('/').unwrap() + 1..self.path.rfind('.').unwrap()];
+						match aeth::file_dialog(aeth::FileDialogMode::OpenFile, format!("Importing {}", filename), filename.to_owned(), viewer.valid_imports()) {
+							aeth::FileDialogResult::Success(path) => {
+								self.importing = false;
+								let path = PathBuf::from(path);
+								log!("import {:?}", path);
+								let ext = path.extension().unwrap().to_str().unwrap();
+								let mut buf = Vec::new();
+								if !noumenon::convert(&mut File::open(&path).unwrap(), ext, &mut Cursor::new(&mut buf), &self.path[self.path.rfind('.').unwrap() + 1..].to_owned()) {
+									log!("import failed"); // TODO: nice popup displaying that it failed
+								}
+								let hash = blake3::hash(&buf).to_hex().as_str()[..24].to_string();
+								File::create(m.path.join("files").join(&hash)).unwrap().write_all(&buf).unwrap();
+								let file = PenumbraFile(vec![FileLayer {
+									id: None,
+									paths: vec![format!("files/{}", &hash)],
+								}]);
+								m.datas.penumbra.update_file(&m.opt, &m.subopt, &self.path, Some(file));
+								self.refresh_mod = true;
+							},
+							aeth::FileDialogResult::Failed => self.importing = false, // TODO: display that it failed
+							aeth::FileDialogResult::Busy => {},
+						}
+					}
 					imgui::same_line();
 				}
 				
-				if imgui::button("Export", [0.0, 0.0]) {self.export()}
+				if imgui::button("Export", [0.0, 0.0]) {self.exporting = true}
+				if self.exporting {
+					let filename = &self.path[self.path.rfind('/').unwrap() + 1..self.path.rfind('.').unwrap()];
+					match aeth::file_dialog(aeth::FileDialogMode::SaveFile, format!("Exporting {}", filename), filename.to_owned(), viewer.valid_exports()) {
+						aeth::FileDialogResult::Success(path) => {
+							self.exporting = false;
+							let path = PathBuf::from(path);
+							log!("export {:?}", path);
+							let ext = path.extension().unwrap().to_str().unwrap();
+							let mut buf = Vec::new();
+							viewer.save(ext, &mut buf);
+							File::create(&path).unwrap().write_all(&buf).unwrap();
+						},
+						aeth::FileDialogResult::Failed => self.exporting = false, // TODO: display that it failed
+						aeth::FileDialogResult::Busy => {},
+					}
+				}
 				imgui::same_line();
 			}
 			
@@ -221,7 +277,7 @@ impl Tab {
 		
 		self.curmod = Some(Mod {
 			tree,
-			datas: Arc::new(Mutex::new(datas)),
+			datas,
 			path,
 			opt: "".to_owned(),
 			subopt: "".to_owned(),
@@ -238,10 +294,10 @@ impl Tab {
 		m.tree.node_state_all(false);
 		
 		if m.opt == "" && m.subopt == "" {
-			m.datas.lock().unwrap().penumbra.files.keys()
+			m.datas.penumbra.files.keys()
 				.for_each(|p| m.tree.node_state(p, true));
 		} else {
-			m.datas.lock().unwrap().penumbra.options.iter()
+			m.datas.penumbra.options.iter()
 				.for_each(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o && opt.name == m.opt {
 					opt.options.iter()
 						.filter(|s| s.name == m.subopt)
@@ -264,7 +320,7 @@ impl Tab {
 		
 		let ext = self.path.split('.').last().unwrap().to_owned();
 		let path = self.path.clone();
-		self.open_viewer(&ext, &path, None, None, None);
+		self.open_viewer(&ext, &path, None);
 		
 		true
 	}
@@ -278,93 +334,40 @@ impl Tab {
 		let ext = self.path.split('.').last().unwrap().to_owned();
 		let path = self.path.clone();
 		let m = self.curmod.as_mut().unwrap();
-		let datas = m.datas.lock().unwrap();
-		let paths = if m.opt == "" {
-			datas.penumbra.files.get(&path).unwrap()
-		} else {
-			datas.penumbra.options.iter()
-				.find_map(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o && opt.name == m.opt {
-					Some(opt.options.iter()
-						.find_map(|o| if o.name == m.subopt {Some(o)} else {None})
-						.unwrap()
-						.files.get(&path)
-						.unwrap()
-					)} else {None})
-				.unwrap()
-		};
-		let paths = paths.clone();
-		let rootpath = Some(m.path.clone());
+		let f = &m.datas.penumbra.file_ref(&m.opt, &m.subopt, &path).unwrap().0;
 		let mut settings = HashMap::new();
-		for l in paths.0.iter() {
+		for i in 0..f.len() {
+			let l = f.get(i).unwrap();
 			if let Some(id) = &l.id {
-				settings.insert(id.clone(), datas.penumbra.options.iter().find(|e| e.id() == Some(&id)).unwrap().default());
+				settings.insert(id.clone(), m.datas.penumbra.options.iter().find(|e| e.id() == Some(&id)).unwrap().default());
 			}
 		}
-		// paths.push(paths[1].clone());
-		drop(datas);
-		self.open_viewer(&ext, &path, rootpath, Some(paths), Some(settings));
+		
+		self.open_viewer(&ext, &path, Some(settings));
 		
 		true
 	}
 	
-	fn open_viewer(&mut self, ext: &str, path: &str, rootpath: Option<PathBuf>, realpaths: Option<PenumbraFile>, settings: Option<HashMap<String, ConfSetting>>) {
-		self.viewer = match ext {
-			"tex" | "atex" => Some(Arc::new(Mutex::new(viewer::Tex::new(path.to_owned(), rootpath, realpaths, settings)))),
-			_ => Some(Arc::new(Mutex::new(viewer::Generic::new(path.to_owned(), rootpath, realpaths, settings)))),
-		};
-	}
-	
-	fn import(&self) {
-		// TODO: allow importing into invalid paths
-		let viewer = self.viewer.as_ref().unwrap().clone();
-		let curmod = self.curmod.as_ref().unwrap();
-		let gamepath = self.path.clone();
-		let modpath = curmod.path.clone();
-		let datas = curmod.datas.clone();
-		let opt = curmod.opt.clone();
-		let subopt = curmod.subopt.clone();
-		let refresh_mod = self.refresh_mod.clone();
+	fn open_viewer(&mut self, ext: &str, path: &str, settings: Option<HashMap<String, ConfSetting>>) {
+		let conf = if let Some(m) = &mut self.curmod {
+			Some(Conf {
+				path: m.path.join("datas.json"),
+				datas: &mut m.datas,
+				option: &mut m.opt,
+				sub_option: &mut m.subopt,
+			})
+		} else {None};
 		
-		std::thread::spawn(move || {
-			let exts = viewer.lock().unwrap().valid_imports();
-			if let Some(path) = crate::file_dialog(0, "Import".to_owned(), exts, "".to_owned()) {
-				log!("import {:?}", path);
-				let ext = path.extension().unwrap().to_str().unwrap();
-				let mut buf = Vec::new();
-				if !noumenon::convert(&mut File::open(&path).unwrap(), ext, &mut Cursor::new(&mut buf), &gamepath[gamepath.rfind('.').unwrap() + 1..].to_owned()) {
-					log!("import failed"); // TODO: nice popup displaying that it failed
-				}
-				let hash = blake3::hash(&buf).to_hex().as_str()[..24].to_string();
-				File::create(modpath.join("files").join(&hash)).unwrap().write_all(&buf).unwrap();
-				let file = PenumbraFile(vec![FileLayer {
-					id: None,
-					paths: vec![format!("files/{}", &hash)],
-				}]);
-				datas.lock().unwrap().penumbra.update_file(&opt, &subopt, &gamepath, Some(file));
-				*refresh_mod.lock().unwrap() = true;
-			}
-		});
-	}
-	
-	fn export(&self) {
-		let viewer = self.viewer.as_ref().unwrap().clone();
-		let name = self.path[self.path.rfind('/').unwrap() + 1..self.path.rfind('.').unwrap()].to_owned();
-		std::thread::spawn(move || {
-			let exts = viewer.lock().unwrap().valid_exports();
-			if let Some(path) = crate::file_dialog(1, format!("Export {}", &name), exts, name) {
-				log!("export {:?}", path);
-				let ext = path.extension().unwrap().to_str().unwrap();
-				let mut buf = Vec::new();
-				viewer.lock().unwrap().save(ext, &mut buf);
-				File::create(&path).unwrap().write_all(&buf).unwrap();
-			}
-		});
+		self.viewer = match ext {
+			"tex" | "atex" => Some(Box::new(viewer::Tex::new(path.to_owned(), conf, settings))),
+			_ => Some(Box::new(viewer::Generic::new(path.to_owned(), conf, settings))),
+		};
 	}
 }
 
 struct Mod {
 	tree: Tree,
-	datas: Arc<Mutex<apply::Datas>>,
+	datas: apply::Datas,
 	path: PathBuf,
 	opt: String,
 	subopt: String,
@@ -392,14 +395,14 @@ fn valid_path_mod(m: &Option<Mod>, path: &str) -> bool {
 	(|| {
 		if let Some(m) = m {
 			if m.opt != "" {
-				m.datas.lock().unwrap().penumbra.options.iter()
+				m.datas.penumbra.options.iter()
 					.find_map(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o && opt.name == m.opt {
 						Some(opt.options.iter().find_map(|o| if o.name == m.subopt {Some(o)} else {None})?)
 					} else {
 						None
 					})?.files.contains_key(path).then(|| ())
 			} else {
-				m.datas.lock().unwrap().penumbra.files.contains_key(path).then(|| ())
+				m.datas.penumbra.files.contains_key(path).then(|| ())
 			}
 		} else {
 			None

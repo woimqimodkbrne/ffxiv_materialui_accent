@@ -31,6 +31,32 @@ impl Config {
 			None => {files.remove(&path.into());},
 		}
 	}
+	
+	pub fn file_mut(&mut self, opt: &str, subopt: &str, path: &str) -> Option<&mut PenumbraFile> {
+		if opt == "" { // No option
+			self.files.get_mut(path)
+		} else {
+			match self.options.iter_mut().find(|o| o.name() == opt).unwrap() {
+				ConfOption::Single(v) | ConfOption::Multi(v) => {
+					v.options.iter_mut().find(|o| o.name == subopt).unwrap().files.get_mut(path)
+				}
+				_ => None,
+			}
+		}
+	}
+	
+	pub fn file_ref(&self, opt: &str, subopt: &str, path: &str) -> Option<&PenumbraFile> {
+		if opt == "" { // No option
+			self.files.get(path)
+		} else {
+			match self.options.iter().find(|o| o.name() == opt).unwrap() {
+				ConfOption::Single(v) | ConfOption::Multi(v) => {
+					v.options.iter().find(|o| o.name == subopt).unwrap().files.get(path)
+				}
+				_ => None,
+			}
+		}
+	}
 }
 
 #[derive(Deserialize, Serialize)]
@@ -69,6 +95,13 @@ impl<'a> ConfOption {
 			ConfOption::Opacity(v) => Some(&v.id),
 			ConfOption::Mask(v) => Some(&v.id),
 			_ => None,
+		}
+	}
+	
+	pub fn is_penumbra(&'a self) -> bool {
+		match self {
+			ConfOption::Single(_) | ConfOption::Multi(_) => true,
+			_ => false,
 		}
 	}
 	

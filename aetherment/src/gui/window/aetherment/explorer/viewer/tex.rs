@@ -1,16 +1,16 @@
 // TODO: save the changes to layers
 
-use std::{fs::File, io::{Seek, Read, Cursor}, collections::HashMap, sync::Mutex, path::PathBuf};
+use std::{fs::File, io::{Seek, Read, Cursor, Write}, collections::HashMap, sync::Mutex, path::{PathBuf, Path}};
 use noumenon::formats::{game::tex::{self, Format}, external::{dds::Dds, png::Png}};
-use crate::{gui::aeth::{self, F2}, GAME, apply::penumbra::{resolve_layer, ConfSetting, Layer as PLayer, Config, PenumbraFile}};
+use crate::{gui::aeth::{self, F2}, GAME, apply::penumbra::{resolve_layer, ConfSetting, Layer as PLayer, PenumbraFile, ConfOption, FileLayer}};
 use super::Viewer;
 
 pub struct Tex {
 	ext: String,
-	#[allow(dead_code)] gamepath: String,
+	gamepath: String,
 	rootpath: Option<PathBuf>,
 	tex: Option<tex::Tex>,
-	layers: Vec<Layer>,
+	settings: HashMap<String, ConfSetting>,
 	width: u16,
 	height: u16,
 	miplevel: i32,
@@ -20,16 +20,8 @@ pub struct Tex {
 	b: bool,
 	a: bool,
 	highlighted_layer: Option<usize>,
-	moving_layer: Option<(usize, f32)>,
-	
+	new_layer: Option<FileLayer>,
 	cache: HashMap<String, Vec<u8>>,
-}
-
-#[derive(Debug, Clone)]
-struct Layer {
-	id: Option<String>,
-	value: Option<ConfSetting>,
-	files: Vec<String>,
 }
 
 const TEXSIZE: i32 = 1024;
@@ -44,31 +36,13 @@ lazy_static!{
 }
 
 impl Tex {
-	pub fn new(gamepath: String, rootpath: Option<PathBuf>, realpaths: Option<PenumbraFile>, settings: Option<HashMap<String, ConfSetting>>) -> Self {
-		let layers = if let Some(paths) = realpaths {
-			let settings = settings.unwrap();
-			paths.0.into_iter().map(|l| {
-				Layer {
-					value: if let Some(id) = l.id.as_ref() {Some(settings[id])} else {None},
-					id: l.id,
-					files: l.paths,
-				}
-			})
-			.collect::<Vec<Layer>>()
-		} else {
-			vec![Layer {
-				id: None,
-				value: None,
-				files: vec![gamepath.clone()],
-			}]
-		};
-		
+	pub fn new(gamepath: String, conf: Option<super::Conf>, settings: Option<HashMap<String, ConfSetting>>) -> Self {
 		let mut t = Tex {
 			ext: format!(".{}", gamepath.split('.').last().unwrap()),
-			gamepath,
-			rootpath,
+			gamepath: gamepath.clone(),
+			rootpath: if let Some(c) = &conf {Some(c.path.parent().unwrap().to_owned())} else {None},
 			tex: None,
-			layers,
+			settings: if let Some(s) = settings {s} else {HashMap::new()},
 			miplevel: 0,
 			depth: 0,
 			width: 0,
@@ -78,26 +52,27 @@ impl Tex {
 			b: true,
 			a: true,
 			highlighted_layer: None,
-			moving_layer: None,
+			new_layer: None,
 			cache: HashMap::new(),
 		};
-		t.reload_preview();
+		let f = t.penumfile(&conf);
+		t.reload_preview(f);
 		t
 	}
 	
-	fn reload_preview(&mut self) {
+	fn reload_preview(&mut self, file: PenumbraFile) {
 		let hl = self.highlighted_layer;
-		let layers = self.layers.clone();
-		let mut layers = layers.iter().enumerate();
+		let mut layers = file.0.into_iter().enumerate();
+		let settings = self.settings.clone();
 		let mut get_file = |p: &str| -> Option<Vec<u8>> {
 			self.get_file(p)
 		};
 		
 		let layer = layers.next().unwrap();
-		let mut tex = resolve_layer(&PLayer{value: layer.1.value, files: layer.1.files.clone()}, &mut get_file).expect("Failed resolving layer");
+		let mut tex = resolve_layer(&PLayer{value: if let Some(id) = &layer.1.id {settings.get(id).cloned()} else {None}, files: layer.1.paths}, &mut get_file).expect("Failed resolving layer");
 		if hl == Some(layer.0) {Self::clrtex(&mut tex)}
 		while let Some((i, layer)) = layers.next() {
-			let mut l = resolve_layer(&PLayer{value: layer.value, files: layer.files.clone()}, &mut get_file).expect("Failed resolving layer");
+			let mut l = resolve_layer(&PLayer{value: if let Some(id) = &layer.id {settings.get(id).cloned()} else {None}, files: layer.paths}, &mut get_file).expect("Failed resolving layer");
 			if hl == Some(i) {Self::clrtex(&mut l)}
 			l.overlay_onto(&mut tex);
 		}
@@ -126,6 +101,16 @@ impl Tex {
 		TEXTURE.lock().unwrap().draw_to(&data).unwrap();
 	}
 	
+	fn penumfile(&mut self, conf: &Option<super::Conf>) -> PenumbraFile {
+		match conf {
+			Some(v) => v.file_ref(&self.gamepath).unwrap().clone(),
+			None => PenumbraFile(vec![FileLayer {
+				id: None,
+				paths: vec![self.gamepath.to_owned()],
+			}]),
+		}
+	}
+	
 	fn clrtex(tex: &mut tex::Tex) {
 		tex.data.iter_mut().for_each(|p| {
 			*p = ((*p).clone() as i16 - 32).clamp(0, 255) as u8;
@@ -139,8 +124,7 @@ impl Tex {
 		
 		log!("loading {}", path);
 		// TODO: allow reading from mods with lower priority
-		let data = if let Some(root) = self.rootpath.as_mut() {
-			let mut f = File::open(root.join(path)).unwrap();
+		let data = if let Some(root) = self.rootpath.as_mut() && let Ok(mut f) = File::open(root.join(path)) {
 			let mut buf = Vec::with_capacity(f.stream_len().unwrap() as usize);
 			f.read_to_end(&mut buf).unwrap();
 			Some(buf)
@@ -165,7 +149,8 @@ impl Viewer for Tex {
 		vec![self.ext.to_owned(), ".dds".to_owned(), ".png".to_owned()]
 	}
 	
-	fn draw(&mut self, state: &mut crate::Data, _conf: Option<&mut Config>) {
+	// TODO: use file in conf instead of a seperate clone of it
+	fn draw(&mut self, _state: &mut crate::Data, mut conf: Option<super::Conf>) {
 		aeth::divider("tex", true)
 		.left(200.0, || {
 			let draw = imgui::get_window_draw_list();
@@ -219,108 +204,137 @@ impl Viewer for Tex {
 			}
 			self.depth = self.depth.min(max_depth);
 			
-			// Layers, this is *kinda* a big mess
-			aeth::offset([0.0, 20.0]);
-			let h = aeth::frame_height();
-			let spos = imgui::get_cursor_screen_pos().y();
-			let mut pos = imgui::get_mouse_pos().y();
-			if let Some(ml) = self.moving_layer {
-				pos = (pos - ml.1).clamp(spos, spos + (self.layers.len() - 1) as f32 * (h + imgui::get_style().item_spacing.y()))
-			}
-			let mut hl = None;
-			let layers: &mut Vec<Layer> = self.layers.as_mut();
-			// for (i, layer) in layers.iter_mut().enumerate() {
-			let ll = layers.len();
-			for mut i in (0..ll).rev() {
-				if let Some(ml) = self.moving_layer {
-					let y = imgui::get_cursor_screen_pos().y();
-					if pos + h / 2.0 >= y && pos + h / 2.0 < y + h + imgui::get_style().item_spacing.y() {
-						imgui::dummy([0.0, h]);
-					}
-					if ml.0 == i {continue;}
-				}
-				
-				imgui::push_id_i32(i as i32);
-				// TODO: make custom element sortable list?
-				aeth::button_icon("", state.fa5); // fa-bars
-				imgui::same_line();
-				
-				if imgui::is_item_active() {
-					let o = imgui::get_mouse_pos().y() - imgui::get_cursor_screen_pos().y();
-					pos -= o;
-					self.moving_layer = Some((i, o));
-				}
-				
-				if imgui::is_item_clicked(imgui::MouseButton::Right) {
-					imgui::open_popup("layeredit", imgui::PopupFlags::MouseButtonLeft)
-				}
-				
-				aeth::popup("layeredit", imgui::WindowFlags::None, || {
+			if let Some(conf) = &mut conf {
+				// Layers
+				aeth::offset([0.0, 20.0]);
+				let mut hl = None;
+				let mut rem = None;
+				let mut layers = &mut conf.file_mut(&self.gamepath).unwrap().0;
+				let len = layers.len();
+				if aeth::orderable_list("layers", &mut layers, |i, _| {
 					// Removing the last layer isnt a great idea
-					if ll > 1 && imgui::button("Remove", [0.0, 0.0]) {
-						layers.remove(i);
-						changed = true;
-						i -= 1;
+					if len > 1 && imgui::button("Remove", [0.0, 0.0]) {
+						rem = Some(i);
 					}
-				});
-				
-				let layer = layers.get_mut(i).unwrap();
-				if let Some(id) = &layer.id {
-					if layer.value.as_mut().unwrap().draw(id) {
-						changed = true;
-						let id = layer.id.clone();
-						let value = layer.value.clone();
-						for j in 0..ll {
-							let layer2 = layers.get_mut(j).unwrap();
-							if layer2.id == id {
-								layer2.value = value;
-							}
-						}
-					}
-				} else {
-					imgui::text("Generic Layer");
-				}
-				
-				if imgui::is_item_hovered() {
-					hl = Some(i);
-				}
-				imgui::pop_id();
-			}
-			
-			if let Some(ml) = self.moving_layer {
-				imgui::set_cursor_screen_pos([imgui::get_cursor_screen_pos().x(), pos]);
-				
-				if !imgui::is_mouse_down(imgui::MouseButton::Left) {
-					let mli = layers.len() - 1 - (((pos + h / 2.0 - spos) / (h + imgui::get_style().item_spacing.y())).floor() as usize).min(self.layers.len() - 1);
-					if ml.0 < mli {
-						self.layers[ml.0..=mli].rotate_left(1);
-					} else if ml.0 > mli {
-						self.layers[mli..=ml.0].rotate_right(1);
-					}
-					
-					self.moving_layer = None;
-					changed = true;
-				} else {
-					aeth::button_icon("", state.fa5); // fa-bars
-					imgui::same_line();
-					
-					let layer = self.layers.get_mut(ml.0).unwrap();
+				}, |i, layer| {
 					if let Some(id) = &layer.id {
-						changed |= layer.value.as_mut().unwrap().draw(id);
+						changed |= self.settings.get_mut(id).unwrap().draw(id);
 					} else {
 						imgui::text("Generic Layer");
 					}
+					
+					if imgui::is_item_hovered() {hl = Some(i);}
+				}) {
+					conf.save();
+					changed = true;
+				} else if let Some(i) = rem {
+					layers.remove(i);
+					conf.save();
+					changed = true
 				}
-			} else {
-				aeth::button_icon("", state.fa5); // fa-plus
+				
+				if self.highlighted_layer != hl {
+					self.highlighted_layer = hl;
+					changed = true;
+				}
+				
+				// New Layer
+				if aeth::button_icon("", aeth::fa5()) { // fa-plus
+					imgui::open_popup("newlayer", imgui::PopupFlags::None);
+				}
+				
+				aeth::popup("newlayer", imgui::WindowFlags::None, || {
+					if imgui::selectable("Generic", false, imgui::SelectableFlags::None, [0.0, 0.0]) {
+						self.new_layer = Some(FileLayer {
+							id: None,
+							paths: vec![String::with_capacity(128)],
+						});
+						imgui::open_popup("newlayer2", imgui::PopupFlags::None);
+					}
+					
+					for i in 0..conf.datas.penumbra.options.len() {
+						let o = conf.datas.penumbra.options.get(i).unwrap();
+						if !o.is_penumbra() && imgui::selectable(&format!("{} ({})", o.name(), o.id().unwrap()), false, imgui::SelectableFlags::None, [0.0, 0.0]) {
+							self.new_layer = Some(FileLayer {
+								id: Some(o.id().unwrap().to_owned()),
+								paths: match o {
+									ConfOption::Mask(_) => vec![String::with_capacity(128), String::with_capacity(128)],
+									_ => vec![String::with_capacity(128)],
+								},
+							});
+						}
+					}
+				});
+				
+				if self.new_layer.is_some() {
+					let imports = self.valid_imports();
+					let layer = self.new_layer.as_mut().unwrap();
+					
+					imgui::set_next_window_pos(imgui::get_cursor_screen_pos(), imgui::Cond::Always, [0.0, 0.0]);
+					imgui::begin("##aetherment_newlayer", &mut true, imgui::WindowFlags::AlwaysAutoResize | /*imgui::WindowFlags::Popup |*/
+					                                                 imgui::WindowFlags::NoSavedSettings | imgui::WindowFlags::NoTitleBar /*|
+					                                                 imgui::WindowFlags::ChildWindow*/);
+					imgui::bring_window_to_display_front(imgui::get_current_window());
+					
+					if layer.id.is_some() {
+						match conf.datas.penumbra.options.iter().find(|f| f.id() == layer.id.as_deref()).unwrap() {
+							ConfOption::Mask(_) => {
+								let p = layer.paths.get_mut(0).unwrap();
+								aeth::file_picker(aeth::FileDialogMode::OpenFile, "Import Image", "", imports.clone(), p);
+								imgui::same_line();
+								imgui::input_text("Image", p, imgui::InputTextFlags::None);
+								
+								let p = layer.paths.get_mut(1).unwrap();
+								aeth::file_picker(aeth::FileDialogMode::OpenFile, "Import Mask", "", imports, p);
+								imgui::same_line();
+								imgui::input_text("Mask", p, imgui::InputTextFlags::None);
+							},
+							_ => {
+								let p = layer.paths.get_mut(0).unwrap();
+								aeth::file_picker(aeth::FileDialogMode::OpenFile, "Import Image", "", imports.clone(), p);
+								imgui::same_line();
+								imgui::input_text("Image", p, imgui::InputTextFlags::None);
+							}
+						}
+					} else {
+						let p = layer.paths.get_mut(0).unwrap();
+						aeth::file_picker(aeth::FileDialogMode::OpenFile, "Import Image", "", imports.clone(), p);
+						imgui::same_line();
+						imgui::input_text("Image", p, imgui::InputTextFlags::None);
+					}
+					
+					if imgui::button("Add", [0.0, 0.0]) && layer.paths.iter().all(|p| p.len() > 0) {
+						for i in 0..layer.paths.len() {
+							let gamepath = layer.paths.get_mut(i).unwrap();
+							let path = Path::new(&gamepath);
+							if path.exists() {
+								let ext = path.extension().unwrap().to_str().unwrap();
+								let mut buf = Vec::new();
+								if !noumenon::convert(&mut File::open(&path).unwrap(), ext, &mut Cursor::new(&mut buf), &self.gamepath[self.gamepath.rfind('.').unwrap() + 1..].to_owned()) {
+									log!("import failed"); // TODO: nice popup displaying that it failed
+								}
+								let hash = blake3::hash(&buf).to_hex().as_str()[..24].to_string();
+								File::create(conf.path.parent().unwrap().join("files").join(&hash)).unwrap().write_all(&buf).unwrap();
+								*gamepath = format!("files/{}", hash);
+							}
+						}
+						
+						conf.file_mut(&self.gamepath).unwrap().0.push(layer.clone());
+						self.new_layer = None;
+						conf.save();
+						changed = true;
+					}
+					imgui::same_line();
+					if imgui::button("Cancel", [0.0, 0.0]) {
+						self.new_layer = None;
+					}
+					
+					imgui::end();
+				}
 			}
 			
-			if self.highlighted_layer != hl {
-				self.highlighted_layer = hl;
-				changed = true;
-			}
-			
-			if changed {self.reload_preview();}
+			let f = self.penumfile(&mut conf);
+			if changed {self.reload_preview(f)}
 		});
 	}
 	
