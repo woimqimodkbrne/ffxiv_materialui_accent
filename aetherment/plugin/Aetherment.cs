@@ -11,7 +11,6 @@ using Dalamud.Game.Command;
 using Dalamud.Interface.Internal.Notifications;
 using Dalamud.IoC;
 using Dalamud.Plugin;
-using Dialog = Dalamud.Interface.ImGuiFileDialog.FileDialog;
 
 namespace Aetherment;
 
@@ -28,6 +27,7 @@ public class Aetherment : IDalamudPlugin {
 	
 	private IntPtr state;
 	private FileDialog fileDialog;
+	private Penumbra penumbra;
 	private TextureManager textureManager;
 	private TextureFinder texFinder;
 	
@@ -40,17 +40,22 @@ public class Aetherment : IDalamudPlugin {
 		public FFI.Str config_path;
 		public IntPtr log;
 		public IntPtr file_dialog;
-		public IntPtr t1;
-		public IntPtr t2;
-		public IntPtr t3;
-		public IntPtr t4;
-		public IntPtr t5;
+		public IntPtr t_c;
+		public IntPtr t_cd;
+		public IntPtr t_d;
+		public IntPtr t_p;
+		public IntPtr t_u;
 		public IntPtr fa5;
+		public IntPtr p_r;
+		public IntPtr p_rs;
+		public IntPtr p_am;
+		public IntPtr p_rm;
 	}
 	
 	public unsafe Aetherment() {
 		logDelegate = Log;
 		fileDialog = new();
+		penumbra = new();
 		textureManager = new();
 		texFinder = new();
 		
@@ -59,12 +64,17 @@ public class Aetherment : IDalamudPlugin {
 			config_path = Interface.ConfigDirectory.FullName,
 			log = Marshal.GetFunctionPointerForDelegate(logDelegate),
 			file_dialog = Marshal.GetFunctionPointerForDelegate(fileDialog.openFileDialogDelegate),
-			t1 = Marshal.GetFunctionPointerForDelegate(textureManager.createTexture),
-			t2 = Marshal.GetFunctionPointerForDelegate(textureManager.createTextureData),
-			t3 = Marshal.GetFunctionPointerForDelegate(textureManager.destroyResource),
-			t4 = Marshal.GetFunctionPointerForDelegate(textureManager.pinData),
-			t5 = Marshal.GetFunctionPointerForDelegate(textureManager.unpinData),
+			t_c = Marshal.GetFunctionPointerForDelegate(textureManager.createTexture),
+			t_cd = Marshal.GetFunctionPointerForDelegate(textureManager.createTextureData),
+			t_d = Marshal.GetFunctionPointerForDelegate(textureManager.destroyResource),
+			t_p = Marshal.GetFunctionPointerForDelegate(textureManager.pinData),
+			t_u = Marshal.GetFunctionPointerForDelegate(textureManager.unpinData),
 			fa5 = (IntPtr)Dalamud.Interface.UiBuilder.IconFont.NativePtr,
+			
+			p_r = Marshal.GetFunctionPointerForDelegate(penumbra.redraw),
+			p_rs = Marshal.GetFunctionPointerForDelegate(penumbra.redrawSelf),
+			p_am = Marshal.GetFunctionPointerForDelegate(penumbra.addTempMod),
+			p_rm = Marshal.GetFunctionPointerForDelegate(penumbra.removeTempMod),
 		};
 		
 		state = initialize(init);
@@ -152,8 +162,12 @@ public class Aetherment : IDalamudPlugin {
 		var typeplugin = typeof(Dalamud.ClientLanguage).Assembly
 			.GetType("Dalamud.Plugin.Internal.Types.LocalPlugin");
 		
-		await ((Task)typeplugin.GetMethod("ReloadAsync")
-			.Invoke(GetPluginInstance(), BindingFlags.Default, null, new object[] {}, null)).ConfigureAwait(false);
+		try {
+			await ((Task)typeplugin.GetMethod("ReloadAsync")
+				.Invoke(GetPluginInstance(), BindingFlags.Default, null, new object[] {}, null)).ConfigureAwait(false);
+		} catch(Exception e) {
+			PluginLog.Error(e, "Failed reloading");
+		}
 	}
 	#pragma warning restore CS8600,CS8602,CS8603,CS8604
 	

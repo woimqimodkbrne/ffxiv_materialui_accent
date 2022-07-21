@@ -1,4 +1,4 @@
-use std::{collections::BTreeMap, path::Path, fs::File, io::{BufReader, BufRead}, rc::Rc};
+use std::{collections::BTreeMap, rc::Rc};
 use crate::gui::aeth;
 
 pub struct Tree {
@@ -68,18 +68,6 @@ impl Tree {
 		let mut iter = self.nodes.iter_mut();
 		iter.next(); // skip root node
 		iter.for_each(|n| n.is_enabled = state);
-	}
-	
-	pub fn from_file<S, P>(name: S, path: P) -> std::io::Result<Self> where
-	S: Into<String>,
-	P: AsRef<Path> {
-		let mut tree = Self::new(name);
-		let reader = BufReader::new(File::open(path)?);
-		for path in reader.lines() {
-			tree.add_node(&path.unwrap());
-		}
-		
-		Ok(tree)
 	}
 	
 	pub fn draw(&mut self) -> Option<(imgui::MouseButton, String)> {

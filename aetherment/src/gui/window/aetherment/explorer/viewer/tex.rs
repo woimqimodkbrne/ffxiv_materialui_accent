@@ -1,8 +1,6 @@
-// TODO: save the changes to layers
-
-use std::{fs::File, io::{Seek, Read, Cursor, Write}, collections::HashMap, sync::Mutex, path::{PathBuf, Path}};
+use std::{fs::File, io::{Cursor, Write}, collections::HashMap, sync::Mutex, path::{PathBuf, Path}};
 use noumenon::formats::{game::tex::{self, Format}, external::{dds::Dds, png::Png}};
-use crate::{gui::aeth::{self, F2}, GAME, apply::penumbra::{resolve_layer, ConfSetting, Layer as PLayer, PenumbraFile, ConfOption, FileLayer}};
+use crate::{gui::aeth::{self, F2}, apply::penumbra::{resolve_layer, ConfSetting, Layer as PLayer, PenumbraFile, ConfOption, FileLayer, self}};
 use super::Viewer;
 
 pub struct Tex {
@@ -102,12 +100,13 @@ impl Tex {
 	}
 	
 	fn penumfile(&mut self, conf: &Option<super::Conf>) -> PenumbraFile {
-		match conf {
-			Some(v) => v.file_ref(&self.gamepath).unwrap().clone(),
-			None => PenumbraFile(vec![FileLayer {
+		if conf.is_some() && let Some(f) = conf.as_ref().unwrap().file_ref(&self.gamepath) {
+			f.clone()
+		} else {
+			PenumbraFile(vec![FileLayer {
 				id: None,
 				paths: vec![self.gamepath.to_owned()],
-			}]),
+			}])
 		}
 	}
 	
@@ -123,13 +122,10 @@ impl Tex {
 		}
 		
 		log!("loading {}", path);
-		// TODO: allow reading from mods with lower priority
-		let data = if let Some(root) = self.rootpath.as_mut() && let Ok(mut f) = File::open(root.join(path)) {
-			let mut buf = Vec::with_capacity(f.stream_len().unwrap() as usize);
-			f.read_to_end(&mut buf).unwrap();
-			Some(buf)
+		let data = if let Some(root) = &self.rootpath && root.join(path).exists() {
+			penumbra::load_file(root.join(path).to_str().unwrap())
 		} else {
-			GAME.file::<Vec<u8>>(path).ok()
+			penumbra::load_file(path)
 		};
 		
 		if let Some(v) = data.clone() {
@@ -204,12 +200,12 @@ impl Viewer for Tex {
 			}
 			self.depth = self.depth.min(max_depth);
 			
-			if let Some(conf) = &mut conf {
+			if let Some(conf) = &mut conf && let Some(f) = conf.file_mut(&self.gamepath) {
 				// Layers
 				aeth::offset([0.0, 20.0]);
 				let mut hl = None;
 				let mut rem = None;
-				let mut layers = &mut conf.file_mut(&self.gamepath).unwrap().0;
+				let mut layers = &mut f.0;
 				let len = layers.len();
 				if aeth::orderable_list("layers", &mut layers, |i, _| {
 					// Removing the last layer isnt a great idea

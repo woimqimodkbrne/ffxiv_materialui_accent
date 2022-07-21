@@ -44,6 +44,9 @@ lazy_static! {
 
 // ---------------------------------------- //
 
+pub mod api {
+	pub mod penumbra;
+}
 pub mod server;
 pub mod config;
 pub mod apply;
@@ -80,7 +83,11 @@ struct Initializers<'a> {
 	drop_texture: fn(usize),
 	pin_texture: fn(usize) -> *mut u8,
 	unpin_texture: fn(usize),
-	fa5: *mut imgui::sys::ImFont
+	fa5: *mut imgui::sys::ImFont,
+	penumbra_redraw: fn(),
+	penumbra_redraw_self: fn(),
+	penumbra_add_mod: fn(String, String, String, i32) -> u8,
+	penumbra_remove_mod: fn(String, i32) -> u8,
 }
 
 #[no_mangle]
@@ -96,6 +103,11 @@ extern fn initialize(init: Initializers) -> *mut State {
 		texture::PIN = init.pin_texture;
 		texture::UNPIN = init.unpin_texture;
 		gui::aeth::FA5 = &mut *init.fa5;
+		
+		api::penumbra::REDRAW = init.penumbra_redraw;
+		api::penumbra::REDRAWSELF = init.penumbra_redraw_self;
+		api::penumbra::ADDMOD = init.penumbra_add_mod;
+		api::penumbra::REMOVEMOD = init.penumbra_remove_mod;
 	}
 	
 	std::panic::set_backtrace_style(BacktraceStyle::Short);

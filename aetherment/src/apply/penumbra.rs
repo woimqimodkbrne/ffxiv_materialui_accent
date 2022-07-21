@@ -1,6 +1,7 @@
-use std::{io::Cursor, collections::HashMap};
+use std::{io::{Cursor, Read, Seek}, collections::HashMap, fs::File};
 use noumenon::formats::game::tex::Tex;
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
+use crate::GAME;
 
 #[derive(Deserialize, Serialize)]
 pub struct Config {
@@ -17,9 +18,7 @@ impl Config {
 			&mut self.files
 		} else {
 			match self.options.iter_mut().find(|o| o.name() == opt).unwrap() {
-				ConfOption::Single(v) | ConfOption::Multi(v) => {
-					&mut v.options.iter_mut().find(|o| o.name == subopt).unwrap().files
-				}
+				ConfOption::Single(v) | ConfOption::Multi(v) => &mut v.options.iter_mut().find(|o| o.name == subopt).unwrap().files,
 				_ => return,
 			}
 		};
@@ -37,9 +36,7 @@ impl Config {
 			self.files.get_mut(path)
 		} else {
 			match self.options.iter_mut().find(|o| o.name() == opt).unwrap() {
-				ConfOption::Single(v) | ConfOption::Multi(v) => {
-					v.options.iter_mut().find(|o| o.name == subopt).unwrap().files.get_mut(path)
-				}
+				ConfOption::Single(v) | ConfOption::Multi(v) => v.options.iter_mut().find(|o| o.name == subopt).unwrap().files.get_mut(path),
 				_ => None,
 			}
 		}
@@ -50,9 +47,18 @@ impl Config {
 			self.files.get(path)
 		} else {
 			match self.options.iter().find(|o| o.name() == opt).unwrap() {
-				ConfOption::Single(v) | ConfOption::Multi(v) => {
-					v.options.iter().find(|o| o.name == subopt).unwrap().files.get(path)
-				}
+				ConfOption::Single(v) | ConfOption::Multi(v) => v.options.iter().find(|o| o.name == subopt).unwrap().files.get(path),
+				_ => None,
+			}
+		}
+	}
+	
+	pub fn files_ref(&self, opt: &str, subopt: &str) -> Option<&HashMap<String, PenumbraFile>> {
+		if opt == "" {
+			Some(&self.files)
+		} else {
+			match self.options.iter().find(|o| o.name() == opt).unwrap() {
+				ConfOption::Single(v) | ConfOption::Multi(v) => Some(&v.options.iter().find(|o| o.name == subopt).unwrap().files),
 				_ => None,
 			}
 		}
@@ -235,6 +241,17 @@ impl ConfSetting {
 pub struct Layer {
 	pub value: Option<ConfSetting>,
 	pub files: Vec<String>,
+}
+
+pub fn load_file(path: &str) -> Option<Vec<u8>> {
+	// TODO: allow reading from mods with lower priority
+	if let Ok(mut f) = File::open(path) {
+		let mut buf = Vec::with_capacity(f.stream_len().unwrap() as usize);
+		f.read_to_end(&mut buf).unwrap();
+		Some(buf)
+	} else {
+		GAME.file::<Vec<u8>>(path).ok()
+	}
 }
 
 // Might not want to return tex, idk yet

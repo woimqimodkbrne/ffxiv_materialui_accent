@@ -117,11 +117,11 @@ impl File for Tex {
 
 impl Tex {
 	pub fn as_pixels(&self) -> &[Pixel] {
-		unsafe { ::std::slice::from_raw_parts(self.data.as_ptr() as *const _, self.data.len() / 4) }
+		unsafe{::std::slice::from_raw_parts(self.data.as_ptr() as *const _, self.data.len() / 4)}
 	}
 	
 	pub fn as_pixels_mut(&mut self) -> &mut [Pixel] {
-		unsafe { ::std::slice::from_raw_parts_mut(self.data.as_mut_ptr() as *mut _, self.data.len() / 4) }
+		unsafe{::std::slice::from_raw_parts_mut(self.data.as_mut_ptr() as *mut _, self.data.len() / 4)}
 	}
 	
 	pub fn overlay_onto(&self, target: &mut Tex) {
