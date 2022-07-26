@@ -17,7 +17,7 @@ pub struct Tab {
 	populated_modselect: bool,
 	mod_entries: Vec<String>,
 	
-	newopt: String,
+	newmod: String,
 	importing: bool,
 	exporting: bool,
 	
@@ -38,7 +38,7 @@ impl Tab {
 			populated_modselect: false,
 			mod_entries: Vec::new(),
 			
-			newopt: String::with_capacity(32),
+			newmod: String::with_capacity(64),
 			importing: false,
 			exporting: false,
 			
@@ -178,6 +178,18 @@ impl Tab {
 						self.load_mod(&m, PathBuf::from(&state.config.local_path).join(&m));
 					}
 				}
+				
+				if aeth::button_icon("", aeth::fa5()) { // fa-plus
+					let path = PathBuf::from(&state.config.local_path).join(&self.newmod);
+					fs::create_dir_all(&path).unwrap();
+					File::create(path.join("datas.json")).unwrap().write_all(crate::serialize_json(json!(apply::Datas::default())).as_bytes()).unwrap();
+					let m = self.newmod.clone();
+					self.newmod.clear();
+					self.load_mod(&m, path);
+				}
+				imgui::same_line();
+				aeth::next_max_width();
+				imgui::input_text_with_hint("##newmod", "New Mod", &mut self.newmod, imgui::InputTextFlags::None);
 			});
 		}).right(400.0, || {
 			aeth::child("viewer", [0.0, -aeth::frame_height() - imgui::get_style().item_spacing.y()], false, imgui::WindowFlags::None, || {

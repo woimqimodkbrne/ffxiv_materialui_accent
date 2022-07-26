@@ -3,7 +3,7 @@ use noumenon::formats::game::tex::Tex;
 use serde::{Deserialize, Serialize, Serializer, ser::SerializeSeq};
 use crate::GAME;
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct Config {
 	pub options: Vec<ConfOption>,
 	pub files: HashMap<String, PenumbraFile>,
