@@ -21,7 +21,7 @@ public class Penumbra {
 	public delegate void RedrawSelfDelegate();
 	public void RedrawSelf() {
 		// This doesnt redraw the mount!!!, TODO: make pr to penumbra to fix that. or bother otter, idk
-		// Aetherment.Interface.GetIpcSubscriber<string, byte, object>("Penumbra.RedrawObject").InvokeAction("self", 0);
+		// Aetherment.Interface.GetIpcSubscriber<GameObject, byte, object>("Penumbra.RedrawObject").InvokeAction(Aetherment.Objects[0]!, 0);
 		
 		Aetherment.Interface.GetIpcSubscriber<byte, object>("Penumbra.RedrawAll").InvokeAction(0);
 	}

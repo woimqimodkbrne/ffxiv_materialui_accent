@@ -3,9 +3,11 @@ use serde_json::json;
 use crate::apply::{penumbra::PenumbraFile, Datas};
 
 mod generic;
+mod options;
 mod tex;
 
 pub use generic::*;
+pub use options::*;
 pub use tex::*;
 
 pub struct Conf<'a> {
@@ -17,7 +19,7 @@ pub struct Conf<'a> {
 
 impl <'a> Conf<'a> {
 	pub fn save(&self) {
-		File::create(&self.path).unwrap().write_all(crate::serialize_json(json!(self.datas)).as_bytes()).unwrap();
+		File::create(&self.path.join("datas.json")).unwrap().write_all(crate::serialize_json(json!(self.datas)).as_bytes()).unwrap();
 	}
 	
 	pub fn file_mut<'b>(&'b mut self, path: &str) -> Option<&'b mut PenumbraFile> {

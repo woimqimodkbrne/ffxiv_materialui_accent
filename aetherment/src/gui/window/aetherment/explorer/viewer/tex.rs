@@ -19,6 +19,7 @@ pub struct Tex {
 	a: bool,
 	highlighted_layer: Option<usize>,
 	new_layer: Option<FileLayer>,
+	invalid_layers: Vec<(usize, String)>,
 	cache: HashMap<String, Vec<u8>>,
 }
 
@@ -34,13 +35,27 @@ lazy_static!{
 }
 
 impl Tex {
-	pub fn new(gamepath: String, conf: Option<super::Conf>, settings: Option<HashMap<String, ConfSetting>>) -> Self {
+	pub fn new(gamepath: String, conf: Option<super::Conf>) -> Self {
+		let settings = if let Some(c) = &conf && let Some(f) = c.datas.penumbra.file_ref(&c.option, &c.sub_option, &gamepath) {
+			let f = &f.0;
+			let mut settings = HashMap::new();
+			for i in 0..f.len() {
+				let l = f.get(i).unwrap();
+				if let Some(id) = &l.id && let Some(setting) = c.datas.penumbra.options.iter().find(|e| e.id() == Some(&id)) {
+					settings.insert(id.clone(), setting.default());
+				}
+			}
+			settings
+		} else {
+			HashMap::new()
+		};
+		
 		let mut t = Tex {
 			ext: format!(".{}", gamepath.split('.').last().unwrap()),
 			gamepath: gamepath.clone(),
-			rootpath: if let Some(c) = &conf {Some(c.path.parent().unwrap().to_owned())} else {None},
+			rootpath: if let Some(c) = &conf {Some(c.path.clone())} else {None},
 			tex: None,
-			settings: if let Some(s) = settings {s} else {HashMap::new()},
+			settings,
 			miplevel: 0,
 			depth: 0,
 			width: 0,
@@ -51,6 +66,7 @@ impl Tex {
 			a: true,
 			highlighted_layer: None,
 			new_layer: None,
+			invalid_layers: Vec::new(),
 			cache: HashMap::new(),
 		};
 		let f = t.penumfile(&conf);
@@ -61,42 +77,55 @@ impl Tex {
 	fn reload_preview(&mut self, file: PenumbraFile) {
 		let hl = self.highlighted_layer;
 		let mut layers = file.0.into_iter().enumerate();
-		let settings = self.settings.clone();
-		let mut get_file = |p: &str| -> Option<Vec<u8>> {
-			self.get_file(p)
-		};
 		
-		let layer = layers.next().unwrap();
-		let mut tex = resolve_layer(&PLayer{value: if let Some(id) = &layer.1.id {settings.get(id).cloned()} else {None}, files: layer.1.paths}, &mut get_file).expect("Failed resolving layer");
-		if hl == Some(layer.0) {Self::clrtex(&mut tex)}
+		self.invalid_layers.clear();
+		let mut tex: Option<tex::Tex> = None;
 		while let Some((i, layer)) = layers.next() {
-			let mut l = resolve_layer(&PLayer{value: if let Some(id) = &layer.id {settings.get(id).cloned()} else {None}, files: layer.paths}, &mut get_file).expect("Failed resolving layer");
-			if hl == Some(i) {Self::clrtex(&mut l)}
-			l.overlay_onto(&mut tex);
-		}
-		
-		let isa = !self.r && !self.g && !self.b && self.a;
-		
-		// Nearest neighbour scaling
-		let (w, h, slice) = tex.slice(self.miplevel as u16, self.depth as u16);
-		let bx = TEXSIZE as f32 / w as f32;
-		let by = TEXSIZE as f32 / h as f32;
-		let mut data = Vec::with_capacity(TEXSIZE as usize * TEXSIZE as usize * 4);
-		for y in 0..TEXSIZE as usize {
-			for x in 0..TEXSIZE as usize {
-				let i = (y as f32 / by).floor() as usize * 4 * w as usize + (x as f32 / bx).floor() as usize * 4;
-				data.push(if isa {slice[i + 3]} else if self.b {slice[i    ]} else {0});
-				data.push(if isa {slice[i + 3]} else if self.g {slice[i + 1]} else {0});
-				data.push(if isa {slice[i + 3]} else if self.r {slice[i + 2]} else {0});
-				data.push(if isa {255} else if self.a {slice[i + 3]} else {255});
+			let val = if let Some(id) = &layer.id {
+				let setting = self.settings.get(id).cloned();
+				if setting.is_none() {
+					self.invalid_layers.push((i, format!("Invalid ID: {}", id)));
+					continue;
+				}
+				setting
+			} else {None};
+			let mut get_file = |p: &str| -> Option<Vec<u8>> {self.get_file(p)};
+			match resolve_layer(&PLayer{value: val, files: layer.paths}, &mut get_file) {
+				Ok(mut l) => {
+					if hl == Some(i) {Self::clrtex(&mut l)}
+					match &mut tex {
+						Some(tex) => l.overlay_onto(tex),
+						None => tex = Some(l),
+					}
+				},
+				Err(e) => self.invalid_layers.push((i, format!("Invalid Path: {}", e))),
 			}
 		}
 		
-		self.tex = Some(tex);
-		self.width = w;
-		self.height = h;
-		
-		TEXTURE.lock().unwrap().draw_to(&data).unwrap();
+		if let Some(tex) = tex {
+			let isa = !self.r && !self.g && !self.b && self.a;
+			
+			// Nearest neighbour scaling
+			let (w, h, slice) = tex.slice(self.miplevel as u16, self.depth as u16);
+			let bx = TEXSIZE as f32 / w as f32;
+			let by = TEXSIZE as f32 / h as f32;
+			let mut data = Vec::with_capacity(TEXSIZE as usize * TEXSIZE as usize * 4);
+			for y in 0..TEXSIZE as usize {
+				for x in 0..TEXSIZE as usize {
+					let i = (y as f32 / by).floor() as usize * 4 * w as usize + (x as f32 / bx).floor() as usize * 4;
+					data.push(if isa {slice[i + 3]} else if self.b {slice[i    ]} else {0});
+					data.push(if isa {slice[i + 3]} else if self.g {slice[i + 1]} else {0});
+					data.push(if isa {slice[i + 3]} else if self.r {slice[i + 2]} else {0});
+					data.push(if isa {255} else if self.a {slice[i + 3]} else {255});
+				}
+			}
+			
+			self.tex = Some(tex);
+			self.width = w;
+			self.height = h;
+			
+			TEXTURE.lock().unwrap().draw_to(&data).unwrap();
+		}
 	}
 	
 	fn penumfile(&mut self, conf: &Option<super::Conf>) -> PenumbraFile {
@@ -173,32 +202,34 @@ impl Viewer for Tex {
 			
 			draw.add_image(TEXTURE.lock().unwrap().resource(), preview_pos, preview_pos.add([w, h]), [0.0, 0.0], [1.0, 1.0], 0xFFFFFFFF);
 		}).right(175.0, || {
-			let header = &self.tex.as_ref().unwrap().header;
-			imgui::text(&format!("{:?}", header.format));
-			
 			let mut changed = false;
-			if !matches!(header.format, Format::A8) || !matches!(header.format, Format::L8) {
-				changed |= imgui::checkbox("R", &mut self.r);
-				imgui::same_line();
-				changed |= imgui::checkbox("G", &mut self.g);
-				imgui::same_line();
-				changed |= imgui::checkbox("B", &mut self.b);
-				imgui::same_line();
-				changed |= imgui::checkbox("A", &mut self.a);
+			if let Some(tex) = self.tex.as_ref() {
+				let header = &tex.header;
+				imgui::text(&format!("{:?}", header.format));
+				
+				if !matches!(header.format, Format::A8) || !matches!(header.format, Format::L8) {
+					changed |= imgui::checkbox("R", &mut self.r);
+					imgui::same_line();
+					changed |= imgui::checkbox("G", &mut self.g);
+					imgui::same_line();
+					changed |= imgui::checkbox("B", &mut self.b);
+					imgui::same_line();
+					changed |= imgui::checkbox("A", &mut self.a);
+				}
+				
+				// TODO: fancier sliders
+				if header.mip_levels > 1 {
+					imgui::set_next_item_width(aeth::width_left() - 70.0);
+					changed |= imgui::slider_int("Mip Level", &mut self.miplevel, 0, header.mip_levels as i32 - 1, "%d", imgui::SliderFlags::None);
+				}
+				
+				let max_depth = 1f32.max(header.depths as f32 * 0.5f32.powf(self.miplevel as f32)) as i32 - 1;
+				if max_depth > 1 {
+					imgui::set_next_item_width(aeth::width_left() - 70.0);
+					changed |= imgui::slider_int("Depth", &mut self.depth, 0, max_depth as i32, "%d", imgui::SliderFlags::None);
+				}
+				self.depth = self.depth.min(max_depth);
 			}
-			
-			// TODO: fancier sliders
-			if header.mip_levels > 1 {
-				imgui::set_next_item_width(aeth::width_left() - 70.0);
-				changed |= imgui::slider_int("Mip Level", &mut self.miplevel, 0, header.mip_levels as i32 - 1, "%d", imgui::SliderFlags::None);
-			}
-			
-			let max_depth = 1f32.max(header.depths as f32 * 0.5f32.powf(self.miplevel as f32)) as i32 - 1;
-			if max_depth > 1 {
-				imgui::set_next_item_width(aeth::width_left() - 70.0);
-				changed |= imgui::slider_int("Depth", &mut self.depth, 0, max_depth as i32, "%d", imgui::SliderFlags::None);
-			}
-			self.depth = self.depth.min(max_depth);
 			
 			if let Some(conf) = &mut conf && let Some(f) = conf.file_mut(&self.gamepath) {
 				// Layers
@@ -213,10 +244,14 @@ impl Viewer for Tex {
 						rem = Some(i);
 					}
 				}, |i, layer| {
-					if let Some(id) = &layer.id {
-						changed |= self.settings.get_mut(id).unwrap().draw(id);
+					if let Some(e) = self.invalid_layers.iter().find(|v| v.0 == i) {
+						imgui::text(&e.1);
 					} else {
-						imgui::text("Generic Layer");
+						if let Some(id) = &layer.id {
+							changed |= self.settings.get_mut(id).unwrap().draw(id);
+						} else {
+							imgui::text("Generic Layer");
+						}
 					}
 					
 					if imgui::is_item_hovered() {hl = Some(i);}
@@ -310,7 +345,7 @@ impl Viewer for Tex {
 									log!("import failed"); // TODO: nice popup displaying that it failed
 								}
 								let hash = blake3::hash(&buf).to_hex().as_str()[..24].to_string();
-								File::create(conf.path.parent().unwrap().join("files").join(&hash)).unwrap().write_all(&buf).unwrap();
+								File::create(conf.path.join("files").join(&hash)).unwrap().write_all(&buf).unwrap();
 								*gamepath = format!("files/{}", hash);
 							}
 						}

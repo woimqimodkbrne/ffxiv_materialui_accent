@@ -7,6 +7,7 @@ using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
+using Dalamud.Game.ClientState.Objects;
 using Dalamud.Game.Command;
 using Dalamud.Interface.Internal.Notifications;
 using Dalamud.IoC;
@@ -19,6 +20,7 @@ public class Aetherment : IDalamudPlugin {
 	
 	[PluginService][RequiredVersion("1.0")] public static DalamudPluginInterface Interface {get; private set;} = null!;
 	[PluginService][RequiredVersion("1.0")] public static CommandManager         Commands  {get; private set;} = null!;
+	[PluginService][RequiredVersion("1.0")] public static ObjectTable            Objects   {get; private set;} = null!;
 	// [PluginService][RequiredVersion("1.0")] public static TitleScreenMenu        TitleMenu  {get; private set;} = null!;
 	
 	public static SharpDX.Direct3D11.Device Device => Interface.UiBuilder.Device;

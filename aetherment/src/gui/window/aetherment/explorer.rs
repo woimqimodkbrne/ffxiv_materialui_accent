@@ -1,5 +1,5 @@
 use std::{fs::{File, self}, path::PathBuf, collections::HashMap, io::{Write, Cursor, BufReader, BufRead}};
-use crate::{gui::aeth::{self, F2}, GAME, apply::{self, penumbra::{ConfOption, ConfSetting, PenumbraFile, FileLayer}}};
+use crate::{gui::aeth::{self, F2}, GAME, apply::{self, penumbra::{ConfOption, PenumbraFile, FileLayer}}};
 
 mod tree;
 mod viewer;
@@ -54,7 +54,9 @@ impl Tab {
 			let path = state.binary_path.join("assets").join("paths");
 			let reader = BufReader::new(File::open(path).unwrap());
 			for path in reader.lines() {
-				self.gametree.add_node(&path.unwrap());
+				let mut path = path.unwrap();
+				path.make_ascii_lowercase();
+				self.gametree.add_node(&path);
 			}
 			
 			self.first_draw = false;
@@ -104,52 +106,52 @@ impl Tab {
 								a = Some((opt.name.clone(), o2.name.clone()));
 							});
 							
-							if aeth::button_icon("", aeth::fa5()) { // fa-plus
-								opt.options.push(apply::penumbra::PenumbraOption {
-									name: self.newopt.clone(),
-									files: HashMap::new(),
-									swaps: HashMap::new(),
-									manipulations: Vec::new(),
-								});
-								self.newopt.clear();
-								self.refresh_mod = true;
-							}
-							imgui::same_line();
-							aeth::next_max_width();
-							imgui::input_text_with_hint("##newopt", "New Sub Option", &mut self.newopt, imgui::InputTextFlags::None);
+							// if aeth::button_icon("", aeth::fa5()) { // fa-plus
+							// 	opt.options.push(apply::penumbra::PenumbraOption {
+							// 		name: self.newopt.clone(),
+							// 		files: HashMap::new(),
+							// 		swaps: HashMap::new(),
+							// 		manipulations: Vec::new(),
+							// 	});
+							// 	self.newopt.clear();
+							// 	self.refresh_mod = true;
+							// }
+							// imgui::same_line();
+							// aeth::next_max_width();
+							// imgui::input_text_with_hint("##newopt", "New Sub Option", &mut self.newopt, imgui::InputTextFlags::None);
 						});
 					});
 					
-					aeth::popup("addoptselect", imgui::WindowFlags::None, || {
-						if imgui::button("Single", [0.0, 0.0]) {
-							m.datas.penumbra.options.push(ConfOption::Single(apply::penumbra::TypPenumbra {
-								name: self.newopt.clone(),
-								description: "".to_owned(), // TODO: editable in mod overview or smth
-								options: Vec::new(),
-							}));
-							self.newopt.clear();
-							self.refresh_mod = true;
-							imgui::close_current_popup();
-						}
+					// aeth::popup("addoptselect", imgui::WindowFlags::None, || {
+					// 	if imgui::button("Single", [0.0, 0.0]) {
+					// 		m.datas.penumbra.options.push(ConfOption::Single(apply::penumbra::TypPenumbra {
+					// 			name: self.newopt.clone(),
+					// 			description: "".to_owned(), // TODO: editable in mod overview or smth
+					// 			options: Vec::new(),
+					// 		}));
+					// 		self.newopt.clear();
+					// 		self.refresh_mod = true;
+					// 		imgui::close_current_popup();
+					// 	}
 						
-						if imgui::button("Multi", [0.0, 0.0]) {
-							m.datas.penumbra.options.push(ConfOption::Multi(apply::penumbra::TypPenumbra {
-								name: self.newopt.clone(),
-								description: "".to_owned(), // TODO: editable in mod overview or smth
-								options: Vec::new(),
-							}));
-							self.newopt.clear();
-							self.refresh_mod = true;
-							imgui::close_current_popup();
-						}
-					});
+					// 	if imgui::button("Multi", [0.0, 0.0]) {
+					// 		m.datas.penumbra.options.push(ConfOption::Multi(apply::penumbra::TypPenumbra {
+					// 			name: self.newopt.clone(),
+					// 			description: "".to_owned(), // TODO: editable in mod overview or smth
+					// 			options: Vec::new(),
+					// 		}));
+					// 		self.newopt.clear();
+					// 		self.refresh_mod = true;
+					// 		imgui::close_current_popup();
+					// 	}
+					// });
 					
-					if aeth::button_icon("", aeth::fa5()) && self.newopt.len() > 0 { // fa-plus
-						imgui::open_popup("addoptselect", imgui::PopupFlags::MouseButtonLeft);
-					}
-					imgui::same_line();
-					aeth::next_max_width();
-					imgui::input_text_with_hint("##newopt", "New Option", &mut self.newopt, imgui::InputTextFlags::None);
+					// if aeth::button_icon("", aeth::fa5()) && self.newopt.len() > 0 { // fa-plus
+					// 	imgui::open_popup("addoptselect", imgui::PopupFlags::MouseButtonLeft);
+					// }
+					// imgui::same_line();
+					// aeth::next_max_width();
+					// imgui::input_text_with_hint("##newopt", "New Option", &mut self.newopt, imgui::InputTextFlags::None);
 					
 					if let Some(o) = a {self.set_mod_option(o.0, o.1);}
 					
@@ -182,7 +184,7 @@ impl Tab {
 				if let Some(viewer) = self.viewer.as_mut() {
 					match &mut self.curmod {
 						Some(m) => viewer.draw(state, Some(Conf {
-							path: m.path.join("datas.json"),
+							path: m.path.clone(),
 							datas: &mut m.datas,
 							// config: &mut m.datas.lock().unwrap().penumbra,
 							option: &mut m.opt,
@@ -263,8 +265,9 @@ impl Tab {
 		self.selected_mod = m.to_owned();
 		
 		let mut tree = Tree::new(m);
-		let datas: apply::Datas = serde_json::from_reader(File::open(path.join("datas.json")).unwrap()).unwrap();
+		tree.add_node("Options");
 		
+		let datas: apply::Datas = serde_json::from_reader(File::open(path.join("datas.json")).unwrap()).unwrap();
 		datas.penumbra.files.keys()
 			.for_each(|p| tree.add_node(p));
 		
@@ -292,6 +295,7 @@ impl Tab {
 		m.opt = opt.into();
 		m.subopt = sub.into();
 		m.tree.node_state_all(false);
+		m.tree.node_state("Options", true);
 		
 		if m.opt == "" && m.subopt == "" {
 			m.datas.penumbra.files.keys()
@@ -377,7 +381,7 @@ impl Tab {
 		
 		let ext = self.path.split('.').last().unwrap().to_owned();
 		let path = self.path.clone();
-		self.open_viewer(&ext, &path, None);
+		self.open_viewer(&ext, &path);
 		
 		true
 	}
@@ -385,30 +389,30 @@ impl Tab {
 	fn open_file_mod<S>(&mut self, path: S) -> bool where
 	S: Into<String> {
 		self.path = path.into().to_lowercase();
-		self.valid_path = valid_path_mod(&self.curmod, &self.path);
-		if !self.valid_path {return false;}
-		
-		let ext = self.path.split('.').last().unwrap().to_owned();
-		let path = self.path.clone();
-		let m = self.curmod.as_mut().unwrap();
-		let f = &m.datas.penumbra.file_ref(&m.opt, &m.subopt, &path).unwrap().0;
-		let mut settings = HashMap::new();
-		for i in 0..f.len() {
-			let l = f.get(i).unwrap();
-			if let Some(id) = &l.id {
-				settings.insert(id.clone(), m.datas.penumbra.options.iter().find(|e| e.id() == Some(&id)).unwrap().default());
-			}
+		match self.path.as_str() {
+			"options" => {
+				self.valid_path = true;
+				self.viewer = Some(Box::new(viewer::Options::new()));
+				
+				true
+			},
+			_ => {
+				self.valid_path = valid_path_mod(&self.curmod, &self.path);
+				if !self.valid_path {return false;}
+				
+				let ext = self.path.split('.').last().unwrap().to_owned();
+				let path = self.path.clone();
+				self.open_viewer(&ext, &path);
+				
+				true
+			},
 		}
-		
-		self.open_viewer(&ext, &path, Some(settings));
-		
-		true
 	}
 	
-	fn open_viewer(&mut self, ext: &str, path: &str, settings: Option<HashMap<String, ConfSetting>>) {
+	fn open_viewer(&mut self, ext: &str, path: &str) {
 		let conf = if let Some(m) = &mut self.curmod {
 			Some(Conf {
-				path: m.path.join("datas.json"),
+				path: m.path.clone(),
 				datas: &mut m.datas,
 				option: &mut m.opt,
 				sub_option: &mut m.subopt,
@@ -416,8 +420,8 @@ impl Tab {
 		} else {None};
 		
 		self.viewer = match ext {
-			"tex" | "atex" => Some(Box::new(viewer::Tex::new(path.to_owned(), conf, settings))),
-			_ => Some(Box::new(viewer::Generic::new(path.to_owned(), conf, settings))),
+			"tex" | "atex" => Some(Box::new(viewer::Tex::new(path.to_owned(), conf))),
+			_ => Some(Box::new(viewer::Generic::new(path.to_owned(), conf))),
 		};
 	}
 }

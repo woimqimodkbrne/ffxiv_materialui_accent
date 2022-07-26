@@ -65,7 +65,7 @@ impl Config {
 	}
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, Debug)]
 #[serde(tag = "type")]
 #[serde(rename_all = "lowercase")]
 pub enum ConfOption {
@@ -123,15 +123,7 @@ impl<'a> ConfOption {
 	}
 }
 
-#[derive(Deserialize, Serialize)]
-pub struct TypRgba {
-	pub id: String,
-	pub name: String,
-	pub description: String,
-	pub default: [f32; 4],
-}
-
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct TypRgb {
 	pub id: String,
 	pub name: String,
@@ -139,7 +131,15 @@ pub struct TypRgb {
 	pub default: [f32; 3],
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+pub struct TypRgba {
+	pub id: String,
+	pub name: String,
+	pub description: String,
+	pub default: [f32; 4],
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct TypSingle {
 	pub id: String,
 	pub name: String,
@@ -147,14 +147,14 @@ pub struct TypSingle {
 	pub default: f32,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 pub struct TypPenumbra {
 	pub name: String,
 	pub description: String,
 	pub options: Vec<PenumbraOption>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
 #[serde(rename_all = "lowercase")]
 pub struct PenumbraOption {
 	pub name: String,
@@ -231,8 +231,25 @@ impl ConfSetting {
 	pub fn draw(&mut self, label: &str) -> bool {
 		match self {
 			Self::Rgb(v) => imgui::color_edit3(label, v, imgui::ColorEditFlags::PickerHueWheel | imgui::ColorEditFlags::NoInputs),
-			Self::Rgba(v) => imgui::color_edit4(label, v, imgui::ColorEditFlags::PickerHueWheel | imgui::ColorEditFlags::NoInputs),
-			_ => todo!(),
+			Self::Rgba(v) => imgui::color_edit4(label, v, imgui::ColorEditFlags::PickerHueWheel | imgui::ColorEditFlags::NoInputs | imgui::ColorEditFlags::AlphaBar | imgui::ColorEditFlags::AlphaPreviewHalf),
+			Self::Grayscale(v) => {
+				let mut v2 = *v * 255.0;
+				let r = imgui::drag_float(label, &mut v2, 0.0, 0.0, 255.0, "%f", imgui::SliderFlags::NoRoundToFormat);
+				*v = v2 / 255.0;
+				r
+			},
+			Self::Opacity(v) => {
+				let mut v2 = *v * 255.0;
+				let r = imgui::drag_float(label, &mut v2, 0.0, 0.0, 255.0, "%f", imgui::SliderFlags::NoRoundToFormat);
+				*v = v2 / 255.0;
+				r
+			},
+			Self::Mask(v) => {
+				let mut v2 = *v * 100.0;
+				let r = imgui::drag_float(label, &mut v2, 0.0, 0.0, 100.0, "%.1f%%", imgui::SliderFlags::NoRoundToFormat);
+				*v = v2 / 100.0;
+				r
+			}
 		}
 	}
 }
@@ -255,11 +272,11 @@ pub fn load_file(path: &str) -> Option<Vec<u8>> {
 }
 
 // Might not want to return tex, idk yet
-pub fn resolve_layer(layer: &Layer, mut load_file: impl FnMut(&str) -> Option<Vec<u8>>) -> Option<Tex> {
-	Some(if let Some(v) = &layer.value {
+pub fn resolve_layer(layer: &Layer, mut load_file: impl FnMut(&str) -> Option<Vec<u8>>) -> Result<Tex, String> {
+	Ok(if let Some(v) = &layer.value {
 		match v {
 			ConfSetting::Rgb(val) => {
-				let mut tex = Tex::read(&mut Cursor::new(&load_file(&layer.files[0])?));
+				let mut tex = Tex::read(&mut Cursor::new(&load_file(&layer.files[0]).ok_or(layer.files[0].clone())?));
 				tex.as_pixels_mut().iter_mut().for_each(|pixel| {
 					pixel.b = (pixel.b as f32 * val[2]) as u8;
 					pixel.g = (pixel.g as f32 * val[1]) as u8;
@@ -268,7 +285,7 @@ pub fn resolve_layer(layer: &Layer, mut load_file: impl FnMut(&str) -> Option<Ve
 				tex
 			},
 			ConfSetting::Rgba(val) => {
-				let mut tex = Tex::read(&mut Cursor::new(&load_file(&layer.files[0])?));
+				let mut tex = Tex::read(&mut Cursor::new(&load_file(&layer.files[0]).ok_or(layer.files[0].clone())?));
 				tex.as_pixels_mut().iter_mut().for_each(|pixel| {
 					pixel.b = (pixel.b as f32 * val[2]) as u8;
 					pixel.g = (pixel.g as f32 * val[1]) as u8;
@@ -278,7 +295,7 @@ pub fn resolve_layer(layer: &Layer, mut load_file: impl FnMut(&str) -> Option<Ve
 				tex
 			},
 			ConfSetting::Grayscale(val) => {
-				let mut tex = Tex::read(&mut Cursor::new(&load_file(&layer.files[0])?));
+				let mut tex = Tex::read(&mut Cursor::new(&load_file(&layer.files[0]).ok_or(layer.files[0].clone())?));
 				tex.as_pixels_mut().iter_mut().for_each(|pixel| {
 					pixel.b = (pixel.b as f32 * val) as u8;
 					pixel.g = (pixel.g as f32 * val) as u8;
@@ -287,7 +304,7 @@ pub fn resolve_layer(layer: &Layer, mut load_file: impl FnMut(&str) -> Option<Ve
 				tex
 			},
 			ConfSetting::Opacity(val) => {
-				let mut tex = Tex::read(&mut Cursor::new(&load_file(&layer.files[0])?));
+				let mut tex = Tex::read(&mut Cursor::new(&load_file(&layer.files[0]).ok_or(layer.files[0].clone())?));
 				tex.as_pixels_mut().iter_mut().for_each(|pixel| {
 					pixel.a = (pixel.a as f32 * val) as u8;
 				});
@@ -295,8 +312,8 @@ pub fn resolve_layer(layer: &Layer, mut load_file: impl FnMut(&str) -> Option<Ve
 			},
 			ConfSetting::Mask(val) => {
 				let val = (val * 255f32) as u8;
-				let mut tex = Tex::read(&mut Cursor::new(&load_file(&layer.files[0])?));
-				let mask = Tex::read(&mut Cursor::new(&load_file(&layer.files[1])?));
+				let mut tex = Tex::read(&mut Cursor::new(&load_file(&layer.files[0]).ok_or(layer.files[0].clone())?));
+				let mask = Tex::read(&mut Cursor::new(&load_file(&layer.files[1]).ok_or(layer.files[1].clone())?));
 				let mask_pixels = mask.as_pixels();
 				tex.as_pixels_mut().iter_mut().enumerate().for_each(|(i, pixel)| {
 					pixel.a = if val >= mask_pixels[i].r {pixel.a} else {0};
@@ -305,6 +322,6 @@ pub fn resolve_layer(layer: &Layer, mut load_file: impl FnMut(&str) -> Option<Ve
 			},
 		}
 	} else {
-		Tex::read(&mut Cursor::new(&load_file(&layer.files[0])?))
+		Tex::read(&mut Cursor::new(&load_file(&layer.files[0]).ok_or(layer.files[0].clone())?))
 	})
 }

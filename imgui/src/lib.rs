@@ -1865,12 +1865,12 @@ pub fn get_tree_node_to_label_spacing() -> f32 {
 	unsafe{sys::igGetTreeNodeToLabelSpacing()}
 }
 
-pub fn collapsing_header__tree_node_flags(label: &str, flags: TreeNodeFlags) -> bool {
+pub fn collapsing_header(label: &str, flags: TreeNodeFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igCollapsingHeader_TreeNodeFlags(label_.as_ptr(), flags.bits)}
 }
 
-pub fn collapsing_header__bool_ptr(label: &str, p_visible: &mut bool, flags: TreeNodeFlags) -> bool {
+pub fn collapsing_header_bool(label: &str, p_visible: &mut bool, flags: TreeNodeFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igCollapsingHeader_BoolPtr(label_.as_ptr(), p_visible, flags.bits)}
 }

@@ -1,7 +1,5 @@
-// TODO: save the changes to layers
-
-use std::{collections::HashMap,  io::Write};
-use crate::{apply::penumbra::ConfSetting, GAME};
+use std::io::Write;
+use crate::GAME;
 use super::Viewer;
 
 pub struct Generic {
@@ -10,7 +8,7 @@ pub struct Generic {
 }
 
 impl Generic {
-	pub fn new(gamepath: String, _conf: Option<super::Conf>, _settings: Option<HashMap<String, ConfSetting>>) -> Self {
+	pub fn new(gamepath: String, _conf: Option<super::Conf>) -> Self {
 		Generic {
 			ext: format!(".{}", gamepath.split('.').last().unwrap()),
 			gamepath,

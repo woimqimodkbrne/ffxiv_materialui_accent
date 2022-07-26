@@ -13,7 +13,7 @@ lto = true
 inherits = "dev"
 
 [profile.dev_r.package.aetherment]
-opt-level = 0
+opt-level = 3
 debug = true
 strip = false
 incremental = true
