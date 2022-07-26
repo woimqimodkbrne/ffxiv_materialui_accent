@@ -39,7 +39,8 @@ pub const SERVER: &'static str = "http://localhost:8080";
 lazy_static! {
 	pub static ref CLIENT: req::Client = req::Client::new();
 	pub static ref GAME: ironworks::Ironworks = Ironworks::new()
-		.with_resource(SqPack::new(ffxiv::FsResource::search().unwrap()));
+		// .with_resource(SqPack::new(ffxiv::FsResource::search().unwrap()));
+		.with_resource(SqPack::new(ffxiv::FsResource::at(std::env::current_exe().unwrap().parent().unwrap().parent().unwrap())));
 }
 
 // ---------------------------------------- //
