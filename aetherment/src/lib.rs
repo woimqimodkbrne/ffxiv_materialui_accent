@@ -2,7 +2,6 @@
 #![feature(panic_backtrace_config)]
 #![feature(backtrace)]
 #![feature(seek_stream_len)]
-#![feature(let_chains)]
 
 use std::{panic::BacktraceStyle, path::PathBuf};
 use ironworks::{Ironworks, sqpack::SqPack, ffxiv};
@@ -25,9 +24,9 @@ static mut LOG: fn(u8, String) = |_, _| {};
 #[macro_export]
 macro_rules! log {
 	(ftl, $($e:tt)*) => {unsafe{crate::LOG(255, format!($($e)*))}};
-	(log, $($e:tt)*) => {unsafe{crate::LOG(0,   format!($($e)*))}};
-	(err, $($e:tt)*) => {unsafe{crate::LOG(1,   format!($($e)*))}};
-	($($e:tt)*) => {unsafe{crate::LOG(0,   format!($($e)*))}};
+	(log, $($e:tt)*) => {unsafe{crate::LOG(0, format!($($e)*))}};
+	(err, $($e:tt)*) => {unsafe{crate::LOG(1,format!($($e)*))}};
+	($($e:tt)*) => {unsafe{crate::LOG(0, format!($($e)*))}};
 }
 
 // ---------------------------------------- //
@@ -35,7 +34,8 @@ macro_rules! log {
 #[macro_use]
 extern crate lazy_static;
 
-pub const SERVER: &'static str = "http://localhost:8080";
+pub const SERVER: &'static str = "http://localhost:80";
+pub const SERVERFILES: &'static str = "https://files.aetherment.com";
 lazy_static! {
 	pub static ref CLIENT: req::Client = req::Client::new();
 	pub static ref GAME: ironworks::Ironworks = Ironworks::new()
@@ -48,7 +48,10 @@ lazy_static! {
 pub mod api {
 	pub mod penumbra;
 }
-pub mod server;
+pub mod server {
+	pub mod user;
+	pub mod mods;
+}
 pub mod config;
 pub mod apply;
 pub mod gui {
@@ -69,8 +72,8 @@ struct State {
 pub struct Data {
 	binary_path: PathBuf,
 	#[allow(dead_code)] config_path: PathBuf,
-	
 	config: config::Config,
+	user: Option<server::user::User>,
 }
 
 #[repr(packed)]
@@ -118,12 +121,11 @@ extern fn initialize(init: Initializers) -> *mut State {
 	}));
 	
 	let config_path: PathBuf = init.config_path.into();
-	
 	let mut data = Data {
 		config: config::Config::load(config_path.join("config.json")),
-		
 		binary_path: init.binary_path.into(),
 		config_path: config_path,
+		user: server::user::User::load(),
 	};
 	
 	Box::into_raw(Box::new(State {

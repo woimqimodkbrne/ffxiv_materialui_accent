@@ -4,6 +4,7 @@ mod scoped;
 mod tabbar;
 mod divider;
 mod orderable_list;
+mod drawlist;
 
 pub use self::texture::{Texture, TextureOptions};
 pub use self::file_dialog::{FileDialogMode, FileDialogResult, FileDialogStatus, file_dialog, file_picker};
@@ -11,6 +12,7 @@ pub use self::scoped::*;
 pub use self::tabbar::*;
 pub use self::divider::*;
 pub use self::orderable_list::*;
+pub use self::drawlist::*;
 
 pub trait F2 {
 	fn add(&self, a: [f32; 2]) -> [f32; 2];

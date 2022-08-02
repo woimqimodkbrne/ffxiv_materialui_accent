@@ -966,7 +966,8 @@ pub fn is_window_hovered(flags: HoveredFlags) -> bool {
 
 pub fn get_window_draw_list() -> DrawList {
 	DrawList {
-		drawlist: unsafe{sys::igGetWindowDrawList()}
+		drawlist: unsafe{sys::igGetWindowDrawList()},
+		vtx_offset: 0,
 	}
 }
 
@@ -2432,11 +2433,10 @@ pub fn end_child_frame() {
 	unsafe{sys::igEndChildFrame()}
 }
 
-pub fn calc_text_size(text: &str, text_end: &str, hide_text_after_double_hash: bool, wrap_width: f32) -> [f32; 2] {
+pub fn calc_text_size(text: &str, hide_text_after_double_hash: bool, wrap_width: f32) -> [f32; 2] {
 	let mut r = [0f32; 2];
 	let text_ = CString::new(text).unwrap();
-	let text_end_ = CString::new(text_end).unwrap();
-	unsafe{sys::igCalcTextSize(&mut r, text_.as_ptr(), text_end_.as_ptr(), hide_text_after_double_hash, wrap_width)}
+	unsafe{sys::igCalcTextSize(&mut r, text_.as_ptr(), (text_.as_ptr() as usize + text.len()) as *const _, hide_text_after_double_hash, wrap_width)}
 	r
 }
 
@@ -2639,6 +2639,7 @@ pub fn im_draw_list_destroy(self_: &mut sys::ImDrawList) {
 
 pub struct DrawList {
 	pub drawlist: *mut sys::ImDrawList,
+	vtx_offset: u16,
 }
 
 impl DrawList {
@@ -2743,8 +2744,10 @@ impl DrawList {
 		unsafe{sys::ImDrawList_AddPolyline(self.drawlist, points, num_points, col, flags.bits, thickness)}
 	}
 	
-	pub fn add_convex_poly_filled(&self, points: *const [f32; 2], num_points: i32, col: u32) {
-		unsafe{sys::ImDrawList_AddConvexPolyFilled(self.drawlist, points, num_points, col)}
+	// pub fn add_convex_poly_filled(&self, points: *const [f32; 2], num_points: i32, col: u32) {
+	pub fn add_convex_poly_filled(&self, points: &[[f32; 2]], col: u32) {
+		let len = points.len() as i32;
+		unsafe{sys::ImDrawList_AddConvexPolyFilled(self.drawlist, points.as_ptr(), len, col)}
 	}
 	
 	pub fn add_bezier_cubic(&self, p1: [f32; 2], p2: [f32; 2], p3: [f32; 2], p4: [f32; 2], col: u32, thickness: f32, num_segments: i32) {
@@ -2831,8 +2834,9 @@ impl DrawList {
 		unsafe{sys::ImDrawList_ChannelsSetCurrent(self.drawlist, n)}
 	}
 	
-	pub fn prim_reserve(&self, idx_count: i32, vtx_count: i32) {
+	pub fn prim_reserve(&mut self, idx_count: i32, vtx_count: i32) {
 		unsafe{sys::ImDrawList_PrimReserve(self.drawlist, idx_count, vtx_count)}
+		self.vtx_offset = unsafe{(*self.drawlist)._VtxCurrentIdx as u16}
 	}
 	
 	pub fn prim_unreserve(&self, idx_count: i32, vtx_count: i32) {
@@ -2855,8 +2859,8 @@ impl DrawList {
 		unsafe{sys::ImDrawList_PrimWriteVtx(self.drawlist, pos, uv, col)}
 	}
 	
-	pub fn prim_write_idx(&self, idx: sys::ImDrawIdx) {
-		unsafe{sys::ImDrawList_PrimWriteIdx(self.drawlist, idx)}
+	pub fn prim_write_idx(&self, idx: u16) {
+		unsafe{sys::ImDrawList_PrimWriteIdx(self.drawlist, self.vtx_offset + idx)}
 	}
 	
 	pub fn prim_vtx(&self, pos: [f32; 2], uv: [f32; 2], col: u32) {

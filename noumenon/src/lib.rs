@@ -1,5 +1,3 @@
-#![feature(let_chains)]
-
 use std::io::{Read, Write, Seek};
 
 trait NullReader {

@@ -81,7 +81,7 @@ impl<'a> TabBar<'a> {
 
 pub fn tab_bar(id: &str) -> TabBar {
 	let pos = imgui::get_cursor_pos();
-	let size = [imgui::get_column_width(-1), super::frame_height()];
+	let size = [imgui::calc_item_width(), super::frame_height()];
 	imgui::dummy(size);
 	
 	TabBar {

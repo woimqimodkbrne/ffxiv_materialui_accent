@@ -88,18 +88,18 @@ public class Aetherment : IDalamudPlugin {
 		});
 		
 		// Reload if the rust part changes
-		if(Interface.IsDev) {
-			watcher = new FileSystemWatcher($"{Interface.AssemblyLocation.DirectoryName}", "aetherment_core.dll");
-			watcher.NotifyFilter = NotifyFilters.LastWrite;
-			watcher.Changed += (object _, FileSystemEventArgs e) => {
-				watcher.EnableRaisingEvents = false;
-				Task.Run(() => {
-					Task.Delay(1000);
-					ReloadPlugin();
-				});
-			};
-			watcher.EnableRaisingEvents = true;
-		}
+		// if(Interface.IsDev) {
+		// 	watcher = new FileSystemWatcher($"{Interface.AssemblyLocation.DirectoryName}", "aetherment_core.dll");
+		// 	watcher.NotifyFilter = NotifyFilters.LastWrite;
+		// 	watcher.Changed += (object _, FileSystemEventArgs e) => {
+		// 		watcher.EnableRaisingEvents = false;
+		// 		Task.Run(() => {
+		// 			Task.Delay(1000);
+		// 			ReloadPlugin();
+		// 		});
+		// 	};
+		// 	watcher.EnableRaisingEvents = true;
+		// }
 	}
 	
 	public void Dispose() {

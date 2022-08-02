@@ -105,53 +105,8 @@ impl Tab {
 							opt.options.iter().for_each(|o2| if imgui::selectable(&o2.name, m.opt == opt.name && m.subopt == o2.name, imgui::SelectableFlags::None, [0.0, 0.0]) {
 								a = Some((opt.name.clone(), o2.name.clone()));
 							});
-							
-							// if aeth::button_icon("", aeth::fa5()) { // fa-plus
-							// 	opt.options.push(apply::penumbra::PenumbraOption {
-							// 		name: self.newopt.clone(),
-							// 		files: HashMap::new(),
-							// 		swaps: HashMap::new(),
-							// 		manipulations: Vec::new(),
-							// 	});
-							// 	self.newopt.clear();
-							// 	self.refresh_mod = true;
-							// }
-							// imgui::same_line();
-							// aeth::next_max_width();
-							// imgui::input_text_with_hint("##newopt", "New Sub Option", &mut self.newopt, imgui::InputTextFlags::None);
 						});
 					});
-					
-					// aeth::popup("addoptselect", imgui::WindowFlags::None, || {
-					// 	if imgui::button("Single", [0.0, 0.0]) {
-					// 		m.datas.penumbra.options.push(ConfOption::Single(apply::penumbra::TypPenumbra {
-					// 			name: self.newopt.clone(),
-					// 			description: "".to_owned(), // TODO: editable in mod overview or smth
-					// 			options: Vec::new(),
-					// 		}));
-					// 		self.newopt.clear();
-					// 		self.refresh_mod = true;
-					// 		imgui::close_current_popup();
-					// 	}
-						
-					// 	if imgui::button("Multi", [0.0, 0.0]) {
-					// 		m.datas.penumbra.options.push(ConfOption::Multi(apply::penumbra::TypPenumbra {
-					// 			name: self.newopt.clone(),
-					// 			description: "".to_owned(), // TODO: editable in mod overview or smth
-					// 			options: Vec::new(),
-					// 		}));
-					// 		self.newopt.clear();
-					// 		self.refresh_mod = true;
-					// 		imgui::close_current_popup();
-					// 	}
-					// });
-					
-					// if aeth::button_icon("", aeth::fa5()) && self.newopt.len() > 0 { // fa-plus
-					// 	imgui::open_popup("addoptselect", imgui::PopupFlags::MouseButtonLeft);
-					// }
-					// imgui::same_line();
-					// aeth::next_max_width();
-					// imgui::input_text_with_hint("##newopt", "New Option", &mut self.newopt, imgui::InputTextFlags::None);
 					
 					if let Some(o) = a {self.set_mod_option(o.0, o.1);}
 					
@@ -223,6 +178,7 @@ impl Tab {
 									log!("import failed"); // TODO: nice popup displaying that it failed
 								}
 								let hash = blake3::hash(&buf).to_hex().as_str()[..24].to_string();
+								fs::create_dir_all(m.path.join("files")).unwrap();
 								File::create(m.path.join("files").join(&hash)).unwrap().write_all(&buf).unwrap();
 								let file = PenumbraFile(vec![FileLayer {
 									id: None,
