@@ -174,7 +174,7 @@ impl Tab {
 								log!("import {:?}", path);
 								let ext = path.extension().unwrap().to_str().unwrap();
 								let mut buf = Vec::new();
-								if !noumenon::convert(&mut File::open(&path).unwrap(), ext, &mut Cursor::new(&mut buf), &self.path[self.path.rfind('.').unwrap() + 1..].to_owned()) {
+								if !noumenon::convert(&mut File::open(&path).unwrap(), ext, &mut Cursor::new(&mut buf), &self.path[self.path.rfind('.').unwrap() + 1..]) {
 									log!("import failed"); // TODO: nice popup displaying that it failed
 								}
 								let hash = blake3::hash(&buf).to_hex().as_str()[..24].to_string();

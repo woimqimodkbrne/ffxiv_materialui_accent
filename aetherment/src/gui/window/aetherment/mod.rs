@@ -111,6 +111,7 @@ impl Window {
 				state.user.as_ref().unwrap().delete().unwrap();
 				state.user = None;
 			}
+			imgui::end_popup();
 		}
 		
 		Ok(())

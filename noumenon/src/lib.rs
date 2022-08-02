@@ -26,6 +26,8 @@ W: Write + Seek {
 		while let readcount = source.read(&mut buf).unwrap() && readcount != 0 {
 			target.write_all(&buf[0..readcount]).unwrap();
 		}
+		
+		return true;
 	}
 	
 	match source_ext {
