@@ -33,7 +33,7 @@ impl Tab {
 			first_draw: true,
 			refresh_mod: false,
 			curmod: None,
-			selected_mod: "".to_owned(),
+			selected_mod: "None".to_owned(),
 			
 			populated_modselect: false,
 			mod_entries: Vec::new(),
@@ -126,6 +126,13 @@ impl Tab {
 							if e.metadata().unwrap().is_dir() {Some(e.file_name().to_str().unwrap().to_owned())} else {None}
 						})
 						.collect()
+				}
+				
+				if imgui::selectable("None", self.curmod.is_none(), imgui::SelectableFlags::None, [0.0, 0.0]) {
+					self.selected_mod = "None".to_owned();
+					self.curmod = None;
+					crate::api::penumbra::remove_mod("aetherment_creator", i32::MAX);
+					crate::api::penumbra::redraw_self();
 				}
 				
 				for m in self.mod_entries.clone().into_iter() { // just clone it, idc anymore, it just some small strings
