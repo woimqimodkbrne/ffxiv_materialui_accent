@@ -52,6 +52,9 @@ pub mod server {
 	pub mod user;
 	pub mod mods;
 }
+pub mod creator {
+	pub mod modpack;
+}
 pub mod config;
 pub mod apply;
 pub mod gui {

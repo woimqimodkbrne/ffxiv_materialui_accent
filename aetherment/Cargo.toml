@@ -37,6 +37,7 @@ reqwest = {version = "0.11.10", features = ["blocking", "json", "multipart"]}
 open = "3.0.2"
 rand = "0.8.5"
 keyring = "1.2.0"
+binrw = "0.8.4"
 imgui = {path = "../imgui"}
 noumenon = {path = "../noumenon"}
 ironworks = {git = "https://github.com/ackwell/ironworks", rev = "bd787883d324f3a150bce5f1ab348d86e770e23e", features = ["ffxiv", "sqpack"]}

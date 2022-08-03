@@ -23,6 +23,8 @@ impl Viewer for Options {
 	}
 	
 	fn draw(&mut self, _state: &mut crate::Data, conf: Option<super::Conf>) {
+		if conf.is_none() {return}
+		
 		let conf = conf.unwrap();
 		let options = &mut conf.datas.penumbra.options;
 		let mut rem = None;
@@ -32,9 +34,10 @@ impl Viewer for Options {
 			}
 		}, |i, option| {
 			imgui::begin_group();
-			if imgui::collapsing_header(&format!("{} ({:?})###{}", option.name(), option, i), imgui::TreeNodeFlags::SpanAvailWidth) {
+			if imgui::collapsing_header(&format!("{} ({})###{}", option.name(), option.type_name(), i), imgui::TreeNodeFlags::SpanAvailWidth) {
 				let single = matches!(option, ConfOption::Single(_));
 				
+				// TODO: fix reserve, it doesnt work since imgui has an internal buffer with capacity that only updates on refocus
 				match option {
 					ConfOption::Rgb(opt) => {
 						opt.id.reserve(16);

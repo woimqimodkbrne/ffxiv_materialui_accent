@@ -104,6 +104,18 @@ impl<'a> ConfOption {
 		}
 	}
 	
+	pub fn type_name(&'a self) -> &'static str {
+		match self {
+			ConfOption::Rgb(_) => "Rgb",
+			ConfOption::Rgba(_) => "Rgba",
+			ConfOption::Grayscale(_) => "Grayscale",
+			ConfOption::Opacity(_) => "Opacity",
+			ConfOption::Mask(_) => "Mask",
+			ConfOption::Single(_) => "Single",
+			ConfOption::Multi(_) => "Multi",
+		}
+	}
+	
 	pub fn is_penumbra(&'a self) -> bool {
 		match self {
 			ConfOption::Single(_) | ConfOption::Multi(_) => true,
