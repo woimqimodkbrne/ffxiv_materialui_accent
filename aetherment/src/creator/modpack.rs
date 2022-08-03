@@ -1,4 +1,4 @@
-use std::{path::PathBuf, fs::{self, File}, collections::HashMap, io::{Seek, Read, Cursor, Write, SeekFrom}};
+use std::{path::PathBuf, fs::{self, File}, collections::{HashMap, HashSet}, io::{Seek, Read, Cursor, Write, SeekFrom}};
 use binrw::{BinWrite, BinReaderExt};
 use crate::apply::penumbra::ConfOption;
 
@@ -160,4 +160,89 @@ pub fn pack(mod_path: PathBuf, version: u32, mut patch_only: bool) {
 	
 	if let Some(release) = &mut release {footer_len.write_to(release).unwrap()}
 	if let Some(patch) = &mut patch {footer_len.write_to(patch).unwrap()}
+}
+
+pub fn unpack(pack_path: PathBuf, taget_dir: PathBuf) {
+	let files_dir = taget_dir.join("files");
+	fs::create_dir_all(&files_dir).unwrap();
+	
+	let mut pack = File::open(pack_path).unwrap();
+	
+	let mut index = HashMap::<String, ([u8; 32], i64)>::new();
+	let mut written_files = HashSet::<[u8; 32]>::new();
+	let mut paths = HashMap::<String, String>::new();
+	
+	// read index
+	pack.seek(SeekFrom::End(-4)).unwrap();
+	let index_len = pack.read_le::<u32>().unwrap() as i64;
+	pack.seek(SeekFrom::End(-index_len - 4)).unwrap();
+	let mut read_len = 0i64;
+	loop {
+		let path_len = pack.read_le::<u8>().unwrap() as usize;
+		let mut buf = vec![0u8; path_len];
+		pack.read_exact(&mut buf).unwrap();
+		let path = String::from_utf8(buf).unwrap();
+		let mut hash = [0u8; 32];
+		pack.read_exact(&mut hash).unwrap();
+		let offset = pack.read_le::<i64>().unwrap();
+		index.insert(path, (hash, offset));
+		read_len += 1 + path_len as i64 + 32 + 8;
+		if read_len == index_len {break}
+	}
+	
+	// write all files
+	let datas_path = taget_dir.join("datas.json");
+	for (path, (hash, offset)) in index {
+		if written_files.contains(&hash) {continue}
+		written_files.insert(hash.clone());
+		
+		if offset == -1 {continue}
+		
+		let hash_str = base64::encode_config(&hash, base64::URL_SAFE_NO_PAD);
+		paths.insert(path.clone(), format!("files/{hash_str}"));
+		
+		pack.seek(SeekFrom::Start(offset as u64)).unwrap();
+		let mut f = flate2::write::ZlibDecoder::new(File::create(files_dir.join(&hash_str)).unwrap());
+		let len = pack.read_le::<u32>().unwrap();
+		let mut buf = vec![0u8; len as usize];
+		pack.read_exact(&mut buf).unwrap();
+		f.write_all(&buf).unwrap();
+		f.finish().unwrap();
+		
+		if path == "datas.json" {
+			fs::rename(files_dir.join(hash_str), &datas_path).unwrap();
+		}
+	}
+	
+	// remove unused files
+	fs::read_dir(&files_dir)
+		.unwrap()
+		.into_iter()
+		.for_each(|e| {
+			let e = e.unwrap();
+			let name = e.file_name().to_str().unwrap().to_owned();
+			let hash = base64::decode_config(name, base64::URL_SAFE_NO_PAD).unwrap();
+			if !written_files.contains(&hash[0..32]) {fs::remove_file(e.path()).unwrap()}
+		});
+	
+	// fix paths
+	let mut datas: crate::apply::Datas = serde_json::from_reader(File::open(&datas_path).unwrap()).unwrap();
+	datas.penumbra.files.iter_mut().for_each(|(_, layers)|
+		layers.0.iter_mut().for_each(|layer|
+			layer.paths.iter_mut().for_each(|p| if let Some(p2) = paths.get(p) {*p = p2.clone()})
+		)
+	);
+	datas.penumbra.options.iter_mut().for_each(|o| match o {
+			ConfOption::Single(opt) | ConfOption::Multi(opt) => opt.options.iter_mut().for_each(|o|
+				o.files.iter_mut().for_each(|(_, layers)|
+					layers.0.iter_mut().for_each(|layer|
+						layer.paths.iter_mut().for_each(|p| if let Some(p2) = paths.get(p) {*p = p2.clone()})
+					)
+				)
+			),
+			_ => {},
+		}
+	);
+	
+	File::create(&datas_path).unwrap().write_all(serde_json::json!(datas).to_string().as_bytes()).unwrap();
 }
