@@ -24,7 +24,7 @@ F2: FnMut(usize, &mut T) {
 		if i == vec.len() {continue}
 		
 		imgui::push_id_i32(i as i32);
-		super::button_icon("", super::fa5()); // fa-bars
+		super::button_icon(""); // fa-bars
 		imgui::same_line();
 		if imgui::is_item_clicked(imgui::MouseButton::Left) {
 			let o = (mpos - imgui::get_cursor_screen_pos().y()) as i32;
@@ -46,7 +46,7 @@ F2: FnMut(usize, &mut T) {
 		let o = (*cur >> 16) as f32;
 		imgui::push_id("move");
 		imgui::set_cursor_screen_pos([imgui::get_cursor_screen_pos().x(), (mpos - o).clamp(start, end)]);
-		super::button_icon("", super::fa5());
+		super::button_icon("");
 		imgui::same_line();
 		draw(i, vec.get_mut(i).unwrap());
 		imgui::pop_id();

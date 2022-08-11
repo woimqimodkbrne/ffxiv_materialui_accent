@@ -6,15 +6,21 @@ use crate::apply::penumbra::ConfOption;
 // .amp.patch: Aetherment Mod Pack Patch
 // both are the same internal structure
 
-pub fn version_to_u32(version: &str) -> u32 {
+pub fn version_to_i32(mut version: &str) -> i32 {
+	log!("{}", version);
+	if version.ends_with(".amp.patch") {
+		version = version.split('-').last().unwrap();
+	}
+	log!("{}", version);
+	
 	let mut segs = version.split('.');
-	(segs.next().unwrap().parse::<u32>().unwrap() << 24) +
-	(segs.next().unwrap().parse::<u32>().unwrap() << 16) +
-	(segs.next().unwrap().parse::<u32>().unwrap() << 8) +
-	segs.next().unwrap().parse::<u32>().unwrap()
+	(segs.next().unwrap().parse::<i32>().unwrap() << 24) +
+	(segs.next().unwrap().parse::<i32>().unwrap() << 16) +
+	(segs.next().unwrap().parse::<i32>().unwrap() << 8) +
+	segs.next().unwrap().parse::<i32>().unwrap()
 }
 
-pub fn version_to_string(version: u32) -> String {
+pub fn version_to_string(version: i32) -> String {
 	format!("{}.{}.{}.{}",
 		(version >> 24) & 0xFF,
 		(version >> 16) & 0xFF,
@@ -23,13 +29,12 @@ pub fn version_to_string(version: u32) -> String {
 	)
 }
 
-pub fn pack(mod_path: PathBuf, version: u32, mut patch_only: bool) {
+pub fn pack_latest(mod_path: PathBuf, version: i32, patch_only: bool) -> (Option<PathBuf>, Option<PathBuf>) {
 	let releases_path = mod_path.join("releases");
 	if !releases_path.exists() {
 		fs::create_dir(&releases_path).unwrap();
 	}
 	
-	// get latest release in order to create a patch file
 	let mut latest = None;
 	let mut latest_version = 0;
 	fs::read_dir(&releases_path)
@@ -38,14 +43,46 @@ pub fn pack(mod_path: PathBuf, version: u32, mut patch_only: bool) {
 		.for_each(|e| {
 			let e = e.unwrap();
 			let name = e.file_name().to_str().unwrap().to_owned();
-			if !name.ends_with(".amp") {return}
+			if !name.ends_with(".amp") && !name.ends_with(".amp.patch") {return}
 			
-			let version = version_to_u32(&name);
+			let version = version_to_i32(&name);
 			if version > latest_version {
 				latest = Some(e.path());
 				latest_version = version;
 			}
 		});
+	
+	pack(mod_path, version, patch_only, latest)
+}
+
+pub fn pack(mod_path: PathBuf, version: i32, mut patch_only: bool, latest: Option<PathBuf>) -> (Option<PathBuf>, Option<PathBuf>) {
+	let releases_path = mod_path.join("releases");
+	if !releases_path.exists() {
+		fs::create_dir(&releases_path).unwrap();
+	}
+	
+	// get latest release in order to create a patch file
+	let latest_version = if let Some(latest) = &latest {
+		version_to_i32(latest.file_name().unwrap().to_str().unwrap())
+	} else {
+		0
+	};
+	// let mut latest = None;
+	// let mut latest_version = 0;
+	// fs::read_dir(&releases_path)
+	// 	.unwrap()
+	// 	.into_iter()
+	// 	.for_each(|e| {
+	// 		let e = e.unwrap();
+	// 		let name = e.file_name().to_str().unwrap().to_owned();
+	// 		if !name.ends_with(".amp") && !name.ends_with(".amp.patch") {return}
+			
+	// 		let version = version_to_u32(name.split(".").last().unwrap());
+	// 		if version > latest_version {
+	// 			latest = Some(e.path());
+	// 			latest_version = version;
+	// 		}
+	// 	});
 	
 	log!("{latest_version}");
 	
@@ -76,9 +113,11 @@ pub fn pack(mod_path: PathBuf, version: u32, mut patch_only: bool) {
 	}
 	
 	let version = version_to_string(version);
-	let mut release = if !patch_only {Some(File::create(releases_path.join(format!("{}.amp", version))).unwrap())} else {None};
+	let release_path = releases_path.join(format!("{}.amp", version));
+	let mut release = if !patch_only {Some(File::create(&release_path).unwrap())} else {None};
 	let mut release_len = 0;
-	let mut patch = if latest.is_some() {Some(File::create(releases_path.join(format!("{}.amp.patch", version))).unwrap())} else {None};
+	let patch_path = releases_path.join(format!("{}-{}.amp.patch", version_to_string(latest_version), version));
+	let mut patch = if latest.is_some() {Some(File::create(&patch_path).unwrap())} else {None};
 	let mut patch_len = 0;
 	
 	let mut hash_location_release = HashMap::<[u8; 32], i64>::new();
@@ -87,8 +126,8 @@ pub fn pack(mod_path: PathBuf, version: u32, mut patch_only: bool) {
 	
 	let datas: crate::apply::Datas = serde_json::from_reader(File::open(mod_path.join("datas.json")).unwrap()).unwrap();
 	let mut todo = Vec::<String>::new();
-	datas.penumbra.files.iter().for_each(|(_, layers)| layers.0.iter().for_each(|layer| layer.paths.iter().for_each(|p| todo.push(p.to_owned()))));
-	datas.penumbra.options.iter().for_each(|o| match o {
+	datas.penumbra.as_ref().unwrap().files.iter().for_each(|(_, layers)| layers.0.iter().for_each(|layer| layer.paths.iter().for_each(|p| todo.push(p.to_owned()))));
+	datas.penumbra.as_ref().unwrap().options.iter().for_each(|o| match o {
 			ConfOption::Single(opt) | ConfOption::Multi(opt) => opt.options.iter().for_each(|o| o.files.iter().for_each(|(_, layers)| layers.0.iter().for_each(|layer| layer.paths.iter().for_each(|p| todo.push(p.to_owned()))))),
 			_ => {},
 		}
@@ -160,6 +199,11 @@ pub fn pack(mod_path: PathBuf, version: u32, mut patch_only: bool) {
 	
 	if let Some(release) = &mut release {footer_len.write_to(release).unwrap()}
 	if let Some(patch) = &mut patch {footer_len.write_to(patch).unwrap()}
+	
+	(
+		if release.is_some() {Some(release_path)} else {None},
+		if patch.is_some() {Some(patch_path)} else {None}
+	)
 }
 
 pub fn unpack(pack_path: PathBuf, taget_dir: PathBuf) {
@@ -227,12 +271,12 @@ pub fn unpack(pack_path: PathBuf, taget_dir: PathBuf) {
 	
 	// fix paths
 	let mut datas: crate::apply::Datas = serde_json::from_reader(File::open(&datas_path).unwrap()).unwrap();
-	datas.penumbra.files.iter_mut().for_each(|(_, layers)|
+	datas.penumbra.as_mut().unwrap().files.iter_mut().for_each(|(_, layers)|
 		layers.0.iter_mut().for_each(|layer|
 			layer.paths.iter_mut().for_each(|p| if let Some(p2) = paths.get(p) {*p = p2.clone()})
 		)
 	);
-	datas.penumbra.options.iter_mut().for_each(|o| match o {
+	datas.penumbra.as_mut().unwrap().options.iter_mut().for_each(|o| match o {
 			ConfOption::Single(opt) | ConfOption::Multi(opt) => opt.options.iter_mut().for_each(|o|
 				o.files.iter_mut().for_each(|(_, layers)|
 					layers.0.iter_mut().for_each(|layer|

@@ -1,6 +1,5 @@
 #![allow(improper_ctypes_definitions)]
 #![feature(panic_backtrace_config)]
-#![feature(backtrace)]
 #![feature(seek_stream_len)]
 
 use std::{panic::BacktraceStyle, path::PathBuf};
@@ -53,6 +52,7 @@ pub mod server {
 	pub mod mods;
 }
 pub mod creator {
+	pub mod tags;
 	pub mod modpack;
 }
 pub mod config;

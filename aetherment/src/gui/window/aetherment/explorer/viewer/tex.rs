@@ -36,12 +36,12 @@ lazy_static!{
 
 impl Tex {
 	pub fn new(gamepath: String, conf: Option<super::Conf>) -> Self {
-		let settings = if let Some(c) = &conf && let Some(f) = c.datas.penumbra.file_ref(&c.option, &c.sub_option, &gamepath) {
+		let settings = if let Some(c) = &conf && let Some(f) = c.datas.penumbra.as_ref().unwrap().file_ref(&c.option, &c.sub_option, &gamepath) {
 			let f = &f.0;
 			let mut settings = HashMap::new();
 			for i in 0..f.len() {
 				let l = f.get(i).unwrap();
-				if let Some(id) = &l.id && let Some(setting) = c.datas.penumbra.options.iter().find(|e| e.id() == Some(&id)) {
+				if let Some(id) = &l.id && let Some(setting) = c.datas.penumbra.as_ref().unwrap().options.iter().find(|e| e.id() == Some(&id)) {
 					settings.insert(id.clone(), setting.default());
 				}
 			}
@@ -270,7 +270,7 @@ impl Viewer for Tex {
 				}
 				
 				// New Layer
-				if aeth::button_icon("", aeth::fa5()) { // fa-plus
+				if aeth::button_icon("") { // fa-plus
 					imgui::open_popup("newlayer", imgui::PopupFlags::None);
 				}
 				
@@ -283,8 +283,8 @@ impl Viewer for Tex {
 						imgui::open_popup("newlayer2", imgui::PopupFlags::None);
 					}
 					
-					for i in 0..conf.datas.penumbra.options.len() {
-						let o = conf.datas.penumbra.options.get(i).unwrap();
+					for i in 0..conf.datas.penumbra.as_ref().unwrap().options.len() {
+						let o = conf.datas.penumbra.as_ref().unwrap().options.get(i).unwrap();
 						if !o.is_penumbra() && imgui::selectable(&format!("{} ({})", o.name(), o.id().unwrap()), false, imgui::SelectableFlags::None, [0.0, 0.0]) {
 							self.new_layer = Some(FileLayer {
 								id: Some(o.id().unwrap().to_owned()),
@@ -308,7 +308,7 @@ impl Viewer for Tex {
 					imgui::bring_window_to_display_front(imgui::get_current_window());
 					
 					if layer.id.is_some() {
-						match conf.datas.penumbra.options.iter().find(|f| f.id() == layer.id.as_deref()).unwrap() {
+						match conf.datas.penumbra.as_ref().unwrap().options.iter().find(|f| f.id() == layer.id.as_deref()).unwrap() {
 							ConfOption::Mask(_) => {
 								let p = layer.paths.get_mut(0).unwrap();
 								aeth::file_picker(aeth::FileDialogMode::OpenFile, "Import Image", "", imports.clone(), p);

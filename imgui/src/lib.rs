@@ -1710,22 +1710,22 @@ pub fn input_float(label: &str, v: &mut f32, step: f32, step_fast: f32, format: 
 	unsafe{sys::igInputFloat(label_.as_ptr(), v, step, step_fast, format_.as_ptr(), flags.bits)}
 }
 
-pub fn input_float2(label: &str, v: &mut f32, format: &str, flags: InputTextFlags) -> bool {
+pub fn input_float2(label: &str, v: &mut [f32; 2], format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igInputFloat2(label_.as_ptr(), v, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igInputFloat2(label_.as_ptr(), v.as_mut_ptr(), format_.as_ptr(), flags.bits)}
 }
 
-pub fn input_float3(label: &str, v: &mut f32, format: &str, flags: InputTextFlags) -> bool {
+pub fn input_float3(label: &str, v: &mut [f32; 3], format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igInputFloat3(label_.as_ptr(), v, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igInputFloat3(label_.as_ptr(), v.as_mut_ptr(), format_.as_ptr(), flags.bits)}
 }
 
-pub fn input_float4(label: &str, v: &mut f32, format: &str, flags: InputTextFlags) -> bool {
+pub fn input_float4(label: &str, v: &mut [f32; 4], format: &str, flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igInputFloat4(label_.as_ptr(), v, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igInputFloat4(label_.as_ptr(), v.as_mut_ptr(), format_.as_ptr(), flags.bits)}
 }
 
 pub fn input_int(label: &str, v: &mut i32, step: i32, step_fast: i32, flags: InputTextFlags) -> bool {
@@ -1733,19 +1733,19 @@ pub fn input_int(label: &str, v: &mut i32, step: i32, step_fast: i32, flags: Inp
 	unsafe{sys::igInputInt(label_.as_ptr(), v, step, step_fast, flags.bits)}
 }
 
-pub fn input_int2(label: &str, v: &mut i32, flags: InputTextFlags) -> bool {
+pub fn input_int2(label: &str, v: &mut [i32; 2], flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igInputInt2(label_.as_ptr(), v, flags.bits)}
+	unsafe{sys::igInputInt2(label_.as_ptr(), v.as_mut_ptr(), flags.bits)}
 }
 
-pub fn input_int3(label: &str, v: &mut i32, flags: InputTextFlags) -> bool {
+pub fn input_int3(label: &str, v: &mut [i32; 3], flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igInputInt3(label_.as_ptr(), v, flags.bits)}
+	unsafe{sys::igInputInt3(label_.as_ptr(), v.as_mut_ptr(), flags.bits)}
 }
 
-pub fn input_int4(label: &str, v: &mut i32, flags: InputTextFlags) -> bool {
+pub fn input_int4(label: &str, v: &mut [i32; 4], flags: InputTextFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igInputInt4(label_.as_ptr(), v, flags.bits)}
+	unsafe{sys::igInputInt4(label_.as_ptr(), v.as_mut_ptr(), flags.bits)}
 }
 
 pub fn input_double(label: &str, v: &mut f64, step: f64, step_fast: f64, format: &str, flags: InputTextFlags) -> bool {

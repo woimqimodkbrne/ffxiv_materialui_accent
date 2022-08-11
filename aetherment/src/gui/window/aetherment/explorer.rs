@@ -17,7 +17,7 @@ pub struct Tab {
 	populated_modselect: bool,
 	mod_entries: Vec<String>,
 	
-	newmod: String,
+	// newmod: String,
 	importing: bool,
 	exporting: bool,
 	
@@ -38,7 +38,7 @@ impl Tab {
 			populated_modselect: false,
 			mod_entries: Vec::new(),
 			
-			newmod: String::with_capacity(64),
+			// newmod: String::with_capacity(64),
 			importing: false,
 			exporting: false,
 			
@@ -75,7 +75,7 @@ impl Tab {
 				if let Some(m) = self.curmod.as_mut() {
 					aeth::popup("modfilecontext", imgui::WindowFlags::None, || {
 						if imgui::button("Remove", [0.0, 0.0]) {
-							m.datas.penumbra.update_file(&m.opt, &m.subopt, &self.path, None);
+							m.datas.penumbra.as_mut().unwrap().update_file(&m.opt, &m.subopt, &self.path, None);
 							self.refresh_mod = true;
 							imgui::close_current_popup();
 						}
@@ -100,7 +100,7 @@ impl Tab {
 				// aeth::combo("##optionselect", &format!("{}/{}", m.opt, m.subopt), imgui::ComboFlags::None, || {
 				if imgui::begin_combo("##optionselect", &format!("{}/{}", m.opt, m.subopt), imgui::ComboFlags::None) { // scoped kinda sucks cuz closures suck
 					let mut a = if imgui::selectable("Default", m.opt == "" && m.subopt == "", imgui::SelectableFlags::None, [0.0, 0.0]) {Some(("".to_owned(), "".to_owned()))} else {None};
-					m.datas.penumbra.options.iter_mut().for_each(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o {
+					m.datas.penumbra.as_mut().unwrap().options.iter_mut().for_each(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o {
 						aeth::tree(&opt.name, || {
 							opt.options.iter().for_each(|o2| if imgui::selectable(&o2.name, m.opt == opt.name && m.subopt == o2.name, imgui::SelectableFlags::None, [0.0, 0.0]) {
 								a = Some((opt.name.clone(), o2.name.clone()));
@@ -141,17 +141,17 @@ impl Tab {
 					}
 				}
 				
-				if aeth::button_icon("", aeth::fa5()) { // fa-plus
-					let path = PathBuf::from(&state.config.local_path).join(&self.newmod);
-					fs::create_dir_all(&path).unwrap();
-					File::create(path.join("datas.json")).unwrap().write_all(crate::serialize_json(json!(apply::Datas::default())).as_bytes()).unwrap();
-					let m = self.newmod.clone();
-					self.newmod.clear();
-					self.load_mod(&m, path);
-				}
-				imgui::same_line();
-				aeth::next_max_width();
-				imgui::input_text_with_hint("##newmod", "New Mod", &mut self.newmod, imgui::InputTextFlags::None);
+				// if aeth::button_icon("", aeth::fa5()) { // fa-plus
+				// 	let path = PathBuf::from(&state.config.local_path).join(&self.newmod);
+				// 	fs::create_dir_all(&path).unwrap();
+				// 	File::create(path.join("datas.json")).unwrap().write_all(crate::serialize_json(json!(apply::Datas::default())).as_bytes()).unwrap();
+				// 	let m = self.newmod.clone();
+				// 	self.newmod.clear();
+				// 	self.load_mod(&m, path);
+				// }
+				// imgui::same_line();
+				// aeth::next_max_width();
+				// imgui::input_text_with_hint("##newmod", "New Mod", &mut self.newmod, imgui::InputTextFlags::None);
 			});
 		}).right(400.0, || {
 			aeth::child("viewer", [0.0, -aeth::frame_height() - imgui::get_style().item_spacing.y()], false, imgui::WindowFlags::None, || {
@@ -191,7 +191,7 @@ impl Tab {
 									id: None,
 									paths: vec![format!("files/{}", &hash)],
 								}]);
-								m.datas.penumbra.update_file(&m.opt, &m.subopt, &self.path, Some(file));
+								m.datas.penumbra.as_mut().unwrap().update_file(&m.opt, &m.subopt, &self.path, Some(file));
 								self.refresh_mod = true;
 							},
 							aeth::FileDialogResult::Failed => self.importing = false, // TODO: display that it failed
@@ -243,10 +243,10 @@ impl Tab {
 		tree.add_node("Options");
 		
 		let datas: apply::Datas = serde_json::from_reader(File::open(path.join("datas.json")).unwrap()).unwrap();
-		datas.penumbra.files.keys()
+		datas.penumbra.as_ref().unwrap().files.keys()
 			.for_each(|p| tree.add_node(p));
 		
-		datas.penumbra.options.iter()
+		datas.penumbra.as_ref().unwrap().options.iter()
 			.for_each(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o {
 				opt.options.iter()
 					.for_each(|s| s.files.keys()
@@ -273,10 +273,10 @@ impl Tab {
 		m.tree.node_state("Options", true);
 		
 		if m.opt == "" && m.subopt == "" {
-			m.datas.penumbra.files.keys()
+			m.datas.penumbra.as_ref().unwrap().files.keys()
 				.for_each(|p| m.tree.node_state(p, true));
 		} else {
-			m.datas.penumbra.options.iter()
+			m.datas.penumbra.as_ref().unwrap().options.iter()
 				.for_each(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o && opt.name == m.opt {
 					opt.options.iter()
 						.filter(|s| s.name == m.subopt)
@@ -307,12 +307,12 @@ impl Tab {
 				let mut layers = f.0.iter();
 				let layer = layers.next().unwrap();
 				let mut tex = penumbra::resolve_layer(&penumbra::Layer {
-					value: if let Some(id) = &layer.id {m.datas.penumbra.options.iter().find(|v| v.id() == Some(id)).and_then(|v| Some(v.default()))} else {None},
+					value: if let Some(id) = &layer.id {m.datas.penumbra.as_ref().unwrap().options.iter().find(|v| v.id() == Some(id)).and_then(|v| Some(v.default()))} else {None},
 					files: layer.paths.clone()
 				}, &mut penumbra::load_file).expect("Failed resolving layer");
 				while let Some(layer) = layers.next() {
 					let l = penumbra::resolve_layer(&penumbra::Layer {
-						value: if let Some(id) = &layer.id {m.datas.penumbra.options.iter().find(|v| v.id() == Some(id)).and_then(|v| Some(v.default()))} else {None},
+						value: if let Some(id) = &layer.id {m.datas.penumbra.as_ref().unwrap().options.iter().find(|v| v.id() == Some(id)).and_then(|v| Some(v.default()))} else {None},
 						files: layer.paths.clone()
 					}, &mut penumbra::load_file).expect("Failed resolving layer");
 					l.overlay_onto(&mut tex);
@@ -337,7 +337,7 @@ impl Tab {
 		penumbra::remove_mod("aetherment_creator", i32::MAX); // without removing the old it keeps old paths
 		penumbra::add_mod(
 			"aetherment_creator", 
-			m.datas.penumbra.files_ref(&m.opt, &m.subopt)
+			m.datas.penumbra.as_ref().unwrap().files_ref(&m.opt, &m.subopt)
 				.unwrap()
 				.into_iter()
 				.map(|(gamepath, file)| (gamepath.to_owned(), mapfile(file)))
@@ -431,14 +431,14 @@ fn valid_path_mod(m: &Option<Mod>, path: &str) -> bool {
 	(|| {
 		if let Some(m) = m {
 			if m.opt != "" {
-				m.datas.penumbra.options.iter()
+				m.datas.penumbra.as_ref().unwrap().options.iter()
 					.find_map(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o && opt.name == m.opt {
 						Some(opt.options.iter().find_map(|o| if o.name == m.subopt {Some(o)} else {None})?)
 					} else {
 						None
 					})?.files.contains_key(path).then(|| ())
 			} else {
-				m.datas.penumbra.files.contains_key(path).then(|| ())
+				m.datas.penumbra.as_ref().unwrap().files.contains_key(path).then(|| ())
 			}
 		} else {
 			None

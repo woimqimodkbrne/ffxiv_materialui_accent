@@ -33,7 +33,7 @@ where S: Into<String> {
 	let picking = imgui::get_state_storage().i32(imgui::get_id(&title), 0);
 	imgui::push_id(&title);
 	// imgui::input_text(&title, path, imgui::InputTextFlags::ReadOnly);
-	super::button_icon("", super::fa5());
+	super::button_icon("");
 	imgui::pop_id();
 	if imgui::is_item_clicked(imgui::MouseButton::Left) {
 		log!("click");

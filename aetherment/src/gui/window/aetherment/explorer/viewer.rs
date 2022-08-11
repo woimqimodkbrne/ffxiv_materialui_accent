@@ -23,11 +23,11 @@ impl <'a> Conf<'a> {
 	}
 	
 	pub fn file_mut<'b>(&'b mut self, path: &str) -> Option<&'b mut PenumbraFile> {
-		self.datas.penumbra.file_mut(self.option, self.sub_option, path)
+		self.datas.penumbra.as_mut().unwrap().file_mut(self.option, self.sub_option, path)
 	}
 	
 	pub fn file_ref<'b>(&'b self, path: &str) -> Option<&'b PenumbraFile> {
-		self.datas.penumbra.file_ref(self.option, self.sub_option, path)
+		self.datas.penumbra.as_ref().unwrap().file_ref(self.option, self.sub_option, path)
 	}
 }
 

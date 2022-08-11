@@ -26,7 +26,7 @@ impl Viewer for Options {
 		if conf.is_none() {return}
 		
 		let conf = conf.unwrap();
-		let options = &mut conf.datas.penumbra.options;
+		let options = &mut conf.datas.penumbra.as_mut().unwrap().options;
 		let mut rem = None;
 		aeth::orderable_list("options", options, |i, _| {
 			if imgui::button("Remove", [0.0, 0.0]) {
@@ -107,7 +107,7 @@ impl Viewer for Options {
 								opt.options.remove(rem);
 							}
 							
-							if aeth::button_icon("", aeth::fa5()) { // fa-plus
+							if aeth::button_icon("") { // fa-plus
 								opt.options.push(PenumbraOption::default())
 							}
 							imgui::same_line();
@@ -128,7 +128,7 @@ impl Viewer for Options {
 			options.remove(rem);
 		}
 		
-		if aeth::button_icon("", aeth::fa5()) { // fa-plus
+		if aeth::button_icon("") { // fa-plus
 			imgui::open_popup("newopt", imgui::PopupFlags::None);
 		}
 		imgui::same_line();

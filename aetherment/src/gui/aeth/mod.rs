@@ -74,8 +74,8 @@ pub fn next_max_width() {
 	imgui::set_next_item_width(imgui::get_column_width(-1));
 }
 
-pub fn button_icon(icon: &str, font: &mut imgui::sys::ImFont) -> bool {
-	imgui::push_font(font);
+pub fn button_icon(icon: &str) -> bool {
+	imgui::push_font(unsafe{&mut *FA5});
 	// push_style_var causes a crash and cba figuring out why
 	let prev = imgui::get_style().frame_padding[0];
 	imgui::get_style().frame_padding[0] = 0.0;
@@ -86,4 +86,10 @@ pub fn button_icon(icon: &str, font: &mut imgui::sys::ImFont) -> bool {
 	imgui::pop_font();
 	
 	r
+}
+
+pub fn icon(icon: &str) {
+	imgui::push_font(unsafe{&mut *FA5});
+	imgui::text(icon);
+	imgui::pop_font();
 }
