@@ -124,8 +124,9 @@ impl Format {
 	
 	pub fn bitcount(&self) -> u32 {
 		match self {
-			Format::Dxt1 | Format::L8 | Format::A8 => 8,
-			Format::Dxt3 | Format::Dxt5 | Format::A4R4G4B4 | Format::A1R5G5B5 => 16,
+			Format::Dxt1 => 4,
+			Format::Dxt3 | Format::Dxt5  | Format::L8 | Format::A8 => 8,
+			Format::A4R4G4B4 | Format::A1R5G5B5 => 16,
 			Format::A8R8G8B8 | Format::X8R8G8B8 => 32,
 			Format::A16B16G16R16 => 64,
 			_ => 0,
@@ -245,8 +246,11 @@ fn convert_to_x8r8g8b8(data: &[u8]) -> Vec<u8> {
 // ---------------------------------------- //
 
 fn convert_from_compressed(format: SFormat, width: usize, height: usize, data: &[u8]) -> Vec<u8> {
-	// let uncompressed_len = data.len() / format.block_size() * 16 * 4;
-	// let height = uncompressed_len / (width * 4);
+	// dont bother with things smaller than the chunk size (4x4)
+	if width < 4 || height < 4 {
+		return vec![0; width * height * 4]
+	}
+	
 	let mut output = vec![0u8; width * height * 4];
 	format.decompress(data, width, height, &mut output);
 	output.chunks_exact(4)

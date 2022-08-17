@@ -90,7 +90,6 @@ impl From<DFormat> for Format {
 
 #[binrw]
 #[brw(little)]
-#[repr(C)]
 pub struct Header {
 	pub flags: u32,
 	pub format: Format,
@@ -102,7 +101,6 @@ pub struct Header {
 	pub mip_offsets: [u32; 13],
 }
 
-#[repr(C)]
 pub struct Tex {
 	pub header: Header,
 	pub data: Vec<u8>,
@@ -138,15 +136,17 @@ impl Tex {
 		});
 	}
 	
-	// this wont work properloy with compressed textures since those are only decompressed for a single slice
-	// TODO: fix that
 	pub fn slice(&self, miplevel: u16, depth: u16) -> (u16, u16, &[u8]) {
+		Self::slice_manual(miplevel, depth, &self.header, 32, &self.data)
+	}
+	
+	fn slice_manual<'a>(miplevel: u16, depth: u16, header: &Header, bitcount: u32, data: &'a [u8]) -> (u16, u16, &'a [u8]) {
+		let bytecount = bitcount as f32 / 8.0;
 		let factor = 0.5f32.powi(miplevel as i32);
-		let (w, h) = (self.header.width as f32 * factor, self.header.height as f32 * factor);
-		let slicesize = (w * h * 4.0) as usize;
-		let offset = ((self.header.mip_offsets[miplevel as usize] - 80) * 4 / (DFormat::from(self.header.format).bitcount() / 8))
-			as usize + slicesize * depth as usize;
-		(w as u16, h as u16, &self.data[offset..(offset + slicesize)])
+		let (w, h) = (header.width as f32 * factor, header.height as f32 * factor);
+		let slicesize = (w * h * bytecount as f32) as usize;
+		let offset = ((header.mip_offsets[miplevel as usize] - 80) as f32 * bytecount / (DFormat::from(header.format).bitcount() as f32 / 8.0)) as usize + slicesize * depth as usize;
+		(w as u16, h as u16, &data[offset..(offset + slicesize)])
 	}
 	
 	pub fn read<T>(reader: &mut T) -> Self where T: Read + Seek {
@@ -158,8 +158,19 @@ impl Tex {
 		reader.seek(SeekFrom::Start(80)).unwrap();
 		reader.read_to_end(&mut data).unwrap();
 		
+		let format = DFormat::from(header.format.clone());
+		let bitcount = format.bitcount();
+		let mut decompressed = Vec::with_capacity(data.len() * 4 / (bitcount as usize / 8));
+		
+		for mip in 0..header.mip_levels.max(1) {
+			for depth in 0..header.depths.max(1) {
+				let (w, h, data) = Self::slice_manual(mip, depth, &header, bitcount, &data);
+				decompressed.extend(format.convert_from(w as usize, h as usize, data).unwrap());
+			}
+		}
+		
 		Tex {
-			data: DFormat::from(header.format).convert_from(header.width as usize, header.height as usize, &data).unwrap(),
+			data: decompressed,
 			header
 		}
 	}
