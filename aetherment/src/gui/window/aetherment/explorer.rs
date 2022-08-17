@@ -1,5 +1,5 @@
 use std::{fs::{File, self}, path::PathBuf, collections::HashMap, io::{Write, Cursor, BufReader, BufRead}};
-use crate::{gui::aeth::{self, F2}, GAME, apply::{self, penumbra::{ConfOption, PenumbraFile, FileLayer}}};
+use crate::{gui::aeth::{self, F2}, GAME, apply::{self, penumbra::{self, ConfOption, PenumbraFile, FileLayer}}};
 
 mod tree;
 mod viewer;
@@ -396,6 +396,7 @@ impl Tab {
 		
 		self.viewer = match ext {
 			"tex" | "atex" => Some(Box::new(viewer::Tex::new(path.to_owned(), conf))),
+			"mtrl" => Some(Box::new(viewer::Mtrl::new(path.to_owned(), conf))),
 			_ => Some(Box::new(viewer::Generic::new(path.to_owned(), conf))),
 		};
 	}
@@ -444,4 +445,20 @@ fn valid_path_mod(m: &Option<Mod>, path: &str) -> bool {
 			None
 		}
 	})().is_some()
+}
+
+pub fn load_file(m: &Option<Conf>, path: &str) -> Vec<u8> {
+	match m.as_ref() {
+		Some(m) => {
+			match penumbra::load_file(&format!("{}/{}", m.path.to_str().unwrap(), m.datas.penumbra.as_ref().unwrap()
+				.file_ref(&m.option, &m.sub_option, path)
+				.unwrap()
+				.0[0]
+				.paths[0])) {
+				Some(f) => f,
+				None => penumbra::load_file(path).unwrap(),
+			}	
+		},
+		None => penumbra::load_file(path).unwrap(),
+	}
 }

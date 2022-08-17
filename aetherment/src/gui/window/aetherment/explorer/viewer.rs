@@ -5,10 +5,12 @@ use crate::apply::{penumbra::PenumbraFile, Datas};
 mod generic;
 mod options;
 mod tex;
+mod mtrl;
 
 pub use generic::*;
 pub use options::*;
 pub use tex::*;
+pub use mtrl::*;
 
 pub struct Conf<'a> {
 	pub path: PathBuf,
