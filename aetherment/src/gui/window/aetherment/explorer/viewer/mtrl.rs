@@ -1,5 +1,5 @@
 use std::io::{Write, Cursor};
-use noumenon::formats::game::mtrl;
+use noumenon::formats::game::{mtrl, tex::Tex};
 use crate::{GAME, gui::{window::aetherment::explorer::load_file, aeth::{self, F2}}};
 use super::Viewer;
 
@@ -25,6 +25,46 @@ impl Mtrl {
 	}
 }
 
+
+lazy_static!{
+	static ref MATERIALS: aeth::Texture = {
+		let mut data = Vec::with_capacity(32 * 2048 * 4);
+		let tex_d = GAME.file::<Tex>("chara/common/texture/-tile_low_d.tex").unwrap();
+		let tex_n = GAME.file::<Tex>("chara/common/texture/-tile_low_n.tex").unwrap();
+		
+		for i in 0..64 {
+			let (_, _, diff) = tex_d.slice(0, i);
+			let (_, _, norm) = tex_n.slice(0, i);
+			for y in 0..32 {
+				for x in 0..(32 - y) {
+					let a = diff[y * 32 * 4 + x * 4 + 3];
+					data.push(a);
+					data.push(a);
+					data.push(a);
+					data.push(255);
+				}
+				
+				for x in (32 - y)..32 {
+					let o = y * 32 * 4 + x * 4;
+					data.push(norm[o]);
+					data.push(norm[o + 1]);
+					data.push(norm[0 + 2]);
+					data.push(255);
+				}
+			}
+		}
+		
+		aeth::Texture::with_data(aeth::TextureOptions {
+			width: 32,
+			height: 2048,
+			format: 87, // DXGI_FORMAT_B8G8R8A8_UNORM
+			usage: 1, // D3D11_USAGE_IMMUTABLE
+			cpu_access_flags: 0,
+		}, &data)
+	};
+}
+
+
 impl Viewer for Mtrl {
 	fn valid_imports(&self) -> Vec<String> {
 		vec![self.ext.to_owned()]
@@ -35,14 +75,6 @@ impl Viewer for Mtrl {
 	}
 	
 	fn draw(&mut self, _state: &mut crate::Data, _conf: Option<super::Conf>) {
-		// imgui::text(&format!("shader: {}", self.mtrl.shader));
-		// imgui::text(&format!("colorsets: {:?}", self.mtrl.colorsets));
-		// imgui::text(&format!("colorset_datas: {:?}", self.mtrl.colorset_datas));
-		// imgui::text(&format!("unk: {:?}", self.mtrl.unk));
-		// imgui::text(&format!("shader_params: {:?}", self.mtrl.shader_params));
-		// imgui::text(&format!("samplers: {:?}", self.mtrl.samplers));
-		// imgui::text(&format!("shader keys: {:?}", self.mtrl.shader_keys));
-		
 		let curshader = self.mtrl.shader.shader_name();
 		if imgui::begin_combo("Shader", curshader, imgui::ComboFlags::None) {
 			for shader in mtrl::Shader::shader_names() {
@@ -94,7 +126,6 @@ impl Viewer for Mtrl {
 		}
 		
 		if imgui::collapsing_header("Textures", imgui::TreeNodeFlags::SpanAvailWidth) {
-			// for sampler in &mut self.mtrl.samplers {
 			for (id, sampler) in &mut self.mtrl.shader.inner().samplers {
 				let sampler_id = &id.to_string();
 				imgui::push_id(sampler_id);
@@ -161,7 +192,17 @@ impl Viewer for Mtrl {
 				imgui::input_float("Specular Strength", &mut row.specular_strength, 0.0, 0.0, "%.4f", imgui::InputTextFlags::None);
 				imgui::color_edit3("Emissive", &mut row.emissive, imgui::ColorEditFlags::PickerHueWheel | imgui::ColorEditFlags::NoInputs);
 				imgui::input_float("Gloss Strength", &mut row.gloss_strength, 0.0, 0.0, "%.4f", imgui::InputTextFlags::None);
-				imgui::input_int("Material", &mut row.material, 0, 0, imgui::InputTextFlags::None);
+				imgui::image(MATERIALS.resource(), [32.0, 32.0], [0.0, row.material as f32 / 64.0], [1.0, row.material as f32 / 64.0 + 1.0 / 64.0], [1.0; 4], [0.0; 4]);
+				if imgui::is_item_clicked(imgui::MouseButton::Left) {
+					imgui::open_popup("materialselect", imgui::PopupFlags::MouseButtonLeft)
+				}
+				if imgui::is_item_hovered() {
+					imgui::begin_tooltip();
+					imgui::image(MATERIALS.resource(), [128.0, 128.0], [0.0, row.material as f32 / 64.0], [1.0, row.material as f32 / 64.0 + 1.0 / 64.0], [1.0; 4], [0.0; 4]);
+					imgui::end_tooltip();
+				}
+				imgui::same_line();
+				imgui::text(&format!("Material ({})", row.material + 1));
 				imgui::input_float("Material Repeat X", &mut row.material_repeat_x, 0.0, 0.0, "%.4f", imgui::InputTextFlags::None);
 				imgui::input_float("Material Repeat Y", &mut row.material_repeat_y, 0.0, 0.0, "%.4f", imgui::InputTextFlags::None);
 				imgui::input_float("Material Skew X", &mut row.material_skew_x, 0.0, 0.0, "%.4f", imgui::InputTextFlags::None);
@@ -178,6 +219,31 @@ impl Viewer for Mtrl {
 					imgui::checkbox("Apply to Emisive", &mut dyerow.emisive);
 					imgui::checkbox("Apply to Gloss", &mut dyerow.gloss);
 					imgui::checkbox("Apply to Specular Strength", &mut dyerow.specular_strength);
+				}
+				
+				if imgui::begin_popup("materialselect", imgui::WindowFlags::None) {
+					for i in 0..64 {
+						imgui::begin_group();
+						imgui::image(MATERIALS.resource(), [32.0, 32.0], [0.0, i as f32 / 64.0], [1.0, i as f32 / 64.0 + 1.0 / 64.0], [1.0; 4], [0.0; 4]);
+						if imgui::is_item_clicked(imgui::MouseButton::Left) {
+							row.material = i;
+							imgui::close_current_popup();
+						}
+						aeth::offset([0.0, -imgui::get_style().item_spacing.y()]);
+						imgui::text(&(i + 1).to_string());
+						imgui::end_group();
+						if imgui::is_item_hovered() {
+							imgui::begin_tooltip();
+							imgui::image(MATERIALS.resource(), [128.0, 128.0], [0.0, i as f32 / 64.0], [1.0, i as f32 / 64.0 + 1.0 / 64.0], [1.0; 4], [0.0; 4]);
+							imgui::end_tooltip();
+						}
+						
+						if (i + 1) % 8 != 0 {
+							imgui::same_line();
+						}
+					}
+					
+					imgui::end_popup();
 				}
 				
 				imgui::end_child();
