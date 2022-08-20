@@ -160,7 +160,7 @@ impl Tex {
 		
 		let format = DFormat::from(header.format.clone());
 		let bitcount = format.bitcount();
-		let mut decompressed = Vec::with_capacity(data.len() * 4 / (bitcount as usize / 8));
+		let mut decompressed = Vec::with_capacity((data.len() as f32 * 4.0 / (bitcount as f32 / 8.0)) as usize);
 		
 		for mip in 0..header.mip_levels.max(1) {
 			for depth in 0..header.depths.max(1) {

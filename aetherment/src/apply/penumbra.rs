@@ -178,6 +178,17 @@ pub struct PenumbraOption {
 #[derive(Clone, Debug)]
 pub struct PenumbraFile(pub Vec<FileLayer>);
 
+impl PenumbraFile {
+	pub fn new_simple(path: &str) -> Self {
+		PenumbraFile(vec![
+			FileLayer {
+				id: None,
+				paths: vec![path.to_owned()],
+			}
+		])
+	}
+}
+
 #[derive(Clone, Debug)]
 pub struct FileLayer {
 	pub id: Option<String>,

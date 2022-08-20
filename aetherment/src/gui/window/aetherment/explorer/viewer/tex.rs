@@ -3,6 +3,17 @@ use noumenon::formats::{game::tex::{self, Format}, external::{dds::Dds, png::Png
 use crate::{gui::aeth::{self, F2}, apply::penumbra::{resolve_layer, ConfSetting, Layer as PLayer, PenumbraFile, ConfOption, FileLayer, self}};
 use super::Viewer;
 
+const TEXSIZE: i32 = 1024;
+lazy_static!{
+	static ref TEXTURE: Mutex<aeth::Texture> = Mutex::new(aeth::Texture::new(aeth::TextureOptions {
+		width: TEXSIZE,
+		height: TEXSIZE,
+		format: 87, // DXGI_FORMAT_B8G8R8A8_UNORM
+		usage: 2, // D3D11_USAGE_DYNAMIC
+		cpu_access_flags: 0x10000, // D3D11_CPU_ACCESS_WRITE
+	}));
+}
+
 pub struct Tex {
 	ext: String,
 	gamepath: String,
@@ -21,17 +32,6 @@ pub struct Tex {
 	new_layer: Option<FileLayer>,
 	invalid_layers: Vec<(usize, String)>,
 	cache: HashMap<String, Vec<u8>>,
-}
-
-const TEXSIZE: i32 = 1024;
-lazy_static!{
-	static ref TEXTURE: Mutex<aeth::Texture> = Mutex::new(aeth::Texture::new(aeth::TextureOptions {
-		width: TEXSIZE,
-		height: TEXSIZE,
-		format: 87, // DXGI_FORMAT_B8G8R8A8_UNORM
-		usage: 2, // D3D11_USAGE_DYNAMIC
-		cpu_access_flags: 0x10000, // D3D11_CPU_ACCESS_WRITE
-	}));
 }
 
 impl Tex {
@@ -344,7 +344,8 @@ impl Viewer for Tex {
 								if !noumenon::convert(&mut File::open(&path).unwrap(), ext, &mut Cursor::new(&mut buf), &self.gamepath[self.gamepath.rfind('.').unwrap() + 1..].to_owned()) {
 									log!("import failed"); // TODO: nice popup displaying that it failed
 								}
-								let hash = blake3::hash(&buf).to_hex().as_str()[..24].to_string();
+								// let hash = blake3::hash(&buf).to_hex().as_str()[..24].to_string();
+								let hash = crate::hash_str(blake3::hash(&buf));
 								File::create(conf.path.join("files").join(&hash)).unwrap().write_all(&buf).unwrap();
 								*gamepath = format!("files/{}", hash);
 							}

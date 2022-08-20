@@ -1,4 +1,4 @@
-use std::{fs::{File, self}, path::PathBuf, collections::HashMap, io::{Write, Cursor, BufReader, BufRead}};
+use std::{fs::{File, self}, path::PathBuf, io::{Write, Cursor, BufReader, BufRead}};
 use crate::{gui::aeth::{self, F2}, GAME, apply::{self, penumbra::{self, ConfOption, PenumbraFile, FileLayer}}};
 
 mod tree;
@@ -75,7 +75,7 @@ impl Tab {
 				if let Some(m) = self.curmod.as_mut() {
 					aeth::popup("modfilecontext", imgui::WindowFlags::None, || {
 						if imgui::button("Remove", [0.0, 0.0]) {
-							m.datas.penumbra.as_mut().unwrap().update_file(&m.opt, &m.subopt, &self.path, None);
+							m.datas.penumbra.as_mut().unwrap().update_file(&m.opt, &m.subopt, &m.context_path, None);
 							self.refresh_mod = true;
 							imgui::close_current_popup();
 						}
@@ -84,6 +84,7 @@ impl Tab {
 					if let Some((button, path)) = m.tree.draw() {
 						if button == imgui::MouseButton::Right {
 							imgui::open_popup("modfilecontext", imgui::PopupFlags::MouseButtonRight);
+							m.context_path = path;
 						} else {
 							self.open_file_mod(path);
 						}
@@ -184,7 +185,8 @@ impl Tab {
 								if !noumenon::convert(&mut File::open(&path).unwrap(), ext, &mut Cursor::new(&mut buf), &self.path[self.path.rfind('.').unwrap() + 1..]) {
 									log!("import failed"); // TODO: nice popup displaying that it failed
 								}
-								let hash = blake3::hash(&buf).to_hex().as_str()[..24].to_string();
+								// let hash = blake3::hash(&buf).to_hex().as_str()[..24].to_string();
+								let hash = crate::hash_str(blake3::hash(&buf));
 								fs::create_dir_all(m.path.join("files")).unwrap();
 								File::create(m.path.join("files").join(&hash)).unwrap().write_all(&buf).unwrap();
 								let file = PenumbraFile(vec![FileLayer {
@@ -253,12 +255,15 @@ impl Tab {
 						.for_each(|p| tree.add_node(p)))
 			});
 		
+		datas.cleanup(&path);
+		
 		self.curmod = Some(Mod {
 			tree,
 			datas,
 			path,
 			opt: "".to_owned(),
 			subopt: "".to_owned(),
+			context_path: "".to_owned(),
 		});
 		
 		self.set_mod_option("", "");
@@ -293,59 +298,14 @@ impl Tab {
 		self.penumbra_draw();
 	}
 	
-	fn penumbra_draw(&self) {
-		use crate::api::penumbra;
-		
-		// TODO: redraw settings
-		// TODO: dont check every file to see if we need to create a temp file
-		// this would also allow live preview of tex layer editing
-		let m = self.curmod.as_ref().unwrap();
-		let mapfile = |f: &PenumbraFile| -> String {
-			if f.0.len() > 1 || f.0[0].paths.len() > 1 {
-				use crate::apply::penumbra;
-				
-				let mut layers = f.0.iter();
-				let layer = layers.next().unwrap();
-				let mut tex = penumbra::resolve_layer(&penumbra::Layer {
-					value: if let Some(id) = &layer.id {m.datas.penumbra.as_ref().unwrap().options.iter().find(|v| v.id() == Some(id)).and_then(|v| Some(v.default()))} else {None},
-					files: layer.paths.clone()
-				}, &mut penumbra::load_file).expect("Failed resolving layer");
-				while let Some(layer) = layers.next() {
-					let l = penumbra::resolve_layer(&penumbra::Layer {
-						value: if let Some(id) = &layer.id {m.datas.penumbra.as_ref().unwrap().options.iter().find(|v| v.id() == Some(id)).and_then(|v| Some(v.default()))} else {None},
-						files: layer.paths.clone()
-					}, &mut penumbra::load_file).expect("Failed resolving layer");
-					l.overlay_onto(&mut tex);
-				}
-				
-				let temp = m.path.join("temp");
-				fs::create_dir_all(&temp).unwrap();
-				let mut data = Vec::new();
-				tex.write(&mut Cursor::new(&mut data));
-				let hash = blake3::hash(&data).to_hex().to_string();
-				let file = temp.join(&hash);
-				if !file.exists() {
-					File::create(&file).unwrap().write_all(&data).unwrap();
-				}
-				file.to_str().unwrap().to_owned()
-			} else {
-				m.path.join(&f.0[0].paths[0]).to_str().unwrap().to_owned()
-			}
-		};
-		
-		log!("penumbra dev mod");
-		penumbra::remove_mod("aetherment_creator", i32::MAX); // without removing the old it keeps old paths
-		penumbra::add_mod(
-			"aetherment_creator", 
-			m.datas.penumbra.as_ref().unwrap().files_ref(&m.opt, &m.subopt)
-				.unwrap()
-				.into_iter()
-				.map(|(gamepath, file)| (gamepath.to_owned(), mapfile(file)))
-				.collect::<HashMap<String, String>>(),
-			"",
-			i32::MAX
-		);
-		penumbra::redraw_self();
+	fn penumbra_draw(&mut self) {
+		let m = self.curmod.as_mut().unwrap();
+		Conf {
+			path: m.path.clone(),
+			datas: &mut m.datas,
+			option: &mut m.opt,
+			sub_option: &mut m.subopt,
+		}.reload_penumbra();
 	}
 	
 	fn open_file<S>(&mut self, path: S) -> bool where
@@ -408,10 +368,7 @@ struct Mod {
 	path: PathBuf,
 	opt: String,
 	subopt: String,
-}
-
-impl Mod {
-	
+	context_path: String,
 }
 
 // ---------------------------------------- //
@@ -450,14 +407,10 @@ fn valid_path_mod(m: &Option<Mod>, path: &str) -> bool {
 pub fn load_file(m: &Option<Conf>, path: &str) -> Vec<u8> {
 	match m.as_ref() {
 		Some(m) => {
-			match penumbra::load_file(&format!("{}/{}", m.path.to_str().unwrap(), m.datas.penumbra.as_ref().unwrap()
-				.file_ref(&m.option, &m.sub_option, path)
-				.unwrap()
-				.0[0]
-				.paths[0])) {
-				Some(f) => f,
+			match m.datas.penumbra.as_ref().unwrap().file_ref(&m.option, &m.sub_option, path) {
+				Some(f) => penumbra::load_file(&format!("{}/{}", m.path.to_str().unwrap(), f.0[0].paths[0])).unwrap(),
 				None => penumbra::load_file(path).unwrap(),
-			}	
+			}
 		},
 		None => penumbra::load_file(path).unwrap(),
 	}

@@ -1,22 +1,29 @@
 #![allow(dead_code)]
 
 use std::{borrow::Cow, io::{Cursor, Read, Seek, Write}, collections::BTreeMap};
-use binrw::{binrw, BinRead};
+use binrw::{binrw, BinRead, BinWrite};
 use half::f16;
 use ironworks::file::File;
 use crate::{formats::game::Result, NullReader};
 
-// pub type ShaderParams = BTreeMap<ShaderParamId, (bool, Vec<f32>)>;
 #[derive(Clone, Debug)]
 pub struct ShaderParams {
 	pub params: BTreeMap<ShaderParamId, ShaderParam>,
+	pub keys: BTreeMap<ShaderKeyId, ShaderKey>,
 	pub samplers: BTreeMap<SamplerType, Sampler>,
+	pub unk: Vec<u32>,
 }
 
 #[derive(Clone, Debug)]
 pub struct ShaderParam {
 	pub enabled: bool,
 	pub vals: Vec<f32>,
+}
+
+#[derive(Clone, Debug)]
+pub struct ShaderKey {
+	pub enabled: bool,
+	pub val: u32,
 }
 
 #[derive(Clone, Debug)]
@@ -130,6 +137,44 @@ impl std::fmt::Display for ShaderParamId {
 #[brw(little, repr = u32)]
 #[repr(u32)]
 #[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum ShaderKeyId {
+	Unk190435047 = 190435047,
+	Unk229123851 = 229123851,
+	Unk274491986 = 274491986,
+	Unk291288682 = 291288682,
+	Unk440654153 = 440654153,
+	Unk612525193 = 612525193,
+	Unk681055795 = 681055795,
+	Unk940355280 = 940355280,
+	Unk1244803460 = 1244803460,
+	Unk1330578998 = 1330578998,
+	Unk1465690188 = 1465690188,
+	Unk1854727813 = 1854727813,
+	Unk2846092837 = 2846092837,
+	Unk2883218939 = 2883218939,
+	Unk3048326218 = 3048326218,
+	Unk3054951514 = 3054951514,
+	Unk3217219831 = 3217219831,
+	Unk3367837167 = 3367837167,
+	Unk3420444140 = 3420444140,
+	Unk3531043187 = 3531043187,
+	Unk3762391338 = 3762391338,
+	Unk3967836472 = 3967836472,
+	Unk4113354501 = 4113354501,
+	Unk4176438622 = 4176438622,
+	Unk4219131364 = 4219131364,
+}
+
+impl std::fmt::Display for ShaderKeyId {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+		f.write_str(&format!("{:?}", self))
+	}
+}
+
+#[binrw]
+#[brw(little, repr = u32)]
+#[repr(u32)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum SamplerType {
 	CharaNormal = 207536625, // chara/equipment/e6015/texture/v01_c0201e6015_sho_n.tex
 	CharaDiffuse = 290653886, // chara/human/c0801/obj/face/f0003/texture/c0801f0003_fac_d.tex
@@ -217,7 +262,26 @@ impl Shader {
 		}
 	}
 	
-	pub fn inner(&mut self) -> &mut ShaderParams {
+	pub fn inner(&self) -> &ShaderParams {
+		match self {
+			Shader::Bg(v) => &v.0,
+			Shader::BgUvScroll(v) => &v.0,
+			Shader::BgColorChange(v) => &v.0,
+			Shader::BgCrestChange(v) => &v.0,
+			Shader::Crystal(v) => &v.0,
+			Shader::LightShaft(v) => &v.0,
+			Shader::VerticalFog(v) => &v.0,
+			Shader::River(v) => &v.0,
+			Shader::Water(v) => &v.0,
+			Shader::Character(v) => &v.0,
+			Shader::CharacterGlass(v) => &v.0,
+			Shader::Skin(v) => &v.0,
+			Shader::Iris(v) => &v.0,
+			Shader::Hair(v) => &v.0,
+		}
+	}
+	
+	pub fn inner_mut(&mut self) -> &mut ShaderParams {
 		match self {
 			Shader::Bg(v) => &mut v.0,
 			Shader::BgUvScroll(v) => &mut v.0,
@@ -233,6 +297,25 @@ impl Shader {
 			Shader::Skin(v) => &mut v.0,
 			Shader::Iris(v) => &mut v.0,
 			Shader::Hair(v) => &mut v.0,
+		}
+	}
+	
+	pub fn into_inner(self) -> ShaderParams {
+		match self {
+			Shader::Bg(v) => v.0,
+			Shader::BgUvScroll(v) => v.0,
+			Shader::BgColorChange(v) => v.0,
+			Shader::BgCrestChange(v) => v.0,
+			Shader::Crystal(v) => v.0,
+			Shader::LightShaft(v) => v.0,
+			Shader::VerticalFog(v) => v.0,
+			Shader::River(v) => v.0,
+			Shader::Water(v) => v.0,
+			Shader::Character(v) => v.0,
+			Shader::CharacterGlass(v) => v.0,
+			Shader::Skin(v) => v.0,
+			Shader::Iris(v) => v.0,
+			Shader::Hair(v) => v.0,
 		}
 	}
 	
@@ -284,14 +367,29 @@ impl Default for Bg {
 				(ShaderParamId::Unk3147419510, ShaderParam {enabled: false, vals: vec![1.0, 1.0, 1.0, 1.0]}), // 37306
 				(ShaderParamId::Unk3219771693, ShaderParam {enabled: false, vals: vec![1.0]}), // 35960
 			]),
-			samplers: BTreeMap::from([
-				(SamplerType::BgUnk465317650, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 35200
-				(SamplerType::BgDiffuse, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 38867
-				(SamplerType::BgUnk1768480522, Sampler {enabled: false, path: "".to_owned(), flags: 832}), // 31604
-				(SamplerType::BgUnk1824202628, Sampler {enabled: false, path: "".to_owned(), flags: 832}), // 31807
-				(SamplerType::BgNormal, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 33266
-				(SamplerType::BgUnk3719555455, Sampler {enabled: false, path: "".to_owned(), flags: 832}), // 31807
+			keys: BTreeMap::from([
+				(ShaderKeyId::Unk190435047, ShaderKey {enabled: false, val: 131274511}), // 91
+				(ShaderKeyId::Unk274491986, ShaderKey {enabled: false, val: 4160862297}), // 5
+				(ShaderKeyId::Unk440654153, ShaderKey {enabled: false, val: 752097944}), // 18
+				(ShaderKeyId::Unk681055795, ShaderKey {enabled: false, val: 3713329004}), // 1
+				(ShaderKeyId::Unk1330578998, ShaderKey {enabled: false, val: 3180618906}), // 7782
+				(ShaderKeyId::Unk1465690188, ShaderKey {enabled: false, val: 671594654}), // 1585
+				(ShaderKeyId::Unk2846092837, ShaderKey {enabled: false, val: 1923787182}), // 4573
+				(ShaderKeyId::Unk3048326218, ShaderKey {enabled: false, val: 2186107714}), // 1
+				(ShaderKeyId::Unk3054951514, ShaderKey {enabled: false, val: 502437980}), // 6141
+				(ShaderKeyId::Unk3217219831, ShaderKey {enabled: false, val: 1999632171}), // 88
+				(ShaderKeyId::Unk3420444140, ShaderKey {enabled: false, val: 2792035745}), // 381
+				(ShaderKeyId::Unk4176438622, ShaderKey {enabled: false, val: 3869682983}), // 1
 			]),
+			samplers: BTreeMap::from([
+				(SamplerType::BgUnk465317650, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 35200
+				(SamplerType::BgDiffuse, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 38867
+				(SamplerType::BgUnk1768480522, Sampler {enabled: false, path: String::with_capacity(128), flags: 832}), // 31604
+				(SamplerType::BgUnk1824202628, Sampler {enabled: false, path: String::with_capacity(128), flags: 832}), // 31807
+				(SamplerType::BgNormal, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 33266
+				(SamplerType::BgUnk3719555455, Sampler {enabled: false, path: String::with_capacity(128), flags: 832}), // 31807
+			]),
+			unk: vec![17, 1065353216, 1065353216, 1065353216, 1065353216, 0, 0, 0, 1065353216], // 21937
 		})
 	}
 }
@@ -321,14 +419,21 @@ impl Default for BgUvScroll {
 				(ShaderParamId::Unk3147419510, ShaderParam {enabled: false, vals: vec![1.0, 1.0, 1.0, 1.0]}), // 278
 				(ShaderParamId::Unk3219771693, ShaderParam {enabled: false, vals: vec![1.0]}), // 177
 			]),
-			samplers: BTreeMap::from([
-				(SamplerType::BgUnk465317650, Sampler {enabled: false, path: "".to_owned(), flags: 832}), // 148
-				(SamplerType::BgDiffuse, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 282
-				(SamplerType::BgUnk1768480522, Sampler {enabled: false, path: "".to_owned(), flags: 832}), // 165
-				(SamplerType::BgUnk1824202628, Sampler {enabled: false, path: "".to_owned(), flags: 832}), // 205
-				(SamplerType::BgNormal, Sampler {enabled: false, path: "".to_owned(), flags: 832}), // 156
-				(SamplerType::BgUnk3719555455, Sampler {enabled: false, path: "".to_owned(), flags: 832}), // 169
+			keys: BTreeMap::from([
+				(ShaderKeyId::Unk1330578998, ShaderKey {enabled: false, val: 3180618906}), // 3
+				(ShaderKeyId::Unk1465690188, ShaderKey {enabled: false, val: 671594654}), // 45
+				(ShaderKeyId::Unk2846092837, ShaderKey {enabled: false, val: 1923787182}), // 83
+				(ShaderKeyId::Unk3054951514, ShaderKey {enabled: false, val: 3835352875}), // 116
 			]),
+			samplers: BTreeMap::from([
+				(SamplerType::BgUnk465317650, Sampler {enabled: false, path: String::with_capacity(128), flags: 832}), // 148
+				(SamplerType::BgDiffuse, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 282
+				(SamplerType::BgUnk1768480522, Sampler {enabled: false, path: String::with_capacity(128), flags: 832}), // 165
+				(SamplerType::BgUnk1824202628, Sampler {enabled: false, path: String::with_capacity(128), flags: 832}), // 205
+				(SamplerType::BgNormal, Sampler {enabled: false, path: String::with_capacity(128), flags: 832}), // 156
+				(SamplerType::BgUnk3719555455, Sampler {enabled: false, path: String::with_capacity(128), flags: 832}), // 169
+			]),
+			unk: vec![0, 1065353216, 1065353216, 1065353216, 1065353216, 0, 0, 0, 1065353216], // 62
 		})
 	}
 }
@@ -348,11 +453,16 @@ impl Default for BgColorChange {
 				(ShaderParamId::Unk3086627810, ShaderParam {enabled: false, vals: vec![1.0]}), // 726
 				(ShaderParamId::Unk3219771693, ShaderParam {enabled: false, vals: vec![1.0]}), // 735
 			]),
-			samplers: BTreeMap::from([
-				(SamplerType::BgUnk465317650, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 723
-				(SamplerType::BgDiffuse, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 737
-				(SamplerType::BgNormal, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 682
+			keys: BTreeMap::from([
+				(ShaderKeyId::Unk1330578998, ShaderKey {enabled: false, val: 3180618906}), // 6
+				(ShaderKeyId::Unk2846092837, ShaderKey {enabled: false, val: 1923787182}), // 13
 			]),
+			samplers: BTreeMap::from([
+				(SamplerType::BgUnk465317650, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 723
+				(SamplerType::BgDiffuse, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 737
+				(SamplerType::BgNormal, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 682
+			]),
+			unk: vec![1041, 1065353216, 1065353216, 1065353216, 1065353216, 0, 0, 0, 1065353216], // 669
 		})
 	}
 }
@@ -372,12 +482,17 @@ impl Default for BgCrestChange {
 				(ShaderParamId::Unk3086627810, ShaderParam {enabled: false, vals: vec![1.0]}), // 41
 				(ShaderParamId::Unk3219771693, ShaderParam {enabled: false, vals: vec![1.0]}), // 41
 			]),
-			samplers: BTreeMap::from([
-				(SamplerType::BgUnk465317650, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 35
-				(SamplerType::BgDiffuse, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 41
-				(SamplerType::BgUnk1768480522, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 41
-				(SamplerType::BgNormal, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 33
+			keys: BTreeMap::from([
+				(ShaderKeyId::Unk2846092837, ShaderKey {enabled: false, val: 1923787182}), // 8
+				(ShaderKeyId::Unk3054951514, ShaderKey {enabled: false, val: 502437980}), // 1
 			]),
+			samplers: BTreeMap::from([
+				(SamplerType::BgUnk465317650, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 35
+				(SamplerType::BgDiffuse, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 41
+				(SamplerType::BgUnk1768480522, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 41
+				(SamplerType::BgNormal, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 33
+			]),
+			unk: vec![4113, 1065353216, 1065353216, 1065353216, 1065353216, 0, 0, 0, 1065353216], // 24
 		})
 	}
 }
@@ -395,12 +510,17 @@ impl Default for Crystal {
 				(ShaderParamId::Unk3219771693, ShaderParam {enabled: false, vals: vec![1.0]}), // 50
 				(ShaderParamId::Unk4009059935, ShaderParam {enabled: false, vals: vec![1.0]}), // 30
 			]),
-			samplers: BTreeMap::from([
-				(SamplerType::BgUnk465317650, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 93
-				(SamplerType::BgDiffuse, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 97
-				(SamplerType::BgNormal, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 90
-				(SamplerType::Cubemap, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 97
+			keys: BTreeMap::from([
+				(ShaderKeyId::Unk1330578998, ShaderKey {enabled: false, val: 3180618906}), // 6
+				(ShaderKeyId::Unk2846092837, ShaderKey {enabled: false, val: 1923787182}), // 1
 			]),
+			samplers: BTreeMap::from([
+				(SamplerType::BgUnk465317650, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 93
+				(SamplerType::BgDiffuse, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 97
+				(SamplerType::BgNormal, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 90
+				(SamplerType::Cubemap, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 97
+			]),
+			unk: vec![17, 1065353216, 1065353216, 1065353216, 1065353216, 0, 0, 0, 1065353216], // 85
 		})
 	}
 }
@@ -419,10 +539,17 @@ impl Default for LightShaft {
 				(ShaderParamId::Unk3224367609, ShaderParam {enabled: false, vals: vec![0.0, 0.05, 0.0]}), // 92
 				(ShaderParamId::Unk3531364537, ShaderParam {enabled: false, vals: vec![1.0, 1.0, 1.0]}), // 147
 			]),
-			samplers: BTreeMap::from([
-				(SamplerType::LiftShaftUnk557626425, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 813
-				(SamplerType::LiftShaftUnk1446741167, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 813
+			keys: BTreeMap::from([
+				(ShaderKeyId::Unk229123851, ShaderKey {enabled: false, val: 3321983381}), // 13
+				(ShaderKeyId::Unk1330578998, ShaderKey {enabled: false, val: 3180618906}), // 3
+				(ShaderKeyId::Unk1465690188, ShaderKey {enabled: false, val: 671594654}), // 3
+				(ShaderKeyId::Unk2846092837, ShaderKey {enabled: false, val: 1923787182}), // 3
 			]),
+			samplers: BTreeMap::from([
+				(SamplerType::LiftShaftUnk557626425, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 813
+				(SamplerType::LiftShaftUnk1446741167, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 813
+			]),
+			unk: Vec::new(),
 		})
 	}
 }
@@ -443,9 +570,11 @@ impl Default for VerticalFog {
 				(ShaderParamId::Unk3494687889, ShaderParam {enabled: false, vals: vec![0.01]}), // 54
 				(ShaderParamId::Unk3531364537, ShaderParam {enabled: false, vals: vec![0.0, 0.0, 0.0, 1.0]}), // 39
 			]),
+			keys: BTreeMap::new(),
 			samplers: BTreeMap::from([
-				(SamplerType::Fog, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 201
+				(SamplerType::Fog, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 201
 			]),
+			unk: Vec::new(),
 		})
 	}
 }
@@ -485,11 +614,24 @@ impl Default for River {
 				(ShaderParamId::Unk3838218227, ShaderParam {enabled: false, vals: vec![1.0, 1.0, 1.0, 1.0]}), // 183
 				(ShaderParamId::Unk4063627017, ShaderParam {enabled: false, vals: vec![0.5]}), // 171
 			]),
-			samplers: BTreeMap::from([
-				(SamplerType::WaterUnk2281064269, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 10
-				(SamplerType::WaterUnk2514613837, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 250
-				(SamplerType::WaterNormal, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 250
+			keys: BTreeMap::from([
+				(ShaderKeyId::Unk291288682, ShaderKey {enabled: false, val: 4029502289}), // 32
+				(ShaderKeyId::Unk681055795, ShaderKey {enabled: false, val: 3713329004}), // 1
+				(ShaderKeyId::Unk1244803460, ShaderKey {enabled: false, val: 3889752702}), // 1
+				(ShaderKeyId::Unk1854727813, ShaderKey {enabled: false, val: 3530971738}), // 27
+				(ShaderKeyId::Unk2883218939, ShaderKey {enabled: false, val: 429953500}), // 27
+				(ShaderKeyId::Unk3048326218, ShaderKey {enabled: false, val: 2186107714}), // 2
+				(ShaderKeyId::Unk3054951514, ShaderKey {enabled: false, val: 502437980}), // 27
+				(ShaderKeyId::Unk3762391338, ShaderKey {enabled: false, val: 652478584}), // 190
+				(ShaderKeyId::Unk3967836472, ShaderKey {enabled: false, val: 4039188000}), // 27
+				(ShaderKeyId::Unk4176438622, ShaderKey {enabled: false, val: 138432195}), // 95
 			]),
+			samplers: BTreeMap::from([
+				(SamplerType::WaterUnk2281064269, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 10
+				(SamplerType::WaterUnk2514613837, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 250
+				(SamplerType::WaterNormal, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 250
+			]),
+			unk: vec![0, 1065353216, 1065353216, 1065353216, 1065353216, 0, 0, 0, 0], // 248
 		})
 	}
 }
@@ -532,13 +674,27 @@ impl Default for Water {
 				(ShaderParamId::Unk3819586170, ShaderParam {enabled: false, vals: vec![0.25]}), // 400
 				(ShaderParamId::Unk4063627017, ShaderParam {enabled: false, vals: vec![0.1]}), // 210
 			]),
-			samplers: BTreeMap::from([
-				(SamplerType::WaterUnk541659712, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 19
-				(SamplerType::WaterUnk1464738518, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 19
-				(SamplerType::WaterUnk2281064269, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 61
-				(SamplerType::WaterUnk2514613837, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 144
-				(SamplerType::WaterNormal, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 477
+			keys: BTreeMap::from([
+				(ShaderKeyId::Unk291288682, ShaderKey {enabled: false, val: 4029502289}), // 3
+				(ShaderKeyId::Unk681055795, ShaderKey {enabled: false, val: 3713329004}), // 145
+				(ShaderKeyId::Unk1244803460, ShaderKey {enabled: false, val: 3889752702}), // 1
+				(ShaderKeyId::Unk1854727813, ShaderKey {enabled: false, val: 3530971738}), // 3
+				(ShaderKeyId::Unk2883218939, ShaderKey {enabled: false, val: 429953500}), // 3
+				(ShaderKeyId::Unk3048326218, ShaderKey {enabled: false, val: 2186107714}), // 93
+				(ShaderKeyId::Unk3054951514, ShaderKey {enabled: false, val: 502437980}), // 4
+				(ShaderKeyId::Unk3762391338, ShaderKey {enabled: false, val: 652478584}), // 77
+				(ShaderKeyId::Unk3967836472, ShaderKey {enabled: false, val: 4039188000}), // 3
+				(ShaderKeyId::Unk4176438622, ShaderKey {enabled: false, val: 138432195}), // 254
+				(ShaderKeyId::Unk4219131364, ShaderKey {enabled: false, val: 289469532}), // 19
 			]),
+			samplers: BTreeMap::from([
+				(SamplerType::WaterUnk541659712, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 19
+				(SamplerType::WaterUnk1464738518, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 19
+				(SamplerType::WaterUnk2281064269, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 61
+				(SamplerType::WaterUnk2514613837, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 144
+				(SamplerType::WaterNormal, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 477
+			]),
+			unk: vec![0, 1065353216, 1065353216, 1065353216, 1065353216, 0, 0, 0, 0], // 465
 		})
 	}
 }
@@ -555,12 +711,19 @@ impl Default for Character {
 				(ShaderParamId::Unk1465565106, ShaderParam {enabled: false, vals: vec![0.25]}), // 24723
 				(ShaderParamId::Unk3036724004, ShaderParam {enabled: false, vals: vec![0.0]}), // 5183
 			]),
-			samplers: BTreeMap::from([
-				(SamplerType::CharaNormal, Sampler {enabled: false, path: "".to_owned(), flags: 1015829}), // 18021
-				(SamplerType::CharaDiffuse, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 9624
-				(SamplerType::CharaSpecular, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 10327
-				(SamplerType::Multi, Sampler {enabled: false, path: "".to_owned(), flags: 1016661}), // 9205
+			keys: BTreeMap::from([
+				(ShaderKeyId::Unk3054951514, ShaderKey {enabled: false, val: 1611594207}), // 16111
+				(ShaderKeyId::Unk3367837167, ShaderKey {enabled: false, val: 2687453224}), // 849
+				(ShaderKeyId::Unk3531043187, ShaderKey {enabled: false, val: 4083110193}), // 10005
+				(ShaderKeyId::Unk4113354501, ShaderKey {enabled: false, val: 2815623008}), // 29125
 			]),
+			samplers: BTreeMap::from([
+				(SamplerType::CharaNormal, Sampler {enabled: false, path: String::with_capacity(128), flags: 1015829}), // 18021
+				(SamplerType::CharaDiffuse, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 9624
+				(SamplerType::CharaSpecular, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 10327
+				(SamplerType::Multi, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016661}), // 9205
+			]),
+			unk: vec![4], // 17644
 		})
 	}
 }
@@ -575,10 +738,17 @@ impl Default for CharacterGlass {
 				(ShaderParamId::Unk1465565106, ShaderParam {enabled: false, vals: vec![0.25]}), // 133
 				(ShaderParamId::Unk3042205627, ShaderParam {enabled: false, vals: vec![1.0]}), // 162
 			]),
-			samplers: BTreeMap::from([
-				(SamplerType::CharaNormal, Sampler {enabled: false, path: "".to_owned(), flags: 1015829}), // 151
-				(SamplerType::Multi, Sampler {enabled: false, path: "".to_owned(), flags: 1016661}), // 136
+			keys: BTreeMap::from([
+				(ShaderKeyId::Unk3054951514, ShaderKey {enabled: false, val: 1611594207}), // 5
+				(ShaderKeyId::Unk3367837167, ShaderKey {enabled: false, val: 2687453224}), // 1
+				(ShaderKeyId::Unk3531043187, ShaderKey {enabled: false, val: 4083110193}), // 63
+				(ShaderKeyId::Unk4113354501, ShaderKey {enabled: false, val: 2815623008}), // 158
 			]),
+			samplers: BTreeMap::from([
+				(SamplerType::CharaNormal, Sampler {enabled: false, path: String::with_capacity(128), flags: 1015829}), // 151
+				(SamplerType::Multi, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016661}), // 136
+			]),
+			unk: vec![5], // 122
 		})
 	}
 }
@@ -602,11 +772,18 @@ impl Default for Skin {
 				(ShaderParamId::Unk2569562539, ShaderParam {enabled: false, vals: vec![3.0]}), // 403
 				(ShaderParamId::Unk3036724004, ShaderParam {enabled: false, vals: vec![0.0]}), // 2
 			]),
-			samplers: BTreeMap::from([
-				(SamplerType::CharaNormal, Sampler {enabled: false, path: "".to_owned(), flags: 983893}), // 299
-				(SamplerType::CharaDiffuse, Sampler {enabled: false, path: "".to_owned(), flags: 1016661}), // 321
-				(SamplerType::Multi, Sampler {enabled: false, path: "".to_owned(), flags: 1016661}), // 311
+			keys: BTreeMap::from([
+				(ShaderKeyId::Unk940355280, ShaderKey {enabled: false, val: 735790577}), // 49
+				(ShaderKeyId::Unk3054951514, ShaderKey {enabled: false, val: 1611594207}), // 31
+				(ShaderKeyId::Unk3531043187, ShaderKey {enabled: false, val: 1480746461}), // 293
+				(ShaderKeyId::Unk4113354501, ShaderKey {enabled: false, val: 2815623008}), // 334
 			]),
+			samplers: BTreeMap::from([
+				(SamplerType::CharaNormal, Sampler {enabled: false, path: String::with_capacity(128), flags: 983893}), // 299
+				(SamplerType::CharaDiffuse, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016661}), // 321
+				(SamplerType::Multi, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016661}), // 311
+			]),
+			unk: vec![0], // 363
 		})
 	}
 }
@@ -627,11 +804,16 @@ impl Default for Iris {
 				(ShaderParamId::Unk2569562539, ShaderParam {enabled: false, vals: vec![200.0]}), // 300
 				(ShaderParamId::Unk3036724004, ShaderParam {enabled: false, vals: vec![0.0]}), // 263
 			]),
-			samplers: BTreeMap::from([
-				(SamplerType::CharaNormal, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 300
-				(SamplerType::Multi, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 310
-				(SamplerType::Reflection, Sampler {enabled: false, path: "".to_owned(), flags: 1016640}), // 311
+			keys: BTreeMap::from([
+				(ShaderKeyId::Unk3054951514, ShaderKey {enabled: false, val: 1611594207}), // 21
+				(ShaderKeyId::Unk4113354501, ShaderKey {enabled: false, val: 2815623008}), // 21
 			]),
+			samplers: BTreeMap::from([
+				(SamplerType::CharaNormal, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 300
+				(SamplerType::Multi, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 310
+				(SamplerType::Reflection, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016640}), // 311
+			]),
+			unk: vec![0], // 308
 		})
 	}
 }
@@ -651,16 +833,24 @@ impl Default for Hair {
 				(ShaderParamId::Unk3036724004, ShaderParam {enabled: false, vals: vec![0.0]}), // 774
 				(ShaderParamId::Unk3042205627, ShaderParam {enabled: false, vals: vec![0.5]}), // 895
 			]),
-			samplers: BTreeMap::from([
-				(SamplerType::CharaNormal, Sampler {enabled: false, path: "".to_owned(), flags: 1016661}), // 545
-				(SamplerType::Multi, Sampler {enabled: false, path: "".to_owned(), flags: 1016661}), // 553
+			keys: BTreeMap::from([
+				(ShaderKeyId::Unk612525193, ShaderKey {enabled: false, val: 1851494160}), // 299
+				(ShaderKeyId::Unk3054951514, ShaderKey {enabled: false, val: 1611594207}), // 9
+				(ShaderKeyId::Unk3367837167, ShaderKey {enabled: false, val: 2687453224}), // 4
+				(ShaderKeyId::Unk4113354501, ShaderKey {enabled: false, val: 2815623008}), // 10
 			]),
+			samplers: BTreeMap::from([
+				(SamplerType::CharaNormal, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016661}), // 545
+				(SamplerType::Multi, Sampler {enabled: false, path: String::with_capacity(128), flags: 1016661}), // 553
+			]),
+			unk: vec![0], // 869
 		})
 	}
 }
 
 #[binrw]
 #[brw(little)]
+#[derive(Debug)]
 struct Data {
 	_sig: u32,
 	_size: u16,
@@ -673,11 +863,11 @@ struct Data {
 	unk_size: u8,
 	
 	#[br(count = texture_count)]
-	textures: Vec<(u16, u16)>,
+	textures: Vec<(u16, u16)>, // 2nd u16 is either 0 or 32768. only CharaDiffuse, CharaNormal, CharaSpecular, and Multi seem to be able to be 32768
 	#[br(count = uvset_count)]
-	uvsets: Vec<(u16, u16)>,
+	uvsets: Vec<(u16, u16)>, // 2nd u16 seems to be index
 	#[br(count = colorset_count)]
-	colorsets: Vec<(u16, u16)>,
+	colorsets: Vec<(u16, u16)>, // 2nd u16 seems to be index
 	
 	#[br(count = strings_size)]
 	strings: Vec<u8>,
@@ -708,25 +898,18 @@ struct Data {
 	
 	shader_param_values_size: u16,
 	shader_keys_count: u16,
-	constant_count: u16,
+	shader_params_count: u16,
 	sampler_count: u16,
 	flags: u32,
 	
 	#[br(count = shader_keys_count)]
-	shader_keys: Vec<(u32, u32)>,
-	#[br(count = constant_count)]
+	shader_keys: Vec<(ShaderKeyId, u32)>,
+	#[br(count = shader_params_count)]
 	shader_params: Vec<(ShaderParamId, u16, u16)>,
 	#[br(count = sampler_count)]
 	samplers: Vec<(SamplerType, u32, u32)>,
 	#[br(count = shader_param_values_size / 4)]
 	shader_param_values: Vec<f32>,
-}
-
-#[binrw]
-#[brw(little)]
-struct Offset {
-	name_offset: u16,
-	special: u16,
 }
 
 #[derive(Clone, Debug)]
@@ -743,6 +926,23 @@ pub struct ColorsetRow {
 	pub material_repeat_y: f32,
 }
 
+impl Default for ColorsetRow {
+	fn default() -> Self {
+		Self {
+			diffuse: [1.0; 3],
+			specular_strength: 1.0,
+			specular: [1.0; 3],
+			gloss_strength: 1.0,
+			emissive: [1.0; 3],
+			material: 0,
+			material_repeat_x: 1.0,
+			material_repeat_y: 1.0,
+			material_skew_x: 0.0,
+			material_skew_y: 0.0,
+		}
+	}
+}
+
 #[derive(Clone, Debug)]
 pub struct ColorsetDyeRow {
 	pub template: i32,
@@ -753,16 +953,27 @@ pub struct ColorsetDyeRow {
 	pub specular_strength: bool,
 }
 
+impl Default for ColorsetDyeRow {
+	fn default() -> Self {
+		Self {
+			template: 0,
+			diffuse: false,
+			specular: false,
+			emisive: false,
+			gloss: false,
+			specular_strength: false,
+		}
+	}
+}
+
 #[derive(Clone, Debug)]
 pub struct Mtrl {
 	pub flags: u32,
 	pub uvsets: Vec<String>,
 	pub colorsets: Vec<String>,
-	pub unk: Vec<u32>,
 	pub colorset_datas: Option<[ColorsetRow; 16]>,
 	pub colorsetdye_datas: Option<[ColorsetDyeRow; 16]>,
 	pub shader: Shader,
-	pub shader_keys: Vec<(u32, u32)>,
 }
 
 impl File for Mtrl {
@@ -777,13 +988,13 @@ impl Mtrl {
 		
 		Mtrl {
 			flags: data.flags,
-			uvsets: data.uvsets.into_iter()
+			uvsets: data.uvsets.into_iter() // TODO: dont assume its in the right order use v.1
 				.map(|v| data.strings[v.0 as usize..].null_terminated().unwrap())
 				.collect(),
-			colorsets: data.colorsets.into_iter()
+			colorsets: data.colorsets.into_iter() // TODO: dont assume its in the right order use v.1
 				.map(|v| data.strings[v.0 as usize..].null_terminated().unwrap())
 				.collect(),
-			unk: data.unk,
+			// unk: data.unk,
 			colorset_datas: if data.colorset_data_size > 0 {
 				let datas: [ColorsetRow; 16] = data.colorset_datas.into_iter().map(|v| ColorsetRow {
 						diffuse: [
@@ -826,12 +1037,19 @@ impl Mtrl {
 			} else {None},
 			shader: {
 				let mut shader = Shader::new(&data.strings[data.shader_offset as usize..].null_terminated().unwrap()).unwrap();
-				let inner = shader.inner();
+				let inner = shader.inner_mut();
 				
 				for (typ, offset, size) in data.shader_params {
 					inner.params.insert(typ, ShaderParam {
 						enabled: true,
 						vals: data.shader_param_values[offset as usize / 4..offset as usize / 4 + size as usize / 4].to_vec(),
+					});
+				}
+				
+				for (typ, val) in data.shader_keys {
+					inner.keys.insert(typ, ShaderKey {
+						enabled: true,
+						val,
 					});
 				}
 				
@@ -843,18 +1061,122 @@ impl Mtrl {
 					});
 				}
 				
+				inner.unk = data.unk;
+				
 				shader
 			},
 			
-			shader_keys: data.shader_keys,
+			// shader_keys: data.shader_keys,
 		}
 	}
 	
-	pub fn write<T>(&self, _writer: &mut T) where T: Write + Seek {
-		todo!();
-		// Data {
-		// 	_sig: 16973824,
-		// 	_size: 0, // TODO
-		// }
+	pub fn write<T>(&self, writer: &mut T) where T: Write + Seek {
+		let mut strings = Vec::<u8>::new();
+		
+		strings.extend(self.shader.shader_name().bytes());
+		strings.push(0);
+		
+		let mut textures = Vec::<(u16, u16)>::new();
+		let mut samplers = Vec::<(u32, u32, u32)>::new();
+		for (typ, sampler) in &self.shader.inner().samplers {
+			if !sampler.enabled {continue}
+			
+			samplers.push((*typ as u32, sampler.flags, textures.len() as u32));
+			textures.push((strings.len() as u16, 0)); // we just assume the 2nd u16 is 0, since that seems to be the case most often than not
+			strings.extend(sampler.path.as_bytes());
+			strings.push(0);
+		}
+		
+		let mut uvsets = Vec::<(u16, u16)>::new();
+		for (i, s) in self.uvsets.iter().enumerate() {
+			uvsets.push((strings.len() as u16, i as u16));
+			strings.extend(s.as_bytes());
+			strings.push(0);
+		}
+		
+		let mut colorsets = Vec::<(u16, u16)>::new();
+		for (i, s) in self.colorsets.iter().enumerate() {
+			colorsets.push((strings.len() as u16, i as u16));
+			strings.extend(s.as_bytes());
+			strings.push(0);
+		}
+		
+		16973824u32.write_to(writer).unwrap();
+		0u16.write_to(writer).unwrap(); // we go back to write the size after we write everything
+		if self.colorsetdye_datas.is_some() {544u16} else if self.colorset_datas.is_some() {512} else {0}.write_to(writer).unwrap();
+		(strings.len() as u16).write_to(writer).unwrap();
+		0u16.write_to(writer).unwrap();
+		(textures.len() as u8).write_to(writer).unwrap();
+		(uvsets.len() as u8).write_to(writer).unwrap();
+		(colorsets.len() as u8).write_to(writer).unwrap();
+		(self.shader.inner().unk.len() as u8 * 4).write_to(writer).unwrap();
+		textures.write_to(writer).unwrap();
+		uvsets.write_to(writer).unwrap();
+		colorsets.write_to(writer).unwrap();
+		strings.write_to(writer).unwrap();
+		self.shader.inner().unk.write_to(writer).unwrap();
+		if let Some(rows) = &self.colorset_datas {
+			for row in rows {
+				f16::from_f32(row.diffuse[0]).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.diffuse[1]).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.diffuse[2]).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.specular_strength).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.specular[0]).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.specular[1]).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.specular[2]).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.gloss_strength).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.emissive[0]).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.emissive[1]).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.emissive[2]).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.material as f32 / 64.0).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.material_repeat_x).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.material_skew_x).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.material_skew_y).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.material_repeat_y).to_bits().write_to(writer).unwrap();
+			}
+		}
+		if let Some(rows) = &self.colorsetdye_datas {
+			for row in rows {
+				(
+					((row.template as u16) << 5) +
+					if row.diffuse {0x01} else {0} +
+					if row.specular {0x02} else {0} +
+					if row.emisive {0x04} else {0} +
+					if row.gloss {0x08} else {0} +
+					if row.specular_strength {0x10} else {0}
+				).write_to(writer).unwrap();
+			}
+		}
+		
+		let mut shader_param_values = Vec::<f32>::new();
+		let mut shader_params = Vec::<(u32, u16, u16)>::new();
+		for (typ, param) in &self.shader.inner().params {
+			if !param.enabled {continue}
+			
+			shader_params.push((*typ as u32, (shader_param_values.len() as u16) * 4, (param.vals.len() as u16) * 4));
+			shader_param_values.extend(param.vals.iter());
+		}
+		
+		let mut shader_keys = Vec::<(u32, u32)>::new();
+		for (typ, key) in &self.shader.inner().keys {
+			if !key.enabled {continue}
+			
+			shader_keys.push((*typ as u32, key.val));
+		}
+		
+		((shader_param_values.len() as u16) * 4).write_to(writer).unwrap();
+		(shader_keys.len() as u16).write_to(writer).unwrap();
+		(shader_params.len() as u16).write_to(writer).unwrap();
+		(samplers.len() as u16).write_to(writer).unwrap();
+		self.flags.write_to(writer).unwrap();
+		shader_keys.write_to(writer).unwrap();
+		shader_params.write_to(writer).unwrap();
+		samplers.write_to(writer).unwrap();
+		shader_param_values.write_to(writer).unwrap();
+		
+		// write the size now
+		let len = writer.stream_position().unwrap() as u16;
+		writer.seek(std::io::SeekFrom::Start(4)).unwrap();
+		len.write_to(writer).unwrap();
 	}
 }

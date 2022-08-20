@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::{HashMap, HashSet}, path::PathBuf};
 use serde::{Deserialize, Serialize};
 use crate::creator::tags::TAGS;
 use self::penumbra::ConfOption;
@@ -37,5 +37,47 @@ impl Datas {
 		}
 		
 		tags
+	}
+	
+	pub fn cleanup(&self, mod_path: &PathBuf) {
+		let mut used_files = HashSet::new();
+		
+		if let Some(penumbra) = &self.penumbra {
+			penumbra.files.iter().for_each(|(_, f)| f.0.iter().for_each(|l| l.paths.iter().for_each(|p| {used_files.insert(p.replace("\\", "/"));})));
+			penumbra.options.iter().for_each(|o| match o {
+				ConfOption::Single(o) | ConfOption::Multi(o) => o.options.iter().for_each(|o| o.files.iter().for_each(|(_, f)| f.0.iter().for_each(|l| l.paths.iter().for_each(|p| {used_files.insert(p.replace("\\", "/"));})))),
+				_ => {},
+			})
+		}
+		
+		fn check_dir(root: &PathBuf, d: &PathBuf, files: &HashSet<String>) {
+			std::fs::read_dir(d)
+				.unwrap()
+				.for_each(|e| {
+					let e = e.unwrap();
+					if e.path().is_dir() {
+						check_dir(root, &e.path(), files);
+					}
+				});
+			
+			let mut c = 0;
+			std::fs::read_dir(d)
+				.unwrap()
+				.for_each(|e| {
+					c += 1;
+					let e = e.unwrap();
+					if e.path().is_file() && !files.contains(&e.path().strip_prefix(root).unwrap().to_str().unwrap().replace("\\", "/")) {
+						std::fs::remove_file(e.path()).unwrap();
+						c -= 1;
+					}
+				});
+			
+			if c == 0 && &root.join("files") != d {
+				std::fs::remove_dir(d).unwrap();
+			}
+		}
+		
+		let fp = mod_path.join("files");
+		check_dir(&mod_path, &fp, &used_files);
 	}
 }

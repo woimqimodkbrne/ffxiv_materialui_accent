@@ -1255,11 +1255,19 @@ pub fn dummy(size: [f32; 2]) {
 	unsafe{sys::igDummy(size)}
 }
 
-pub fn indent(indent_w: f32) {
+pub fn indent() {
+	unsafe{sys::igIndent(0.0)}
+}
+
+pub fn indent_f32(indent_w: f32) {
 	unsafe{sys::igIndent(indent_w)}
 }
 
-pub fn unindent(indent_w: f32) {
+pub fn unindent() {
+	unsafe{sys::igUnindent(0.0)}
+}
+
+pub fn unindent_f32(indent_w: f32) {
 	unsafe{sys::igUnindent(indent_w)}
 }
 
