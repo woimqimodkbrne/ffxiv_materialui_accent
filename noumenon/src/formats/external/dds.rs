@@ -22,9 +22,11 @@ pub enum Format {
 	A1R5G5B5,
 	A8R8G8B8,
 	X8R8G8B8,
-	Dxt1,
-	Dxt3,
-	Dxt5,
+	Bc1,
+	Bc2,
+	Bc3,
+	Bc5,
+	Bc7,
 	A16B16G16R16
 }
 
@@ -37,9 +39,10 @@ impl Format {
 			Format::A1R5G5B5 => Some(convert_from_a1r5g5b5(data)),
 			Format::A8R8G8B8 => Some(Vec::from(data)),
 			Format::X8R8G8B8 => Some(convert_from_x8r8g8b8(data)),
-			Format::Dxt1     => Some(convert_from_compressed(SFormat::Bc1, width, height, data)),
-			Format::Dxt3     => Some(convert_from_compressed(SFormat::Bc2, width, height, data)),
-			Format::Dxt5     => Some(convert_from_compressed(SFormat::Bc3, width, height, data)),
+			Format::Bc1      => Some(convert_from_compressed(SFormat::Bc1, width, height, data)),
+			Format::Bc2      => Some(convert_from_compressed(SFormat::Bc2, width, height, data)),
+			Format::Bc3      => Some(convert_from_compressed(SFormat::Bc3, width, height, data)),
+			Format::Bc5      => Some(convert_from_compressed(SFormat::Bc5, width, height, data)),
 			_                => None,
 		}
 	}
@@ -52,9 +55,10 @@ impl Format {
 			Format::A1R5G5B5 => Some(convert_to_a1r5g5b5(data)),
 			Format::A8R8G8B8 => Some(Vec::from(data)),
 			Format::X8R8G8B8 => Some(convert_to_x8r8g8b8(data)),
-			Format::Dxt1     => Some(convert_to_compressed(SFormat::Bc1, width, height, data)),
-			Format::Dxt3     => Some(convert_to_compressed(SFormat::Bc2, width, height, data)),
-			Format::Dxt5     => Some(convert_to_compressed(SFormat::Bc3, width, height, data)),
+			Format::Bc1      => Some(convert_to_compressed(SFormat::Bc1, width, height, data)),
+			Format::Bc2      => Some(convert_to_compressed(SFormat::Bc2, width, height, data)),
+			Format::Bc3      => Some(convert_to_compressed(SFormat::Bc3, width, height, data)),
+			Format::Bc5      => Some(convert_to_compressed(SFormat::Bc5, width, height, data)),
 			_                => None,
 		}
 	}
@@ -74,9 +78,9 @@ impl Format {
 			(0,          0x7C00,     0x8000    ) => Format::A1R5G5B5,
 			(0,          0x00FF0000, 0xFF000000) => Format::A8R8G8B8,
 			(0,          0x00FF0000, 0         ) => Format::X8R8G8B8,
-			(0x31545844, 0,          0         ) => Format::Dxt1,
-			(0x33545844, 0,          0         ) => Format::Dxt3,
-			(0x35545844, 0,          0         ) => Format::Dxt5,
+			(0x31545844, 0,          0         ) => Format::Bc1,
+			(0x33545844, 0,          0         ) => Format::Bc2,
+			(0x35545844, 0,          0         ) => Format::Bc3,
 			// (113,        0,          0         ) => Format::A16B16G16R16,
 			_                                    => Format::Unknown,
 		}
@@ -84,14 +88,14 @@ impl Format {
 	
 	pub fn flags(&self) -> u32 {
 		match self {
-			Format::Dxt1 | Format::Dxt3 | Format::Dxt5 | Format::A16B16G16R16 => 0x00081007,
+			Format::Bc1 | Format::Bc2 | Format::Bc3 | Format::A16B16G16R16 => 0x00081007,
 			_ => 0x0000100F,
 		}
 	}
 	
 	pub fn flags2(&self) -> u32 {
 		match self {
-			Format::Dxt1 | Format::Dxt3 | Format::Dxt5 | Format::A16B16G16R16 => 0x4,
+			Format::Bc1 | Format::Bc2 | Format::Bc3 | Format::A16B16G16R16 => 0x4,
 			Format::A8R8G8B8 | Format::A4R4G4B4 | Format::A1R5G5B5 => 0x41,
 			Format::X8R8G8B8 => 0x40,
 			Format::L8 => 0x20000,
@@ -102,9 +106,9 @@ impl Format {
 	
 	pub fn fourcc(&self) -> u32 {
 		match self {
-			Format::Dxt1 => 0x31545844,
-			Format::Dxt3 => 0x33545844,
-			Format::Dxt5 => 0x35545844,
+			Format::Bc1 => 0x31545844,
+			Format::Bc2 => 0x33545844,
+			Format::Bc3 => 0x35545844,
 			Format::A16B16G16R16 => 113,
 			_ => 0,
 		}
@@ -124,8 +128,8 @@ impl Format {
 	
 	pub fn bitcount(&self) -> u32 {
 		match self {
-			Format::Dxt1 => 4,
-			Format::Dxt3 | Format::Dxt5  | Format::L8 | Format::A8 => 8,
+			Format::Bc1 => 4,
+			Format::Bc2 | Format::Bc3  | Format::L8 | Format::A8 => 8,
 			Format::A4R4G4B4 | Format::A1R5G5B5 => 16,
 			Format::A8R8G8B8 | Format::X8R8G8B8 => 32,
 			Format::A16B16G16R16 => 64,
