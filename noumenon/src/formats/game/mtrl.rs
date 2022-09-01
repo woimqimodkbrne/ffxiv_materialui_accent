@@ -145,7 +145,7 @@ pub enum ShaderKeyId {
 	Unk440654153 = 440654153,
 	Unk612525193 = 612525193,
 	Unk681055795 = 681055795,
-	Unk940355280 = 940355280,
+	Skin = 940355280,
 	Unk1244803460 = 1244803460,
 	Unk1330578998 = 1330578998,
 	Unk1465690188 = 1465690188,
@@ -773,7 +773,7 @@ impl Default for Skin {
 				(ShaderParamId::Unk3036724004, ShaderParam {enabled: false, vals: vec![0.0]}), // 2
 			]),
 			keys: BTreeMap::from([
-				(ShaderKeyId::Unk940355280, ShaderKey {enabled: false, val: 735790577}), // 49
+				(ShaderKeyId::Skin, ShaderKey {enabled: false, val: 735790577}), // 49
 				(ShaderKeyId::Unk3054951514, ShaderKey {enabled: false, val: 1611594207}), // 31
 				(ShaderKeyId::Unk3531043187, ShaderKey {enabled: false, val: 1480746461}), // 293
 				(ShaderKeyId::Unk4113354501, ShaderKey {enabled: false, val: 2815623008}), // 334
@@ -919,11 +919,11 @@ pub struct ColorsetRow {
 	pub specular: [f32; 3],
 	pub gloss_strength: f32,
 	pub emissive: [f32; 3],
-	pub material: i32,
-	pub material_repeat_x: f32,
-	pub material_skew_x: f32,
-	pub material_skew_y: f32,
-	pub material_repeat_y: f32,
+	pub tile_index: i32,
+	pub tile_repeat_x: f32,
+	pub tile_skew_x: f32,
+	pub tile_skew_y: f32,
+	pub tile_repeat_y: f32,
 }
 
 impl Default for ColorsetRow {
@@ -934,11 +934,11 @@ impl Default for ColorsetRow {
 			specular: [1.0; 3],
 			gloss_strength: 1.0,
 			emissive: [1.0; 3],
-			material: 0,
-			material_repeat_x: 1.0,
-			material_repeat_y: 1.0,
-			material_skew_x: 0.0,
-			material_skew_y: 0.0,
+			tile_index: 0,
+			tile_repeat_x: 1.0,
+			tile_repeat_y: 1.0,
+			tile_skew_x: 0.0,
+			tile_skew_y: 0.0,
 		}
 	}
 }
@@ -971,8 +971,8 @@ pub struct Mtrl {
 	pub flags: u32,
 	pub uvsets: Vec<String>,
 	pub colorsets: Vec<String>,
-	pub colorset_datas: Option<[ColorsetRow; 16]>,
-	pub colorsetdye_datas: Option<[ColorsetDyeRow; 16]>,
+	pub colorset_rows: Option<[ColorsetRow; 16]>,
+	pub colorsetdye_rows: Option<[ColorsetDyeRow; 16]>,
 	pub shader: Shader,
 }
 
@@ -995,7 +995,7 @@ impl Mtrl {
 				.map(|v| data.strings[v.0 as usize..].null_terminated().unwrap())
 				.collect(),
 			// unk: data.unk,
-			colorset_datas: if data.colorset_data_size > 0 {
+			colorset_rows: if data.colorset_data_size > 0 {
 				let datas: [ColorsetRow; 16] = data.colorset_datas.into_iter().map(|v| ColorsetRow {
 						diffuse: [
 							f16::from_bits(v[0]).to_f32(),
@@ -1014,16 +1014,16 @@ impl Mtrl {
 							f16::from_bits(v[9]).to_f32(),
 							f16::from_bits(v[10]).to_f32(),
 						],
-						material: (f16::from_bits(v[11]).to_f32() * 64.0) as i32,
-						material_repeat_x: f16::from_bits(v[12]).to_f32(),
-						material_skew_x: f16::from_bits(v[13]).to_f32(),
-						material_skew_y: f16::from_bits(v[14]).to_f32(),
-						material_repeat_y: f16::from_bits(v[15]).to_f32(),
+						tile_index: (f16::from_bits(v[11]).to_f32() * 64.0) as i32,
+						tile_repeat_x: f16::from_bits(v[12]).to_f32(),
+						tile_skew_x: f16::from_bits(v[13]).to_f32(),
+						tile_skew_y: f16::from_bits(v[14]).to_f32(),
+						tile_repeat_y: f16::from_bits(v[15]).to_f32(),
 					}).collect::<Vec<ColorsetRow>>().try_into().unwrap();
 				
 				Some(datas)
 			} else {None},
-			colorsetdye_datas: if data.colorset_data_size == 544 {
+			colorsetdye_rows: if data.colorset_data_size == 544 {
 				let datas: [ColorsetDyeRow; 16] = data.colorsetdye_datas.into_iter().map(|v| ColorsetDyeRow {
 						template: (v >> 5) as i32,
 						diffuse: (v & 0x01) == 0x01,
@@ -1081,7 +1081,7 @@ impl Mtrl {
 		for (typ, sampler) in &self.shader.inner().samplers {
 			if !sampler.enabled {continue}
 			
-			samplers.push((*typ as u32, sampler.flags, textures.len() as u32));
+			samplers.push((typ.clone() as u32, sampler.flags, textures.len() as u32));
 			textures.push((strings.len() as u16, 0)); // we just assume the 2nd u16 is 0, since that seems to be the case most often than not
 			strings.extend(sampler.path.as_bytes());
 			strings.push(0);
@@ -1103,7 +1103,7 @@ impl Mtrl {
 		
 		16973824u32.write_to(writer).unwrap();
 		0u16.write_to(writer).unwrap(); // we go back to write the size after we write everything
-		if self.colorsetdye_datas.is_some() {544u16} else if self.colorset_datas.is_some() {512} else {0}.write_to(writer).unwrap();
+		if self.colorset_rows.is_some() {544u16} else if self.colorset_rows.is_some() {512} else {0}.write_to(writer).unwrap();
 		(strings.len() as u16).write_to(writer).unwrap();
 		0u16.write_to(writer).unwrap();
 		(textures.len() as u8).write_to(writer).unwrap();
@@ -1115,7 +1115,7 @@ impl Mtrl {
 		colorsets.write_to(writer).unwrap();
 		strings.write_to(writer).unwrap();
 		self.shader.inner().unk.write_to(writer).unwrap();
-		if let Some(rows) = &self.colorset_datas {
+		if let Some(rows) = &self.colorset_rows {
 			for row in rows {
 				f16::from_f32(row.diffuse[0]).to_bits().write_to(writer).unwrap();
 				f16::from_f32(row.diffuse[1]).to_bits().write_to(writer).unwrap();
@@ -1128,14 +1128,14 @@ impl Mtrl {
 				f16::from_f32(row.emissive[0]).to_bits().write_to(writer).unwrap();
 				f16::from_f32(row.emissive[1]).to_bits().write_to(writer).unwrap();
 				f16::from_f32(row.emissive[2]).to_bits().write_to(writer).unwrap();
-				f16::from_f32(row.material as f32 / 64.0).to_bits().write_to(writer).unwrap();
-				f16::from_f32(row.material_repeat_x).to_bits().write_to(writer).unwrap();
-				f16::from_f32(row.material_skew_x).to_bits().write_to(writer).unwrap();
-				f16::from_f32(row.material_skew_y).to_bits().write_to(writer).unwrap();
-				f16::from_f32(row.material_repeat_y).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.tile_index as f32 / 64.0).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.tile_repeat_x).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.tile_skew_x).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.tile_skew_y).to_bits().write_to(writer).unwrap();
+				f16::from_f32(row.tile_repeat_y).to_bits().write_to(writer).unwrap();
 			}
 		}
-		if let Some(rows) = &self.colorsetdye_datas {
+		if let Some(rows) = &self.colorsetdye_rows {
 			for row in rows {
 				(
 					((row.template as u16) << 5) +
@@ -1153,7 +1153,7 @@ impl Mtrl {
 		for (typ, param) in &self.shader.inner().params {
 			if !param.enabled {continue}
 			
-			shader_params.push((*typ as u32, (shader_param_values.len() as u16) * 4, (param.vals.len() as u16) * 4));
+			shader_params.push((typ.clone() as u32, (shader_param_values.len() as u16) * 4, (param.vals.len() as u16) * 4));
 			shader_param_values.extend(param.vals.iter());
 		}
 		
@@ -1161,7 +1161,7 @@ impl Mtrl {
 		for (typ, key) in &self.shader.inner().keys {
 			if !key.enabled {continue}
 			
-			shader_keys.push((*typ as u32, key.val));
+			shader_keys.push((typ.clone() as u32, key.val));
 		}
 		
 		((shader_param_values.len() as u16) * 4).write_to(writer).unwrap();

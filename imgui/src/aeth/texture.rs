@@ -7,11 +7,11 @@ pub struct TextureOptions {
 	pub cpu_access_flags: i32,
 }
 
-pub(in crate) static mut CREATE: fn(TextureOptions) -> usize = |_| {0};
-pub(in crate) static mut CREATEDATA: fn(TextureOptions, Vec<u8>) -> usize = |_, _| {0};
-pub(in crate) static mut DROP: fn(usize) = |_| {};
-pub(in crate) static mut PIN: fn(usize) -> *mut u8 = |_| {0 as *mut u8};
-pub(in crate) static mut UNPIN: fn(usize) = |_| {};
+pub static mut CREATE: fn(TextureOptions) -> usize = |_| {0};
+pub static mut CREATEDATA: fn(TextureOptions, Vec<u8>) -> usize = |_, _| {0};
+pub static mut DROP: fn(usize) = |_| {};
+pub static mut PIN: fn(usize) -> *mut u8 = |_| {0 as *mut u8};
+pub static mut UNPIN: fn(usize) = |_| {};
 
 pub struct Texture {
 	pub width: usize,

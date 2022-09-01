@@ -192,8 +192,8 @@ fn convert_to_a4r4g4b4(data: &[u8]) -> Vec<u8> {
 		.chunks_exact(4)
 		.flat_map(|p| {
 			[
-				(p[0] >> 4) + p[1],
-				(p[2] >> 4) + p[3],
+				(p[0] >> 4) + (p[1] & 0xF0),
+				(p[2] >> 4) + (p[3] & 0xF0),
 			]
 		}).collect::<Vec<u8>>()
 }

@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use crate as imgui;
+
 macro_rules! scoped {
 	($name:ident, ($($param_name:ident: $param_type:ty),*), $begin:path, $end:path) => {
 		pub fn $name<F>($($param_name: $param_type,)* scope: F) -> bool where F: FnOnce() {

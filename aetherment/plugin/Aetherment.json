@@ -1,0 +1,11 @@
+{
+	"Author": "Sevii",
+	"Name": "Aetherment",
+	"Punchline": "TODO",
+	"Description": "TODO",
+	"InternalName": "Aetherment",
+	"ApplicableVersion": "any",
+	"DalamudApiLevel": 7,
+	"LoadPriority": 1,
+	"Tags": []
+}

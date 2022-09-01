@@ -1,3 +1,4 @@
+use crate as imgui;
 use super::F2;
 
 pub fn orderable_list<T, F, F2>(id: &str, vec: &mut Vec<T>, mut context_menu: F, mut draw: F2) -> bool where

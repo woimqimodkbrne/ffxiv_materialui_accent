@@ -4,7 +4,7 @@ use crate::{GAME, gui::{window::aetherment::explorer::load_file, aeth::{self, F2
 use super::Viewer;
 
 lazy_static!{
-	static ref MATERIALS: aeth::Texture = {
+	static ref TILES: aeth::Texture = {
 		let mut data = Vec::with_capacity(32 * 2048 * 4);
 		let tex_d = GAME.file::<Tex>("chara/common/texture/-tile_low_d.tex").unwrap();
 		let tex_n = GAME.file::<Tex>("chara/common/texture/-tile_low_n.tex").unwrap();
@@ -41,7 +41,7 @@ lazy_static!{
 	};
 	
 	static ref SHADERKEYPRESETS: HashMap<mtrl::ShaderKeyId, BTreeMap<u32, &'static str>> = HashMap::from([
-		(mtrl::ShaderKeyId::Unk940355280, BTreeMap::from([(735790577, "Normal Skin"), (1476344676, "Furry Skin")])),
+		(mtrl::ShaderKeyId::Skin, BTreeMap::from([(735790577, "Normal"), (1476344676, "Furry")])),
 		(mtrl::ShaderKeyId::Unk3054951514, BTreeMap::from([(502437980, "502437980"), (1556481461, "1556481461"), (1611594207, "1611594207"), (2484609214, "2484609214"), (3835352875, "3835352875")])),
 		(mtrl::ShaderKeyId::Unk3531043187, BTreeMap::from([(1480746461, "1480746461"), (4083110193, "4083110193")])),
 		(mtrl::ShaderKeyId::Unk4176438622, BTreeMap::from([(138432195, "138432195"), (3869682983, "3869682983")])),
@@ -52,7 +52,8 @@ pub struct Mtrl {
 	ext: String,
 	gamepath: String,
 	mtrl: mtrl::Mtrl,
-	colorset_row: Option<usize>,
+	// colorset_row: Option<usize>,
+	colorset_row_copy: Option<(mtrl::ColorsetRow, Option<mtrl::ColorsetDyeRow>)>,
 }
 
 impl Mtrl {
@@ -61,7 +62,8 @@ impl Mtrl {
 			ext: format!(".{}", gamepath.split('.').last().unwrap()),
 			mtrl: mtrl::Mtrl::read(&mut Cursor::new(load_file(&conf, &gamepath))),
 			gamepath,
-			colorset_row: None,
+			// colorset_row: None,
+			colorset_row_copy: None,
 		}
 	}
 	
@@ -109,7 +111,7 @@ impl Viewer for Mtrl {
 				imgui::text(param_id);
 				
 				imgui::same_line();
-				aeth::offset([150.0 - imgui::get_cursor_pos().x(), 0.0]);
+				aeth::offset([180.0 - imgui::get_cursor_pos().x(), 0.0]);
 				for (i, val) in param.vals.iter_mut().enumerate() {
 					imgui::push_id_i32(i as i32);
 					imgui::set_next_item_width(60.0);
@@ -132,7 +134,7 @@ impl Viewer for Mtrl {
 				imgui::text(&id.to_string());
 				
 				imgui::same_line();
-				aeth::offset([150.0 - imgui::get_cursor_pos().x(), 0.0]);
+				aeth::offset([180.0 - imgui::get_cursor_pos().x(), 0.0]);
 				if let Some(presets) = SHADERKEYPRESETS.get(id) {
 					imgui::set_next_item_width(200.0);
 					if imgui::begin_combo("##presetselect", presets.get(&key.val).unwrap(), imgui::ComboFlags::None) {
@@ -161,7 +163,7 @@ impl Viewer for Mtrl {
 				imgui::text(sampler_id);
 				
 				imgui::same_line();
-				aeth::offset([150.0 - imgui::get_cursor_pos().x(), 0.0]);
+				aeth::offset([180.0 - imgui::get_cursor_pos().x(), 0.0]);
 				imgui::set_next_item_width(500.0);
 				imgui::input_text("##path", &mut sampler.path, imgui::InputTextFlags::None);
 				
@@ -192,24 +194,24 @@ impl Viewer for Mtrl {
 		}
 		
 		{ // colorsets
-			let mut state = self.mtrl.colorset_datas.is_some();
+			let mut state = self.mtrl.colorset_rows.is_some();
 			if imgui::checkbox("##colorset_enabled", &mut state) {
 				match state {
-					true => self.mtrl.colorset_datas = Some(Default::default()),
-					false => self.mtrl.colorset_datas = None,
+					true => self.mtrl.colorset_rows = Some(Default::default()),
+					false => self.mtrl.colorset_rows = None,
 				}
 			}
 			if imgui::is_item_hovered() {
 				imgui::set_tooltip("Colorsets")
 			}
 			
-			if self.mtrl.colorset_datas.is_some() {
+			if self.mtrl.colorset_rows.is_some() {
 				imgui::same_line();
-				let mut state = self.mtrl.colorsetdye_datas.is_some();
+				let mut state = self.mtrl.colorsetdye_rows.is_some();
 				if imgui::checkbox("##colorsetdye_enabled", &mut state) {
 					match state {
-						true => self.mtrl.colorsetdye_datas = Some(Default::default()),
-						false => self.mtrl.colorsetdye_datas = None,
+						true => self.mtrl.colorsetdye_rows = Some(Default::default()),
+						false => self.mtrl.colorsetdye_rows = None,
 					}
 				}
 				if imgui::is_item_hovered() {
@@ -218,85 +220,220 @@ impl Viewer for Mtrl {
 			}
 			
 			imgui::same_line();
-			if let Some(colorset) = &mut self.mtrl.colorset_datas && imgui::collapsing_header("Colorset", imgui::TreeNodeFlags::SpanAvailWidth) {
+			if let Some(colorset) = &mut self.mtrl.colorset_rows && imgui::collapsing_header("Colorset", imgui::TreeNodeFlags::SpanAvailWidth) {
 				imgui::indent();
+				
 				let h = aeth::frame_height();
-				imgui::begin_child("rows", [h * 5.0, h * 16.0], false, imgui::WindowFlags::None);
+				let row_width = h + 10.0 + h + h + 10.0 + (h + 1.0) * 3.0 + 60.0 + 1.0 + 60.0 + 10.0 + h + (1.0 + 60.0) * 4.0 +
+					if self.mtrl.colorsetdye_rows.is_some() {10.0 + 60.0 + (h + 1.0) * 5.0} else {0.0};
 				let draw = imgui::get_window_draw_list();
-				let spos = imgui::get_cursor_screen_pos();
-				let pos = imgui::get_cursor_pos();
-				for (i, row) in colorset.iter().enumerate() {
-					// imgui::button(&i.to_string(), [0.0, 0.0]);
-					imgui::push_id_i32(i as i32);
-					imgui::set_cursor_pos(pos.add([0.0, h * i as f32]));
-					if imgui::invisible_button("##row", [h * 4.0, h], imgui::ButtonFlags::MouseButtonLeft) {
-						self.colorset_row = Some(i);
-					}
-					imgui::pop_id();
+				
+				let clrframe = imgui::get_color(imgui::Col::FrameBg);
+				let rounding = imgui::get_style().frame_rounding;
+				
+				for (i, row) in colorset.iter_mut().enumerate() {
+					let pos = imgui::get_cursor_screen_pos();
+					draw.add_rect_filled(pos, pos.add([row_width, h]), imgui::get_color(imgui::Col::PopupBg), imgui::get_style().frame_rounding, imgui::DrawFlags::RoundCornersAll);
 					
 					let num = &(i + 1).to_string();
-					draw.add_text(spos.add([0.0, h * i as f32]).add([h, h].sub(imgui::calc_text_size(num, false, 0.0)).div([2.0, 2.0])), 0xFFFFFFFF, num);
+					draw.add_text(pos.add([h, h].sub(imgui::calc_text_size(num, false, 0.0)).div([2.0, 2.0])), imgui::get_color(imgui::Col::Text), num);
 					
-					let col = 0xFF000000 + (((row.diffuse[2].min(1.0) * 255.0) as u32) << 16) + (((row.diffuse[1].min(1.0) * 255.0) as u32) << 8) + ((row.diffuse[0].min(1.0) * 255.0) as u32);
-					draw.add_rect_filled(spos.add([h, h * i as f32]), spos.add([h * 2.0, h * i as f32 + h]), col, 0.0, imgui::DrawFlags::None);
+					imgui::begin_group();
+					imgui::push_style_var2(imgui::StyleVar::ItemSpacing, [0.0, 0.0]);
+					imgui::push_style_var(imgui::StyleVar::FrameRounding, 0.0);
+					imgui::push_style_color(imgui::Col::FrameBg, 0);
+					imgui::push_style_color(imgui::Col::FrameBgActive, 0);
+					imgui::push_style_color(imgui::Col::FrameBgHovered, 0);
+					imgui::push_id_i32(i as i32);
 					
-					let col = 0xFF000000 + (((row.specular[2].min(1.0) * 255.0) as u32) << 16) + (((row.specular[1].min(1.0) * 255.0) as u32) << 8) + ((row.specular[0].min(1.0) * 255.0) as u32);
-					draw.add_rect_filled(spos.add([h * 2.0, h * i as f32]), spos.add([h * 3.0, h * i as f32 + h]), col, 0.0, imgui::DrawFlags::None);
-					
-					let col = 0xFF000000 + (((row.emissive[2].min(1.0) * 255.0) as u32) << 16) + (((row.emissive[1].min(1.0) * 255.0) as u32) << 8) + ((row.emissive[0].min(1.0) * 255.0) as u32);
-					draw.add_rect_filled(spos.add([h * 3.0, h * i as f32]), spos.add([h * 4.0, h * i as f32 + h]), col, 0.0, imgui::DrawFlags::None);
-					
-					if imgui::is_item_hovered() || self.colorset_row == Some(i) {
-						draw.add_rect(spos.add([0.0, h * i as f32]), spos.add([h * 4.0, h * i as f32 + h]), 0xFF000000, 0.0, imgui::DrawFlags::None, 2.0);
+					// copy row
+					aeth::offset([h + 10.0, 0.0]);
+					if aeth::button_icon("") { // fa-copy
+						self.colorset_row_copy = Some((
+							row.clone(),
+							if let Some(dyes) = &self.mtrl.colorsetdye_rows {Some(dyes[i].clone())} else {None},
+						))
 					}
-				}
-				imgui::end_child();
-				if let Some(rowi) = self.colorset_row {
-					let row = self.mtrl.colorset_datas.as_mut().unwrap().get_mut(rowi).unwrap();
+					aeth::tooltip("Copy");
 					
+					// paste copied row
 					imgui::same_line();
-					imgui::begin_child("row", [0.0, h * 16.0], false, imgui::WindowFlags::None);
-					
-					imgui::color_edit3("Diffuse", &mut row.diffuse, imgui::ColorEditFlags::PickerHueWheel | imgui::ColorEditFlags::NoInputs);
-					imgui::color_edit3("Specular", &mut row.specular, imgui::ColorEditFlags::PickerHueWheel | imgui::ColorEditFlags::NoInputs);
-					imgui::input_float("Specular Strength", &mut row.specular_strength, 0.0, 0.0, "%.4f", imgui::InputTextFlags::None);
-					imgui::color_edit3("Emissive", &mut row.emissive, imgui::ColorEditFlags::PickerHueWheel | imgui::ColorEditFlags::NoInputs);
-					imgui::input_float("Gloss Strength", &mut row.gloss_strength, 0.0, 0.0, "%.4f", imgui::InputTextFlags::None);
-					imgui::image(MATERIALS.resource(), [32.0, 32.0], [0.0, row.material as f32 / 64.0], [1.0, row.material as f32 / 64.0 + 1.0 / 64.0], [1.0; 4], [0.0; 4]);
-					if imgui::is_item_clicked(imgui::MouseButton::Left) {
-						imgui::open_popup("materialselect", imgui::PopupFlags::MouseButtonLeft)
+					if aeth::button_icon_state("", self.colorset_row_copy.is_some()) && let Some(copy) = &self.colorset_row_copy { // fa-paste
+						*row = copy.0.clone();
+						if let Some(dye) = &copy.1 {
+							self.mtrl.colorsetdye_rows.as_mut().unwrap()[i] = dye.clone();
+						}
+						// self.colorset_row_copy = None;
 					}
+					aeth::tooltip("Paste");
+					
+					// diffuse
+					imgui::same_line();
+					aeth::offset([10.0, 0.0]);
+					let pos = imgui::get_cursor_screen_pos();
+					if imgui::invisible_button("diffuse", [h, h], imgui::ButtonFlags::MouseButtonLeft) {imgui::open_popup("diffuse", imgui::PopupFlags::None)}
+					aeth::tooltip("Diffuse");
+					let col = 0xFF000000 + (((row.diffuse[2].min(1.0) * 255.0) as u32) << 16) + (((row.diffuse[1].min(1.0) * 255.0) as u32) << 8) + ((row.diffuse[0].min(1.0) * 255.0) as u32);
+					draw.add_rect_filled(pos, pos.add([h, h]), col, 0.0, imgui::DrawFlags::None);
+					
+					// emissive
+					imgui::same_line();
+					aeth::offset([1.0, 0.0]);
+					let pos = imgui::get_cursor_screen_pos();
+					if imgui::invisible_button("emissive", [h, h], imgui::ButtonFlags::MouseButtonLeft) {imgui::open_popup("emissive", imgui::PopupFlags::None)}
+					aeth::tooltip("Emissive");
+					let col = 0xFF000000 + (((row.emissive[2].min(1.0) * 255.0) as u32) << 16) + (((row.emissive[1].min(1.0) * 255.0) as u32) << 8) + ((row.emissive[0].min(1.0) * 255.0) as u32);
+					draw.add_rect_filled(pos, pos.add([h, h]), col, 0.0, imgui::DrawFlags::None);
+					
+					// specular
+					imgui::same_line();
+					aeth::offset([1.0, 0.0]);
+					let pos = imgui::get_cursor_screen_pos();
+					if imgui::invisible_button("specular", [h, h], imgui::ButtonFlags::MouseButtonLeft) {imgui::open_popup("specular", imgui::PopupFlags::None)}
+					aeth::tooltip("Specular");
+					let col = 0xFF000000 + (((row.specular[2].min(1.0) * 255.0) as u32) << 16) + (((row.specular[1].min(1.0) * 255.0) as u32) << 8) + ((row.specular[0].min(1.0) * 255.0) as u32);
+					draw.add_rect_filled(pos, pos.add([h, h]), col, 0.0, imgui::DrawFlags::None);
+					
+					// specular strength
+					imgui::same_line();
+					aeth::offset([1.0, 0.0]);
+					let pos = imgui::get_cursor_screen_pos();
+					draw.add_rect_filled(pos, pos.add([60.0, h]), clrframe, 0.0, imgui::DrawFlags::None);
+					imgui::set_next_item_width(60.0);
+					imgui::input_float("##specular_strength", &mut row.specular_strength, 0.0, 0.0, "%.2f", imgui::InputTextFlags::None);
+					aeth::tooltip("Specular Strength");
+					
+					// gloss strength
+					imgui::same_line();
+					aeth::offset([1.0, 0.0]);
+					let pos = imgui::get_cursor_screen_pos();
+					draw.add_rect_filled(pos, pos.add([60.0, h]), clrframe, rounding, imgui::DrawFlags::RoundCornersRight);
+					imgui::set_next_item_width(60.0);
+					imgui::input_float("##gloss_strength", &mut row.gloss_strength, 0.0, 0.0, "%.2f", imgui::InputTextFlags::None);
+					aeth::tooltip("Gloss Strength");
+					
+					// tile
+					imgui::same_line();
+					aeth::offset([10.0, 0.0]);
+					imgui::image(TILES.resource(), [h, h], [0.0, row.tile_index as f32 / 64.0], [1.0, row.tile_index as f32 / 64.0 + 1.0 / 64.0], [1.0; 4], [0.0; 4]);
+					if imgui::is_item_clicked(imgui::MouseButton::Left) {imgui::open_popup("tile", imgui::PopupFlags::None)}
 					if imgui::is_item_hovered() {
 						imgui::begin_tooltip();
-						imgui::image(MATERIALS.resource(), [128.0, 128.0], [0.0, row.material as f32 / 64.0], [1.0, row.material as f32 / 64.0 + 1.0 / 64.0], [1.0; 4], [0.0; 4]);
+						imgui::text(&format!("Tile Index ({})", row.tile_index));
+						imgui::image(TILES.resource(), [128.0, 128.0], [0.0, row.tile_index as f32 / 64.0], [1.0, row.tile_index as f32 / 64.0 + 1.0 / 64.0], [1.0; 4], [0.0; 4]);
 						imgui::end_tooltip();
 					}
-					imgui::same_line();
-					imgui::text(&format!("Material ({})", row.material + 1));
-					imgui::input_float("Material Repeat X", &mut row.material_repeat_x, 0.0, 0.0, "%.4f", imgui::InputTextFlags::None);
-					imgui::input_float("Material Repeat Y", &mut row.material_repeat_y, 0.0, 0.0, "%.4f", imgui::InputTextFlags::None);
-					imgui::input_float("Material Skew X", &mut row.material_skew_x, 0.0, 0.0, "%.4f", imgui::InputTextFlags::None);
-					imgui::input_float("Material Skew Y", &mut row.material_skew_y, 0.0, 0.0, "%.4f", imgui::InputTextFlags::None);
 					
-					if let Some(dyedatas) = &mut self.mtrl.colorsetdye_datas {
-						let dyerow = &mut dyedatas[rowi];
+					// tile repeat x
+					imgui::same_line();
+					aeth::offset([1.0, 0.0]);
+					let pos = imgui::get_cursor_screen_pos();
+					draw.add_rect_filled(pos, pos.add([60.0, h]), clrframe, 0.0, imgui::DrawFlags::None);
+					imgui::set_next_item_width(60.0);
+					imgui::input_float("##tile_repeat_x", &mut row.tile_repeat_x, 0.0, 0.0, "%.2f", imgui::InputTextFlags::None);
+					aeth::tooltip("Tile Repeat X");
+					
+					// tile repeat y
+					imgui::same_line();
+					aeth::offset([1.0, 0.0]);
+					let pos = imgui::get_cursor_screen_pos();
+					draw.add_rect_filled(pos, pos.add([60.0, h]), clrframe, 0.0, imgui::DrawFlags::None);
+					imgui::set_next_item_width(60.0);
+					imgui::input_float("##tile_repeat_y", &mut row.tile_repeat_y, 0.0, 0.0, "%.2f", imgui::InputTextFlags::None);
+					aeth::tooltip("Tile Repeat Y");
+					
+					// tile skew x
+					imgui::same_line();
+					aeth::offset([1.0, 0.0]);
+					let pos = imgui::get_cursor_screen_pos();
+					draw.add_rect_filled(pos, pos.add([60.0, h]), clrframe, 0.0, imgui::DrawFlags::None);
+					imgui::set_next_item_width(60.0);
+					imgui::input_float("##tile_skew_x", &mut row.tile_skew_x, 0.0, 0.0, "%.2f", imgui::InputTextFlags::None);
+					aeth::tooltip("Tile Skew X");
+					
+					// tile skew y
+					imgui::same_line();
+					aeth::offset([1.0, 0.0]);
+					let pos = imgui::get_cursor_screen_pos();
+					draw.add_rect_filled(pos, pos.add([60.0, h]), clrframe, rounding, imgui::DrawFlags::RoundCornersRight);
+					imgui::set_next_item_width(60.0);
+					imgui::input_float("##tile_skew_y", &mut row.tile_skew_y, 0.0, 0.0, "%.2f", imgui::InputTextFlags::None);
+					aeth::tooltip("Tile Skew Y");
+					
+					if let Some(dye) = &mut self.mtrl.colorsetdye_rows {
+						let dye = &mut dye[i];
 						
-						aeth::offset([0.0, 10.0]);
-						imgui::text("Dye settings");
-						imgui::input_int("Template", &mut dyerow.template, 0, 0, imgui::InputTextFlags::None);
-						imgui::checkbox("Apply to Diffiuse", &mut dyerow.diffuse);
-						imgui::checkbox("Apply to Specular", &mut dyerow.specular);
-						imgui::checkbox("Apply to Emisive", &mut dyerow.emisive);
-						imgui::checkbox("Apply to Gloss", &mut dyerow.gloss);
-						imgui::checkbox("Apply to Specular Strength", &mut dyerow.specular_strength);
+						imgui::same_line();
+						aeth::offset([10.0, 0.0]);
+						let pos = imgui::get_cursor_screen_pos();
+						imgui::set_next_item_width(60.0);
+						draw.add_rect_filled(pos, pos.add([60.0, h]), clrframe, rounding, imgui::DrawFlags::RoundCornersLeft);
+						imgui::input_int("##dye_template", &mut dye.template, 0, 0, imgui::InputTextFlags::None);
+						aeth::tooltip("Dye Template");
+						
+						imgui::same_line();
+						aeth::offset([1.0, 0.0]);
+						let pos = imgui::get_cursor_screen_pos();
+						draw.add_rect_filled(pos, pos.add([h, h]), clrframe, 0.0, imgui::DrawFlags::None);
+						imgui::checkbox("##dye_diffuse", &mut dye.diffuse);
+						aeth::tooltip("Dye Diffuse");
+						
+						imgui::same_line();
+						aeth::offset([1.0, 0.0]);
+						let pos = imgui::get_cursor_screen_pos();
+						draw.add_rect_filled(pos, pos.add([h, h]), clrframe, 0.0, imgui::DrawFlags::None);
+						imgui::checkbox("##dye_emisive", &mut dye.emisive);
+						aeth::tooltip("Dye Emisive");
+						
+						imgui::same_line();
+						aeth::offset([1.0, 0.0]);
+						let pos = imgui::get_cursor_screen_pos();
+						draw.add_rect_filled(pos, pos.add([h, h]), clrframe, 0.0, imgui::DrawFlags::None);
+						imgui::checkbox("##dye_specular", &mut dye.specular);
+						aeth::tooltip("Dye Specular");
+						
+						imgui::same_line();
+						aeth::offset([1.0, 0.0]);
+						let pos = imgui::get_cursor_screen_pos();
+						draw.add_rect_filled(pos, pos.add([h, h]), clrframe, 0.0, imgui::DrawFlags::None);
+						imgui::checkbox("##dye_specular_strength", &mut dye.specular_strength);
+						aeth::tooltip("Dye Specular Strength");
+						
+						imgui::same_line();
+						aeth::offset([1.0, 0.0]);
+						let pos = imgui::get_cursor_screen_pos();
+						draw.add_rect_filled(pos, pos.add([h, h]), clrframe, rounding, imgui::DrawFlags::RoundCornersRight);
+						imgui::checkbox("##dye_gloss", &mut dye.gloss);
+						aeth::tooltip("Dye Gloss");
 					}
 					
-					if imgui::begin_popup("materialselect", imgui::WindowFlags::None) {
+					//
+					imgui::pop_style_var(2);
+					imgui::pop_style_color(3);
+					imgui::end_group();
+					
+					// draw these at the end so it isnt affected by the style changes
+					if imgui::begin_popup("diffuse", imgui::WindowFlags::None) {
+						imgui::color_picker3("diffuse", &mut row.diffuse, imgui::ColorEditFlags::PickerHueWheel);
+						imgui::end_popup();
+					}
+					
+					if imgui::begin_popup("emissive", imgui::WindowFlags::None) {
+						imgui::color_picker3("emissive", &mut row.emissive, imgui::ColorEditFlags::PickerHueWheel);
+						imgui::end_popup();
+					}
+					
+					if imgui::begin_popup("specular", imgui::WindowFlags::None) {
+						imgui::color_picker3("specular", &mut row.specular, imgui::ColorEditFlags::PickerHueWheel);
+						imgui::end_popup();
+					}
+					
+					if imgui::begin_popup("tile", imgui::WindowFlags::None) {
 						for i in 0..64 {
 							imgui::begin_group();
-							imgui::image(MATERIALS.resource(), [32.0, 32.0], [0.0, i as f32 / 64.0], [1.0, i as f32 / 64.0 + 1.0 / 64.0], [1.0; 4], [0.0; 4]);
+							imgui::image(TILES.resource(), [32.0, 32.0], [0.0, i as f32 / 64.0], [1.0, i as f32 / 64.0 + 1.0 / 64.0], [1.0; 4], [0.0; 4]);
 							if imgui::is_item_clicked(imgui::MouseButton::Left) {
-								row.material = i;
+								row.tile_index = i;
 								imgui::close_current_popup();
 							}
 							aeth::offset([0.0, -imgui::get_style().item_spacing.y()]);
@@ -304,7 +441,7 @@ impl Viewer for Mtrl {
 							imgui::end_group();
 							if imgui::is_item_hovered() {
 								imgui::begin_tooltip();
-								imgui::image(MATERIALS.resource(), [128.0, 128.0], [0.0, i as f32 / 64.0], [1.0, i as f32 / 64.0 + 1.0 / 64.0], [1.0; 4], [0.0; 4]);
+								imgui::image(TILES.resource(), [128.0, 128.0], [0.0, i as f32 / 64.0], [1.0, i as f32 / 64.0 + 1.0 / 64.0], [1.0; 4], [0.0; 4]);
 								imgui::end_tooltip();
 							}
 							
@@ -316,8 +453,9 @@ impl Viewer for Mtrl {
 						imgui::end_popup();
 					}
 					
-					imgui::end_child();
+					imgui::pop_id();
 				}
+				
 				imgui::unindent();
 			} else {
 				imgui::text("Colorsets")

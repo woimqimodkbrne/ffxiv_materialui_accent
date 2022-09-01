@@ -1,5 +1,7 @@
-pub(crate) mod texture;
-pub(crate) mod file_dialog;
+use crate as imgui;
+
+pub mod texture;
+pub mod file_dialog;
 mod scoped;
 mod tabbar;
 mod divider;
@@ -23,6 +25,7 @@ pub trait F2 {
 	fn x(&self) -> f32;
 	fn y(&self) -> f32;
 }
+
 impl F2 for [f32; 2] {
 	fn add(&self, a: [f32; 2]) -> [f32; 2] {
 		[self[0] + a[0], self[1] + a[1]]
@@ -53,7 +56,7 @@ impl F2 for [f32; 2] {
 	}
 }
 
-pub(in crate) static mut FA5: *mut imgui::sys::ImFont = std::ptr::null_mut::<imgui::sys::ImFont>();
+pub static mut FA5: *mut imgui::sys::ImFont = std::ptr::null_mut::<imgui::sys::ImFont>();
 pub fn fa5() -> &'static mut imgui::sys::ImFont {
 	unsafe{&mut *FA5}
 }
@@ -75,15 +78,31 @@ pub fn next_max_width() {
 }
 
 pub fn button_icon(icon: &str) -> bool {
+	imgui::push_style_color(imgui::Col::Button, 0);
 	imgui::push_font(unsafe{&mut *FA5});
-	// push_style_var causes a crash and cba figuring out why
-	let prev = imgui::get_style().frame_padding[0];
-	imgui::get_style().frame_padding[0] = 0.0;
-	// imgui::push_style_var2(imgui::StyleVar::FramePadding, [0.0, 0.0]);
-	let r = imgui::button(icon, [frame_height(); 2]);
-	// imgui::pop_style_var(1);
-	imgui::get_style().frame_padding[0] = prev;
+	imgui::push_id(icon);
+	let h = frame_height();
+	let pos = imgui::get_cursor_screen_pos();
+	let r = imgui::button("", [h, h]);
+	imgui::get_window_draw_list().add_text(pos.add([h, h].sub(imgui::calc_text_size(icon, false, 0.0)).div([2.0, 2.0])), imgui::get_color(imgui::Col::Text), icon);
+	imgui::pop_id();
 	imgui::pop_font();
+	imgui::pop_style_color(1);
+	
+	r
+}
+
+pub fn button_icon_state(icon: &str, enabled: bool) -> bool {
+	imgui::push_style_color(imgui::Col::Button, 0);
+	imgui::push_font(unsafe{&mut *FA5});
+	imgui::push_id(icon);
+	let h = frame_height();
+	let pos = imgui::get_cursor_screen_pos();
+	let r = imgui::button("", [h, h]);
+	imgui::get_window_draw_list().add_text(pos.add([h, h].sub(imgui::calc_text_size(icon, false, 0.0)).div([2.0, 2.0])), imgui::get_color(if enabled {imgui::Col::Text} else {imgui::Col::TextDisabled}), icon);
+	imgui::pop_id();
+	imgui::pop_font();
+	imgui::pop_style_color(1);
 	
 	r
 }
@@ -92,4 +111,10 @@ pub fn icon(icon: &str) {
 	imgui::push_font(unsafe{&mut *FA5});
 	imgui::text(icon);
 	imgui::pop_font();
+}
+
+pub fn tooltip(label: &str) {
+	if imgui::is_item_hovered() {
+		imgui::set_tooltip(label);
+	}
 }

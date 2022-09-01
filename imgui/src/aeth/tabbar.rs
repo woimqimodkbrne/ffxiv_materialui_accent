@@ -1,4 +1,5 @@
-use super::F2 as _;
+use crate as imgui;
+use super::F2;
 
 pub struct TabBar<'a> {
 	id: &'a str,

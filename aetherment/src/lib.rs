@@ -1,8 +1,9 @@
 #![allow(improper_ctypes_definitions)]
-#![feature(panic_backtrace_config)]
+// #![feature(panic_backtrace_config)]
 #![feature(seek_stream_len)]
+#![feature(let_chains)]
 
-use std::{panic::BacktraceStyle, path::PathBuf};
+use std::path::PathBuf;
 use ironworks::{Ironworks, sqpack::SqPack, ffxiv};
 use serde::Serialize;
 use reqwest::blocking as req;
@@ -62,7 +63,7 @@ pub mod creator {
 pub mod config;
 pub mod apply;
 pub mod gui {
-	pub mod aeth;
+	pub use imgui::aeth;
 	pub mod window {
 		pub mod aetherment;
 	}
@@ -121,7 +122,7 @@ extern fn initialize(init: Initializers) -> *mut State {
 		api::penumbra::REMOVEMOD = init.penumbra_remove_mod;
 	}
 	
-	std::panic::set_backtrace_style(BacktraceStyle::Short);
+	// std::panic::set_backtrace_style(BacktraceStyle::Short);
 	std::panic::set_hook(Box::new(|info| {
 		// log!(ftl, "{}", info);
 		log!(err, "{}", info);
@@ -143,6 +144,7 @@ extern fn initialize(init: Initializers) -> *mut State {
 
 #[no_mangle]
 extern fn destroy(state: *mut State) {
+	log!("destroy");
 	let _state = unsafe{Box::from_raw(state)};
 }
 
