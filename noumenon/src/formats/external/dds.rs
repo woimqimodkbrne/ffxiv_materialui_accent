@@ -81,6 +81,7 @@ impl Format {
 			(0x31545844, 0,          0         ) => Format::Bc1,
 			(0x33545844, 0,          0         ) => Format::Bc2,
 			(0x35545844, 0,          0         ) => Format::Bc3,
+			(0x31495441, 0,          0         ) => Format::Bc5,
 			// (113,        0,          0         ) => Format::A16B16G16R16,
 			_                                    => Format::Unknown,
 		}
@@ -95,7 +96,7 @@ impl Format {
 	
 	pub fn flags2(&self) -> u32 {
 		match self {
-			Format::Bc1 | Format::Bc2 | Format::Bc3 | Format::A16B16G16R16 => 0x4,
+			Format::Bc1 | Format::Bc2 | Format::Bc3 | Format::Bc5 | Format::A16B16G16R16 => 0x4,
 			Format::A8R8G8B8 | Format::A4R4G4B4 | Format::A1R5G5B5 => 0x41,
 			Format::X8R8G8B8 => 0x40,
 			Format::L8 => 0x20000,
@@ -109,6 +110,7 @@ impl Format {
 			Format::Bc1 => 0x31545844,
 			Format::Bc2 => 0x33545844,
 			Format::Bc3 => 0x35545844,
+			Format::Bc5 => 0x31495441,
 			Format::A16B16G16R16 => 113,
 			_ => 0,
 		}
@@ -129,7 +131,7 @@ impl Format {
 	pub fn bitcount(&self) -> u32 {
 		match self {
 			Format::Bc1 => 4,
-			Format::Bc2 | Format::Bc3  | Format::L8 | Format::A8 => 8,
+			Format::Bc2 | Format::Bc3 | Format::Bc5 | Format::L8 | Format::A8 => 8,
 			Format::A4R4G4B4 | Format::A1R5G5B5 => 16,
 			Format::A8R8G8B8 | Format::X8R8G8B8 => 32,
 			Format::A16B16G16R16 => 64,
