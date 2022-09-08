@@ -244,7 +244,11 @@ impl Tab {
 		let mut tree = Tree::new(m);
 		tree.add_node("Options");
 		
-		let datas: apply::Datas = serde_json::from_reader(File::open(path.join("datas.json")).unwrap()).unwrap();
+		let mut datas: apply::Datas = serde_json::from_reader(File::open(path.join("datas.json")).unwrap()).unwrap();
+		if datas.penumbra.is_none() {
+			datas.penumbra = Some(penumbra::Config::default());
+		}
+		
 		datas.penumbra.as_ref().unwrap().files.keys()
 			.for_each(|p| tree.add_node(p));
 		

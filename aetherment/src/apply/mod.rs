@@ -51,6 +51,8 @@ impl Datas {
 		}
 		
 		fn check_dir(root: &PathBuf, d: &PathBuf, files: &HashSet<String>) {
+			if !d.exists() {return}
+			
 			std::fs::read_dir(d)
 				.unwrap()
 				.for_each(|e| {

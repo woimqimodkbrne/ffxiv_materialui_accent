@@ -264,22 +264,24 @@ impl Tab {
 				mods: Vec<OnlineMod>,
 			}
 			
-			let stats: serde_json::Value = CLIENT.get(format!("{}/user/stats", SERVER))
+			match CLIENT.get(format!("{}/user/stats", SERVER))
 				.header("Authorization", &user.token)
-				.send()
-				.unwrap()
-				.json()
-				.unwrap();
-			
-			log!("{:?}", stats);
-			if stats["error"].is_string() {
-				state.user = None;
-				return;
+				.send() {
+				Ok(v) => {
+					let stats: serde_json::Value = v.json().unwrap();
+					
+					log!("{:?}", stats);
+					if stats["error"].is_string() {
+						state.user = None;
+						return;
+					}
+					let stats: Stats = serde_json::from_value(stats).unwrap();
+					
+					self.storage = Some((stats.total_storage, stats.used_storage));
+					stats.mods
+				},
+				Err(_) => Vec::new(),
 			}
-			let stats: Stats = serde_json::from_value(stats).unwrap();
-			
-			self.storage = Some((stats.total_storage, stats.used_storage));
-			stats.mods
 		} else {
 			Vec::new()
 		};
