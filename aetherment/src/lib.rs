@@ -54,7 +54,6 @@ pub mod api {
 }
 pub mod server {
 	pub mod user;
-	pub mod mods;
 }
 pub mod creator {
 	pub mod tags;

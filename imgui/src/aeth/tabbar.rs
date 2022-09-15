@@ -64,7 +64,8 @@ impl<'a> TabBar<'a> {
 				pos.add(if i != l {tabsize.sub([1.0, 0.0])} else {tabsize}),
 				if imgui::is_item_hovered() {clrh} else if *curtab == i as i32 {clra} else {clrn},
 				s.tab_rounding,
-				if i == 0 {if self.docked_bottom {imgui::DrawFlags::RoundCornersTopLeft} else {imgui::DrawFlags::RoundCornersBottomLeft}}
+				if l == 0 {if self.docked_bottom {imgui::DrawFlags::RoundCornersTop} else {imgui::DrawFlags::RoundCornersBottom}}
+				else if i == 0 {if self.docked_bottom {imgui::DrawFlags::RoundCornersTopLeft} else {imgui::DrawFlags::RoundCornersBottomLeft}}
 				else if i == l {if self.docked_bottom {imgui::DrawFlags::RoundCornersTopRight} else {imgui::DrawFlags::RoundCornersBottomRight}}
 				else {imgui::DrawFlags::RoundCornersNone}
 			);

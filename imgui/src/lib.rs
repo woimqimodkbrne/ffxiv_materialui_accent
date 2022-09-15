@@ -1535,22 +1535,22 @@ pub fn drag_float(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32
 	unsafe{sys::igDragFloat(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
-pub fn drag_float2(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
+pub fn drag_float2(label: &str, v: &mut [f32; 2], v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragFloat2(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igDragFloat2(label_.as_ptr(), v.as_mut_ptr(), v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
-pub fn drag_float3(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
+pub fn drag_float3(label: &str, v: &mut [f32; 3], v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragFloat3(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igDragFloat3(label_.as_ptr(), v.as_mut_ptr(), v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
-pub fn drag_float4(label: &str, v: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
+pub fn drag_float4(label: &str, v: &mut [f32; 4], v_speed: f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragFloat4(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igDragFloat4(label_.as_ptr(), v.as_mut_ptr(), v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn drag_float_range2(label: &str, v_current_min: &mut f32, v_current_max: &mut f32, v_speed: f32, v_min: f32, v_max: f32, format: &str, format_max: &str, flags: SliderFlags) -> bool {
@@ -1566,22 +1566,22 @@ pub fn drag_int(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, 
 	unsafe{sys::igDragInt(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
-pub fn drag_int2(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
+pub fn drag_int2(label: &str, v: &mut [i32; 2], v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragInt2(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igDragInt2(label_.as_ptr(), v.as_mut_ptr(), v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
-pub fn drag_int3(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
+pub fn drag_int3(label: &str, v: &mut [i32; 3], v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragInt3(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igDragInt3(label_.as_ptr(), v.as_mut_ptr(), v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
-pub fn drag_int4(label: &str, v: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
+pub fn drag_int4(label: &str, v: &mut [i32; 4], v_speed: f32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igDragInt4(label_.as_ptr(), v, v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igDragInt4(label_.as_ptr(), v.as_mut_ptr(), v_speed, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn drag_int_range2(label: &str, v_current_min: &mut i32, v_current_max: &mut i32, v_speed: f32, v_min: i32, v_max: i32, format: &str, format_max: &str, flags: SliderFlags) -> bool {
@@ -1609,22 +1609,22 @@ pub fn slider_float(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &s
 	unsafe{sys::igSliderFloat(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
-pub fn slider_float2(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
+pub fn slider_float2(label: &str, v: &mut [f32; 2], v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderFloat2(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igSliderFloat2(label_.as_ptr(), v.as_mut_ptr(), v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
-pub fn slider_float3(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
+pub fn slider_float3(label: &str, v: &mut [f32; 3], v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderFloat3(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igSliderFloat3(label_.as_ptr(), v.as_mut_ptr(), v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
-pub fn slider_float4(label: &str, v: &mut f32, v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
+pub fn slider_float4(label: &str, v: &mut [f32; 4], v_min: f32, v_max: f32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderFloat4(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igSliderFloat4(label_.as_ptr(), v.as_mut_ptr(), v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_angle(label: &str, v_rad: &mut f32, v_degrees_min: f32, v_degrees_max: f32, format: &str, flags: SliderFlags) -> bool {
@@ -1639,22 +1639,22 @@ pub fn slider_int(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str
 	unsafe{sys::igSliderInt(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
-pub fn slider_int2(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
+pub fn slider_int2(label: &str, v: &mut [i32; 2], v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderInt2(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igSliderInt2(label_.as_ptr(), v.as_mut_ptr(), v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
-pub fn slider_int3(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
+pub fn slider_int3(label: &str, v: &mut [i32; 3], v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderInt3(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igSliderInt3(label_.as_ptr(), v.as_mut_ptr(), v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
-pub fn slider_int4(label: &str, v: &mut i32, v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
+pub fn slider_int4(label: &str, v: &mut [i32; 4], v_min: i32, v_max: i32, format: &str, flags: SliderFlags) -> bool {
 	let label_ = CString::new(label).unwrap();
 	let format_ = CString::new(format).unwrap();
-	unsafe{sys::igSliderInt4(label_.as_ptr(), v, v_min, v_max, format_.as_ptr(), flags.bits)}
+	unsafe{sys::igSliderInt4(label_.as_ptr(), v.as_mut_ptr(), v_min, v_max, format_.as_ptr(), flags.bits)}
 }
 
 pub fn slider_scalar(label: &str, data_type: DataType, p_data: &mut ::std::os::raw::c_void, p_min: *const ::std::os::raw::c_void, p_max: *const ::std::os::raw::c_void, format: &str, flags: SliderFlags) -> bool {

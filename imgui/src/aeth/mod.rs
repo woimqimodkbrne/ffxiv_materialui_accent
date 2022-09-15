@@ -1,3 +1,4 @@
+use regex::Regex;
 use crate as imgui;
 
 pub mod texture;
@@ -117,4 +118,38 @@ pub fn tooltip(label: &str) {
 	if imgui::is_item_hovered() {
 		imgui::set_tooltip(label);
 	}
+}
+
+// TODO: end with ... if cut short
+pub(crate) fn wrap_text_area<'a>(text: &'a str, area: [f32; 2]) -> Vec<&'a str> {
+	lazy_static::lazy_static! {
+		static ref WORD: Regex = Regex::new(r"\b\w+[[:punct:]]*\b").unwrap();
+	}
+	
+	let mut lines = Vec::new();
+	let linecount = (area.y() / imgui::get_font_size()).floor() as i32;
+	let mut curline = 0;
+	let mut lineindex = 0;
+	let mut previndex = 0;
+	
+	for cap in WORD.find_iter(text) {
+		let line = &text[lineindex..cap.end()];
+		if imgui::calc_text_size(line, false, -1.0).x() > area.x() {
+			lines.push(&text[lineindex..previndex]);
+			curline += 1;
+			lineindex = cap.start();
+			previndex = lineindex;
+			if curline >= linecount {
+				return lines;
+			}
+		} else {
+			previndex = cap.end();
+		}
+	}
+	
+	if lineindex != previndex {
+		lines.push(&text[lineindex..])
+	}
+	
+	lines
 }

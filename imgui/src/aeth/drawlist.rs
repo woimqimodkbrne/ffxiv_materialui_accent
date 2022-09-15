@@ -3,6 +3,7 @@ use super::F2;
 
 pub trait DrawList {
 	fn add_rect_rounded(&mut self, p1: [f32; 2], p2: [f32; 2], u: [f32; 2], v: [f32; 2], clr: u32, rounding: f32);
+	fn add_text_area(&self, pos: [f32; 2], col: u32, text: &str, area: [f32; 2]);
 }
 
 impl DrawList for imgui::DrawList {
@@ -50,6 +51,13 @@ impl DrawList for imgui::DrawList {
 			self.prim_write_idx(0);
 			self.prim_write_idx(i - 1);
 			self.prim_write_idx(i);
+		}
+	}
+	
+	fn add_text_area(&self, pos: [f32; 2], col: u32, text: &str, area: [f32; 2]) {
+		let height = imgui::get_font_size();
+		for (i, line) in super::wrap_text_area(text, area).into_iter().enumerate() {
+			self.add_text(pos.add([0.0, height * i as f32]), col, line);
 		}
 	}
 }
