@@ -6,8 +6,9 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+half = "2.1.0"
 binrw = "0.8.4"
 image = "0.24.2"
 squish = "2.0.0-beta1"
-half = "2.1.0"
+fbxcel = "0.8.1"
 ironworks = {git = "https://github.com/ackwell/ironworks", rev = "bd787883d324f3a150bce5f1ab348d86e770e23e", features = ["ffxiv", "sqpack"]}

@@ -186,7 +186,7 @@ impl Tab {
 									log!("import failed"); // TODO: nice popup displaying that it failed
 								}
 								// let hash = blake3::hash(&buf).to_hex().as_str()[..24].to_string();
-								let hash = crate::hash_str(blake3::hash(&buf));
+								let hash = crate::hash_str(blake3::hash(&buf).as_bytes());
 								fs::create_dir_all(m.path.join("files")).unwrap();
 								File::create(m.path.join("files").join(&hash)).unwrap().write_all(&buf).unwrap();
 								let file = PenumbraFile(vec![FileLayer {

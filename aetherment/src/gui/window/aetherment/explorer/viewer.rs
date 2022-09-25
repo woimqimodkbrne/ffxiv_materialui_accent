@@ -52,7 +52,7 @@ impl <'a> Conf<'a> {
 				let mut data = Vec::new();
 				tex.write(&mut Cursor::new(&mut data));
 				// let hash = blake3::hash(&data).to_hex().to_string();
-				let hash = crate::hash_str(blake3::hash(&data));
+				let hash = crate::hash_str(blake3::hash(&data).as_bytes());
 				let file = temp.join(&hash);
 				if !file.exists() {
 					File::create(&file).unwrap().write_all(&data).unwrap();

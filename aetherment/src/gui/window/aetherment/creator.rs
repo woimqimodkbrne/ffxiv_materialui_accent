@@ -167,83 +167,83 @@ impl Tab {
 			imgui::new_line();
 			
 			let version = (m.version[0] << 24) + (m.version[1] << 16) + (m.version[2] << 8) + m.version[3];
-			if let Some(user) = &state.user && (m.online.is_none() || version > m.online.as_ref().unwrap().version) {
-				if imgui::button("Upload", [0.0, 0.0]) {
-					let mut req = CLIENT.post(format!("{}/mod/upload", SERVER))
-						.header("Authorization", user.token.clone())
-						.header("Mod-Name", m.meta.name.clone())
-						.header("Mod-Description", m.meta.description.clone())
-						.header("Mod-Nsfw", if m.meta.nsfw {"true"} else {"false"})
-						.header("Mod-Version", version)
-						.header("Mod-Patch-Notes", "") // TODO: patchnotes
-						.header("Mod-Patch", if m.online.is_some() {"true"} else {"false"});
+			// if let Some(user) = &state.user && (m.online.is_none() || version > m.online.as_ref().unwrap().version) {
+			// 	if imgui::button("Upload", [0.0, 0.0]) {
+			// 		let mut req = CLIENT.post(format!("{}/mod/upload", SERVER))
+			// 			.header("Authorization", user.token.clone())
+			// 			.header("Mod-Name", m.meta.name.clone())
+			// 			.header("Mod-Description", m.meta.description.clone())
+			// 			.header("Mod-Nsfw", if m.meta.nsfw {"true"} else {"false"})
+			// 			.header("Mod-Version", version)
+			// 			.header("Mod-Patch-Notes", "") // TODO: patchnotes
+			// 			.header("Mod-Patch", if m.online.is_some() {"true"} else {"false"});
 					
-					let pack;
-					let mod_path = PathBuf::from(&state.config.local_path).join(&self.selected_mod);
-					let releases_path = mod_path.join("releases");
-					if let Some(online) = &m.online {
-						if !releases_path.exists() {
-							// TODO: popup
-							log!(err, "Local copy out of sync from remote");
-							return
-						}
+			// 		// let pack;
+			// 		let mod_path = PathBuf::from(&state.config.local_path).join(&self.selected_mod);
+			// 		let releases_path = mod_path.join("releases");
+			// 		if let Some(online) = &m.online {
+			// 			if !releases_path.exists() {
+			// 				// TODO: popup
+			// 				log!(err, "Local copy out of sync from remote");
+			// 				return
+			// 			}
 						
-						req = req.header("Mod-Id", online.id);
+			// 			req = req.header("Mod-Id", online.id);
 						
-						let version_str = modpack::version_to_string(online.version);
-						let latest = match std::fs::read_dir(&releases_path)
-							.unwrap()
-							.into_iter()
-							.find(|e| {
-								let name = e.as_ref().unwrap().file_name();
-								let name = name.to_str().unwrap();
+			// 			let version_str = modpack::version_to_string(online.version);
+			// 			let latest = match std::fs::read_dir(&releases_path)
+			// 				.unwrap()
+			// 				.into_iter()
+			// 				.find(|e| {
+			// 					let name = e.as_ref().unwrap().file_name();
+			// 					let name = name.to_str().unwrap();
 								
-								return name.ends_with(&format!("{version_str}.amp")) || name.ends_with(&format!("{version_str}.amp.patch"));
-							}) {
-							Some(v) => v.unwrap().path(),
-							None => {
-								log!(err, "Local copy out of sync from remote");
-								return
-							}
-						};
-						log!("online!");
-						let paths = modpack::pack(mod_path.clone(), version, true, Some(latest));
-						pack = paths.1.unwrap_or_else(|| paths.0.unwrap());
-					} else {
-						let paths = modpack::pack(mod_path.clone(), version, true, None);
-						pack = paths.1.unwrap_or_else(|| paths.0.unwrap());
-					}
+			// 					return name.ends_with(&format!("{version_str}.amp")) || name.ends_with(&format!("{version_str}.amp.patch"));
+			// 				}) {
+			// 				Some(v) => v.unwrap().path(),
+			// 				None => {
+			// 					log!(err, "Local copy out of sync from remote");
+			// 					return
+			// 				}
+			// 			};
+			// 			log!("online!");
+			// 			let paths = modpack::pack(mod_path.clone(), version, true, Some(latest));
+			// 			pack = paths.1.unwrap_or_else(|| paths.0.unwrap());
+			// 		} else {
+			// 			let paths = modpack::pack(mod_path.clone(), version, true, None);
+			// 			pack = paths.1.unwrap_or_else(|| paths.0.unwrap());
+			// 		}
 					
-					req = req.header("Content-Length", pack.metadata().unwrap().len().to_string());
-					let refresh = self.refresh.clone();
+			// 		req = req.header("Content-Length", pack.metadata().unwrap().len().to_string());
+			// 		let refresh = self.refresh.clone();
 					
-					std::thread::spawn(move || {
-						let resp = req
-							.body(File::open(pack).unwrap())
-							.send()
-							.unwrap()
-							.text()
-							.unwrap();
+			// 		std::thread::spawn(move || {
+			// 			let resp = req
+			// 				.body(File::open(pack).unwrap())
+			// 				.send()
+			// 				.unwrap()
+			// 				.text()
+			// 				.unwrap();
 						
-						log!("upload resp: {resp}");
+			// 			log!("upload resp: {resp}");
 						
-						let resp: serde_json::Value = serde_json::from_str(&resp).unwrap();
+			// 			let resp: serde_json::Value = serde_json::from_str(&resp).unwrap();
 						
-						if let Some(err) = resp["error"].as_str() {
-							log!(err, "{err}");
-							return
-						}
+			// 			if let Some(err) = resp["error"].as_str() {
+			// 				log!(err, "{err}");
+			// 				return
+			// 			}
 						
-						#[derive(Deserialize, Clone, Debug)]
-						struct Mod {
-							id: i32,
-						}
-						let uploaded_mod: Mod = serde_json::from_value(resp).unwrap();
-						uploaded_mod.id.write_to(&mut File::create(mod_path.join("aeth")).unwrap()).unwrap();
-						*refresh.lock().unwrap() = true;
-					});
-				}
-			}
+			// 			#[derive(Deserialize, Clone, Debug)]
+			// 			struct Mod {
+			// 				id: i32,
+			// 			}
+			// 			let uploaded_mod: Mod = serde_json::from_value(resp).unwrap();
+			// 			uploaded_mod.id.write_to(&mut File::create(mod_path.join("aeth")).unwrap()).unwrap();
+			// 			*refresh.lock().unwrap() = true;
+			// 		});
+			// 	}
+			// }
 			
 			// if imgui::button("create modpack", [0.0, 0.0]) {
 			// 	let path = PathBuf::from(&state.config.local_path).join(&self.selected_mod);

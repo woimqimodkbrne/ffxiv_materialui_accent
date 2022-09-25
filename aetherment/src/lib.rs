@@ -20,8 +20,12 @@ pub fn serialize_json(json: serde_json::Value) -> String {
 	String::from_utf8(ser.into_inner()).unwrap()
 }
 
-pub fn hash_str(hash: blake3::Hash) -> String {
-	base64::encode_config(hash.as_bytes(), base64::URL_SAFE_NO_PAD)
+// pub fn hash_str(hash: blake3::Hash) -> String {
+// 	base64::encode_config(hash.as_bytes(), base64::URL_SAFE_NO_PAD)
+// }
+
+pub fn hash_str(hash: &[u8; 32]) -> String {
+	base64::encode_config(hash, base64::URL_SAFE_NO_PAD)
 }
 
 static mut LOG: fn(u8, String) = |_, _| {};

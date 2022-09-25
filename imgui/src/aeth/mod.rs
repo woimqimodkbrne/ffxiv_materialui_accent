@@ -123,7 +123,7 @@ pub fn tooltip(label: &str) {
 // TODO: end with ... if cut short
 pub(crate) fn wrap_text_area<'a>(text: &'a str, area: [f32; 2]) -> Vec<&'a str> {
 	lazy_static::lazy_static! {
-		static ref WORD: Regex = Regex::new(r"\b\w+[[:punct:]]*\b").unwrap();
+		static ref WORD: Regex = Regex::new(r"\b\w+[[:punct:]]*").unwrap();
 	}
 	
 	let mut lines = Vec::new();

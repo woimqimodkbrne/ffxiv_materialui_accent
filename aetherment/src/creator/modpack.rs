@@ -1,10 +1,343 @@
-use std::{path::PathBuf, fs::{self, File}, collections::{HashMap, HashSet}, io::{Seek, Read, Cursor, Write, SeekFrom}};
+use std::{path::Path, fs::{File, self}, collections::{HashMap, HashSet}, io::{Seek, Read, Cursor, Write, SeekFrom}, sync::{Mutex, Arc}};
 use binrw::{BinWrite, BinReaderExt};
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 use crate::apply::penumbra::ConfOption;
 
 // .amp: Aetherment Mod Pack
 // .amp.patch: Aetherment Mod Pack Patch
-// both are the same internal structure
+// both are the same internal structure, only named differently for user convenience
+
+/* modpack layout version 1
+u8  layout version
+u32 mod version
+u32 required mod version (0 if not patch)
+[ zlib compressed file blobs
+	u32  blob size
+	[u8] blob
+]
+[ index
+	u8       path length
+	[u8]     utf8 path
+	[u8; 32] uncompressed blake3 hash
+	i64      file blob offset, -1 for existing file without including it (patch)
+]
+u32 index size
+*/
+
+// TODO: proper error type
+pub type Error = Box<dyn std::error::Error>;
+
+pub struct ModPack<W: Write + Read + Seek> {
+	inner: Mutex<W>,
+	index: Mutex<Index>,
+	prev_files: HashMap<[u8; 32], Vec<String>>,
+}
+
+#[derive(Debug, Default, Clone)]
+pub struct Index {
+	locations: HashMap<[u8; 32], i64>,
+	paths: HashMap<String, [u8; 32]>,
+}
+
+impl<'a, W: Write + Read + Seek> ModPack<W> {
+	pub fn new(mut writer: W, version: i32) -> Result<ModPack<W>, Error> {
+		let w = &mut writer;
+		1u8.write_to(w)?;
+		version.write_to(w)?;
+		0u32.write_to(w)?;
+		
+		Ok(ModPack {
+			inner: Mutex::new(writer),
+			index: Mutex::new(Index::default()),
+			prev_files: HashMap::new(),
+		})
+	}
+	
+	pub fn new_patch<R>(mut writer: W, version: i32, mut prev: R) -> Result<ModPack<W>, Error> where
+	R: Read + Seek {
+		let _prev_modpack_version = prev.read_le::<u8>()?;
+		let prev_version = prev.read_le::<u32>()?;
+		let mut prev_files = HashMap::new();
+		
+		prev.seek(SeekFrom::End(-4))?;
+		let index_len = prev.read_le::<u32>()? as i64;
+		prev.seek(SeekFrom::End(-4 - index_len))?;
+		let mut read_len = 0;
+		loop {
+			let path_len = prev.read_le::<u8>()? as i64;
+			// prev.seek(SeekFrom::Current(path_len))?;
+			let mut buf = vec![0u8; path_len as usize];
+			prev.read_exact(&mut buf)?;
+			let path = String::from_utf8(buf)?;
+			
+			let mut hash = [0u8; 32];
+			prev.read_exact(&mut hash)?;
+			
+			prev.seek(SeekFrom::Current(8))?;
+			
+			prev_files.entry(hash).or_insert_with(|| Vec::new()).push(path);
+			
+			read_len += 1 + path_len + 32 + 8;
+			if read_len == index_len {break}
+		}
+		
+		let w = &mut writer;
+		1u8.write_to(w)?;
+		version.write_to(w)?;
+		prev_version.write_to(w)?;
+		
+		Ok(ModPack {
+			inner: Mutex::new(writer),
+			index: Mutex::new(Index::default()),
+			prev_files,
+		})
+	}
+	
+	pub fn load(mut reader: W) -> Result<ModPack<W>, Error> {
+		let mut index = Index::default();
+		
+		reader.seek(SeekFrom::End(-4))?;
+		let index_len = reader.read_le::<u32>()? as i64;
+		reader.seek(SeekFrom::End(-4 - index_len))?;
+		let mut read_len = 0;
+		loop {
+			let path_len = reader.read_le::<u8>()? as i64;
+			let mut buf = vec![0u8; path_len as usize];
+			reader.read_exact(&mut buf)?;
+			let path = String::from_utf8(buf)?;
+			
+			let mut hash = [0u8; 32];
+			reader.read_exact(&mut hash)?;
+			
+			let offset = reader.read_le::<i64>()? as i64;
+			
+			// index.entry(hash).or_insert_with(|| HashMap::new()).insert(path, offset);
+			index.locations.insert(hash.clone(), offset);
+			index.paths.insert(path, hash);
+			
+			read_len += 1 + path_len + 32 + 8;
+			if read_len == index_len {break}
+		}
+		
+		Ok(ModPack {
+			inner: Mutex::new(reader),
+			index: Mutex::new(index),
+			prev_files: HashMap::new(),
+		})
+	}
+	
+	pub fn write_file<S, R>(&self, path: S, mut file: R) -> Result<(), Error> where
+	S: Into<String>,
+	R: Read + Seek {
+		let mut buf = [0u8; 4096];
+		let mut hasher = blake3::Hasher::new();
+		while let readcount = file.read(&mut buf)? && readcount != 0 {
+			hasher.update(&buf[0..readcount]);
+		}
+		
+		let hash = hasher.finalize().as_bytes().to_owned();
+		if self.prev_files.contains_key(&hash) {
+			// self.index.lock().unwrap().entry(hash).or_insert_with(|| HashMap::new()).insert(path.into(), -1);
+			let mut index = self.index.lock().unwrap();
+			index.locations.insert(hash.clone(), -1);
+			index.paths.insert(path.into(), hash);
+		} else {
+			let mut writer = flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::best());
+			
+			file.seek(SeekFrom::Start(0))?;
+			while let readcount = file.read(&mut buf)? && readcount != 0 {
+				writer.write_all(&buf[0..readcount])?;
+			}
+			
+			let mut inner = self.inner.lock().unwrap();
+			let offset = inner.stream_position()? as i64;
+			let mut index = self.index.lock().unwrap();
+			if index.locations.insert(hash.clone(), offset).is_none() {
+				let blob = writer.finish()?;
+				inner.write_all(&(blob.len() as u32).to_le_bytes())?;
+				inner.write_all(&blob)?;
+			}
+			index.paths.insert(path.into(), hash);
+		}
+		
+		Ok(())
+	}
+	
+	pub fn read_file<S>(&self, path: S) -> Result<Vec<u8>, Error> where
+	S: AsRef<str> {
+		let index = self.index.lock().unwrap();
+		let offset = *index.locations.get(index.paths.get(path.as_ref()).ok_or("Invalid Path")?).expect("Hash was invalid, how, what");
+		if offset == -1 {Err("File is patch file")?}
+		
+		self.read_file_offset(offset)
+	}
+	
+	pub fn read_file_offset(&self, offset: i64) -> Result<Vec<u8>, Error> {
+		let mut inner = self.inner.lock().unwrap();
+		inner.seek(SeekFrom::Start(offset as u64))?;
+		let mut buf = vec![0; inner.read_le::<u32>()? as usize];
+		inner.read_exact(&mut buf)?;
+		drop(inner);
+		
+		let mut f = flate2::write::ZlibDecoder::new(Cursor::new(Vec::new()));
+		f.write_all(&buf)?;
+		Ok(f.finish()?.into_inner())
+	}
+	
+	// Cloning this stuff isnt great. TODO: figure out how to return a reference from a mutex locked item
+	pub fn paths_valid(&'a self) -> Vec<String> {
+		let index = self.index.lock().unwrap();
+		index.paths.iter().filter_map(|(path, hash)| index.locations.get(hash).map_or(None, |o| if *o == -1 {None} else {Some(path.to_owned())})).collect()
+	}
+	
+	pub fn index(&self) -> Index {
+		self.index.lock().unwrap().clone()
+	}
+	
+	pub fn finish(self) -> Result<W, Error> {
+		let mut inner = self.inner.into_inner().unwrap();
+		let index = self.index.into_inner().unwrap();
+		let w = &mut inner;
+		
+		let mut index_len = 0u32;
+		for (path, hash) in index.paths {
+			(path.len() as u8).write_to(w)?;
+			path.as_bytes().write_to(w)?;
+			hash.write_to(w)?;
+			index.locations[&hash].write_to(w)?;
+			
+			index_len += 1 + path.len() as u32 + 32 + 8;
+		}
+		// for (hash, files) in self.index.into_inner().unwrap() {
+		// 	for (path, offset) in files {
+		// 		(path.len() as u8).write_to(w)?;
+		// 		path.as_bytes().write_to(w)?;
+		// 		hash.write_to(w)?;
+		// 		offset.write_to(w)?;
+				
+		// 		index_len += 1 + path.len() as u32 + 32 + 8;
+		// 	}
+		// }
+		index_len.write_to(w)?;
+		
+		Ok(inner)
+	}
+	
+	/// Manually mark a file as existing.
+	/// 
+	/// Useful for when creating a patch and are certain a file is the same to avoid reading and hashing it.
+	pub fn mark_file<S>(&self, path: S, hash: [u8; 32]) where
+	S: Into<String> {
+		// self.index.lock().unwrap().entry(hash).or_insert_with(|| HashMap::new()).insert(path.into(), -1);
+		let mut index = self.index.lock().unwrap();
+		index.locations.insert(hash.clone(), -1);
+		index.paths.insert(path.into(), hash);
+	}
+	
+	/// Mark all files as existing, only works if creating a path
+	/// 
+	/// Useful for when files are only changed or added, and none removed.
+	pub fn mark_all(&self) {
+		let mut index = self.index.lock().unwrap();
+		for (hash, paths) in &self.prev_files {
+			index.locations.insert(hash.clone(), -1);
+			for path in paths {
+				index.paths.insert(path.to_owned(), hash.clone());
+			}
+			// let p = index.entry(hash.to_owned()).or_insert_with(|| HashMap::new());
+			// for path in paths {
+			// 	p.insert(path.to_owned(), -1);
+			// }
+		}
+	}
+}
+
+pub fn pack<W, P, R>(writer: W, mod_path: P, version: i32, prev: Option<R>, progress: &mut(usize, usize)) -> Result<(), Error> where
+W: Write + Read + Seek + std::marker::Send,
+P: AsRef<Path>,
+R: Read + Seek {
+	let mod_path = mod_path.as_ref();
+	let datas: crate::apply::Datas = serde_json::from_reader(File::open(mod_path.join("datas.json")).unwrap()).unwrap();
+	let mut files = Vec::new();
+	
+	// Penumbra files
+	if let Some(penumbra) = &datas.penumbra {
+		penumbra.files.iter().for_each(|(_, layers)| layers.0.iter().for_each(|layer| layer.paths.iter().for_each(|p| files.push(p.as_str()))));
+		penumbra.options.iter().for_each(|o| match o {
+				ConfOption::Single(opt) | ConfOption::Multi(opt) => opt.options.iter().for_each(|o| o.files.iter().for_each(|(_, layers)| layers.0.iter().for_each(|layer| layer.paths.iter().for_each(|p| files.push(p.as_str()))))),
+				_ => {},
+			}
+		);
+	}
+	
+	// Generic files
+	files.push("datas.json");
+	
+	// Modpack creation
+	for path in &files {
+		if !mod_path.join(path).exists() {Err(format!("{path} is a invalid file"))?}
+	}
+	
+	// let releases_path = mod_path.join("releases");
+	// if !releases_path.exists() {fs::create_dir(&releases_path)?}
+	
+	// let mut modpack = Arc::new(ModPack::new(File::create(releases_path.join(version_to_string(version)))?, version)?);
+	let modpack = Arc::new(match prev {
+		Some(prev) => ModPack::new_patch(writer, version, prev)?,
+		None => ModPack::new(writer, version)?,
+	});
+	
+	progress.1 = files.len();
+	let progress = Mutex::new(progress);
+	files.into_par_iter().for_each(|path| {
+		modpack.write_file(path, File::open(mod_path.join(path)).unwrap()).unwrap();
+		// *progress = (progress.0 + 1, total);
+		let mut p = progress.lock().unwrap();
+		p.0 = p.0 + 1;
+	});
+	
+	Ok(())
+}
+
+pub fn unpack<W, F>(reader: W, file_handler: F) -> Result<(), Error> where
+W: Write + Read + Seek + std::marker::Send,
+F: Fn(HashSet<&str>, &[u8; 32], &[u8]) + std::marker::Sync {
+	let modpack = ModPack::load(reader)?;
+	let mut files = HashMap::new();
+	
+	let index = modpack.index();
+	for (hash, offset) in &index.locations {
+		files.entry(hash).or_insert_with(|| (offset, HashSet::new()));
+	}
+	for (path, hash) in &index.paths {
+		files.get_mut(hash).expect("Hash was invalid, how, what").1.insert(path.as_str());
+	}
+	
+	files.into_par_iter().for_each(|(hash, (offset, paths))| {
+		let data = modpack.read_file_offset(*offset).unwrap();
+		file_handler(paths, hash, &data);
+	});
+	
+	Ok(())
+}
+
+pub fn unpack_to<W, P>(reader: W, mod_path: P) -> Result<(), Error> where
+W: Write + Read + Seek + std::marker::Send,
+P: AsRef<Path> {
+	let mod_path = mod_path.as_ref();
+	let files_path = mod_path.join("files");
+	if !files_path.exists() {fs::create_dir_all(&files_path)?}
+	
+	unpack(reader, |paths, hash, data| {
+		// TODO: handle non penumbra files in a better way in the future
+		// TODO: deal with errors
+		if paths.contains("datas.json") {
+			File::create(mod_path.join("datas.json")).unwrap().write_all(data).unwrap();
+		} else {
+			File::create(files_path.join(crate::hash_str(hash))).unwrap().write_all(data).unwrap();
+		}
+	})
+}
 
 pub fn version_to_i32(mut version: &str) -> i32 {
 	log!("{}", version);
@@ -27,266 +360,4 @@ pub fn version_to_string(version: i32) -> String {
 		(version >> 8) & 0xFF,
 		(version) & 0xFF
 	)
-}
-
-pub fn pack_latest(mod_path: PathBuf, version: i32, patch_only: bool) -> (Option<PathBuf>, Option<PathBuf>) {
-	let releases_path = mod_path.join("releases");
-	if !releases_path.exists() {
-		fs::create_dir(&releases_path).unwrap();
-	}
-	
-	let mut latest = None;
-	let mut latest_version = 0;
-	fs::read_dir(&releases_path)
-		.unwrap()
-		.into_iter()
-		.for_each(|e| {
-			let e = e.unwrap();
-			let name = e.file_name().to_str().unwrap().to_owned();
-			if !name.ends_with(".amp") && !name.ends_with(".amp.patch") {return}
-			
-			let version = version_to_i32(&name);
-			if version > latest_version {
-				latest = Some(e.path());
-				latest_version = version;
-			}
-		});
-	
-	pack(mod_path, version, patch_only, latest)
-}
-
-pub fn pack(mod_path: PathBuf, version: i32, mut patch_only: bool, latest: Option<PathBuf>) -> (Option<PathBuf>, Option<PathBuf>) {
-	let releases_path = mod_path.join("releases");
-	if !releases_path.exists() {
-		fs::create_dir(&releases_path).unwrap();
-	}
-	
-	// get latest release in order to create a patch file
-	let latest_version = if let Some(latest) = &latest {
-		version_to_i32(latest.file_name().unwrap().to_str().unwrap())
-	} else {
-		0
-	};
-	// let mut latest = None;
-	// let mut latest_version = 0;
-	// fs::read_dir(&releases_path)
-	// 	.unwrap()
-	// 	.into_iter()
-	// 	.for_each(|e| {
-	// 		let e = e.unwrap();
-	// 		let name = e.file_name().to_str().unwrap().to_owned();
-	// 		if !name.ends_with(".amp") && !name.ends_with(".amp.patch") {return}
-			
-	// 		let version = version_to_u32(name.split(".").last().unwrap());
-	// 		if version > latest_version {
-	// 			latest = Some(e.path());
-	// 			latest_version = version;
-	// 		}
-	// 	});
-	
-	log!("{latest_version}");
-	
-	// -1 as offset means file exists in mod but not this pack (patch)
-	let mut hash_location_latest = HashMap::<[u8; 32], i64>::new();
-	if let Some(latest) = &latest {
-		let mut latest = File::open(latest).unwrap();
-		latest.seek(SeekFrom::End(-4)).unwrap();
-		let index_len = latest.read_le::<u32>().unwrap() as i64;
-		log!("{index_len}");
-		latest.seek(SeekFrom::End(-index_len - 4)).unwrap();
-		let mut read_len = 0i64;
-		loop {
-			let path_len = latest.read_le::<u8>().unwrap() as usize;
-			let mut buf = vec![0u8; path_len];
-			latest.read_exact(&mut buf).unwrap();
-			// let path = String::from_utf8(buf).unwrap();
-			let mut hash = [0u8; 32];
-			latest.read_exact(&mut hash).unwrap();
-			let offset = latest.read_le::<i64>().unwrap();
-			hash_location_latest.insert(hash, offset);
-			read_len += 1 + path_len as i64 + 32 + 8;
-			log!("{read_len}");
-			if read_len == index_len {break}
-		}
-	} else {
-		patch_only = false;
-	}
-	
-	let version = version_to_string(version);
-	let release_path = releases_path.join(format!("{}.amp", version));
-	let mut release = if !patch_only {Some(File::create(&release_path).unwrap())} else {None};
-	let mut release_len = 0;
-	let patch_path = releases_path.join(format!("{}-{}.amp.patch", version_to_string(latest_version), version));
-	let mut patch = if latest.is_some() {Some(File::create(&patch_path).unwrap())} else {None};
-	let mut patch_len = 0;
-	
-	let mut hash_location_release = HashMap::<[u8; 32], i64>::new();
-	let mut hash_location_patch = HashMap::<[u8; 32], i64>::new();
-	let mut file_hashes = HashMap::<String, [u8; 32]>::new();
-	
-	let datas: crate::apply::Datas = serde_json::from_reader(File::open(mod_path.join("datas.json")).unwrap()).unwrap();
-	let mut todo = Vec::<String>::new();
-	datas.penumbra.as_ref().unwrap().files.iter().for_each(|(_, layers)| layers.0.iter().for_each(|layer| layer.paths.iter().for_each(|p| todo.push(p.to_owned()))));
-	datas.penumbra.as_ref().unwrap().options.iter().for_each(|o| match o {
-			ConfOption::Single(opt) | ConfOption::Multi(opt) => opt.options.iter().for_each(|o| o.files.iter().for_each(|(_, layers)| layers.0.iter().for_each(|layer| layer.paths.iter().for_each(|p| todo.push(p.to_owned()))))),
-			_ => {},
-		}
-	);
-	
-	// write all files to release pack and all needed files to patch file
-	let mut buf = Vec::new();
-	let mut compress_buf = Vec::new();
-	
-	let mut do_file = |subpath: String| {
-		if let Ok(mut f) = File::open(mod_path.join(&subpath)) {
-			log!("packing {}", subpath);
-			f.read_to_end(&mut buf).unwrap();
-			
-			let hash = blake3::hash(&buf).as_bytes().to_owned();
-			file_hashes.insert(subpath.to_owned(), hash.clone());
-			
-			if !hash_location_release.contains_key(&hash) {
-				if release.is_some() || (patch.is_some() && !hash_location_latest.contains_key(&hash)) {
-					let mut writer = flate2::write::ZlibEncoder::new(Cursor::new(&mut compress_buf), flate2::Compression::best());
-					writer.write_all(&buf).unwrap();
-					writer.finish().unwrap();
-				}
-				
-				if let Some(release) = &mut release {
-					hash_location_release.insert(hash.clone(), release_len);
-					(compress_buf.len() as u32).write_to(release).unwrap();
-					release.write_all(&compress_buf).unwrap();
-					release_len += 4 + compress_buf.len() as i64;
-				}
-				
-				if let Some(patch) = &mut patch && !hash_location_latest.contains_key(&hash) {
-					hash_location_patch.insert(hash.clone(), patch_len);
-					(compress_buf.len() as u32).write_to(patch).unwrap();
-					patch.write_all(&compress_buf).unwrap();
-					patch_len += 4 + compress_buf.len() as i64;
-				}
-			}
-			
-			buf.clear();
-			compress_buf.clear();
-		}
-	};
-	
-	do_file("datas.json".to_owned());
-	todo.into_iter().for_each(do_file);
-	
-	// write the index footer
-	let mut footer_len = 0;
-	for (path, hash) in file_hashes {
-		footer_len += 1 + path.len() as u32 + 32 + 8;
-		let len = path.len() as u8;
-		
-		if let Some(release) = &mut release {
-			len.write_to(release).unwrap();
-			path.as_bytes().write_to(release).unwrap();
-			hash.write_to(release).unwrap();
-			hash_location_release[&hash].write_to(release).unwrap();
-		}
-		
-		
-		if let Some(patch) = &mut patch {
-			len.write_to(patch).unwrap();
-			path.as_bytes().write_to(patch).unwrap();
-			hash.write_to(patch).unwrap();
-			(if let Some(o) = hash_location_patch.get(&hash) {*o} else {-1}).write_to(patch).unwrap();
-		}
-	}
-	
-	if let Some(release) = &mut release {footer_len.write_to(release).unwrap()}
-	if let Some(patch) = &mut patch {footer_len.write_to(patch).unwrap()}
-	
-	(
-		if release.is_some() {Some(release_path)} else {None},
-		if patch.is_some() {Some(patch_path)} else {None}
-	)
-}
-
-pub fn unpack(pack_path: PathBuf, taget_dir: PathBuf) {
-	let files_dir = taget_dir.join("files");
-	fs::create_dir_all(&files_dir).unwrap();
-	
-	let mut pack = File::open(pack_path).unwrap();
-	
-	let mut index = HashMap::<String, ([u8; 32], i64)>::new();
-	let mut written_files = HashSet::<[u8; 32]>::new();
-	let mut paths = HashMap::<String, String>::new();
-	
-	// read index
-	pack.seek(SeekFrom::End(-4)).unwrap();
-	let index_len = pack.read_le::<u32>().unwrap() as i64;
-	pack.seek(SeekFrom::End(-index_len - 4)).unwrap();
-	let mut read_len = 0i64;
-	loop {
-		let path_len = pack.read_le::<u8>().unwrap() as usize;
-		let mut buf = vec![0u8; path_len];
-		pack.read_exact(&mut buf).unwrap();
-		let path = String::from_utf8(buf).unwrap();
-		let mut hash = [0u8; 32];
-		pack.read_exact(&mut hash).unwrap();
-		let offset = pack.read_le::<i64>().unwrap();
-		index.insert(path, (hash, offset));
-		read_len += 1 + path_len as i64 + 32 + 8;
-		if read_len == index_len {break}
-	}
-	
-	// write all files
-	let datas_path = taget_dir.join("datas.json");
-	for (path, (hash, offset)) in index {
-		if written_files.contains(&hash) {continue}
-		written_files.insert(hash.clone());
-		
-		if offset == -1 {continue}
-		
-		let hash_str = base64::encode_config(&hash, base64::URL_SAFE_NO_PAD);
-		paths.insert(path.clone(), format!("files/{hash_str}"));
-		
-		pack.seek(SeekFrom::Start(offset as u64)).unwrap();
-		let mut f = flate2::write::ZlibDecoder::new(File::create(files_dir.join(&hash_str)).unwrap());
-		let len = pack.read_le::<u32>().unwrap();
-		let mut buf = vec![0u8; len as usize];
-		pack.read_exact(&mut buf).unwrap();
-		f.write_all(&buf).unwrap();
-		f.finish().unwrap();
-		
-		if path == "datas.json" {
-			fs::rename(files_dir.join(hash_str), &datas_path).unwrap();
-		}
-	}
-	
-	// remove unused files
-	fs::read_dir(&files_dir)
-		.unwrap()
-		.into_iter()
-		.for_each(|e| {
-			let e = e.unwrap();
-			let name = e.file_name().to_str().unwrap().to_owned();
-			let hash = base64::decode_config(name, base64::URL_SAFE_NO_PAD).unwrap();
-			if !written_files.contains(&hash[0..32]) {fs::remove_file(e.path()).unwrap()}
-		});
-	
-	// fix paths
-	let mut datas: crate::apply::Datas = serde_json::from_reader(File::open(&datas_path).unwrap()).unwrap();
-	datas.penumbra.as_mut().unwrap().files.iter_mut().for_each(|(_, layers)|
-		layers.0.iter_mut().for_each(|layer|
-			layer.paths.iter_mut().for_each(|p| if let Some(p2) = paths.get(p) {*p = p2.clone()})
-		)
-	);
-	datas.penumbra.as_mut().unwrap().options.iter_mut().for_each(|o| match o {
-			ConfOption::Single(opt) | ConfOption::Multi(opt) => opt.options.iter_mut().for_each(|o|
-				o.files.iter_mut().for_each(|(_, layers)|
-					layers.0.iter_mut().for_each(|layer|
-						layer.paths.iter_mut().for_each(|p| if let Some(p2) = paths.get(p) {*p = p2.clone()})
-					)
-				)
-			),
-			_ => {},
-		}
-	);
-	
-	File::create(&datas_path).unwrap().write_all(serde_json::json!(datas).to_string().as_bytes()).unwrap();
 }

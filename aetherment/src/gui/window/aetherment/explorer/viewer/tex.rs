@@ -345,7 +345,7 @@ impl Viewer for Tex {
 									log!("import failed"); // TODO: nice popup displaying that it failed
 								}
 								// let hash = blake3::hash(&buf).to_hex().as_str()[..24].to_string();
-								let hash = crate::hash_str(blake3::hash(&buf));
+								let hash = crate::hash_str(blake3::hash(&buf).as_bytes());
 								File::create(conf.path.join("files").join(&hash)).unwrap().write_all(&buf).unwrap();
 								*gamepath = format!("files/{}", hash);
 							}

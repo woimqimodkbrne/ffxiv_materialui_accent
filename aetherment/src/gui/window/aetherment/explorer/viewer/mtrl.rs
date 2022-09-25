@@ -70,7 +70,7 @@ impl Mtrl {
 	fn save_changes(&self, conf: &mut super::Conf) {
 		let mut buf = Vec::new();
 		self.mtrl.write(&mut Cursor::new(&mut buf));
-		let hash = crate::hash_str(blake3::hash(&buf));
+		let hash = crate::hash_str(blake3::hash(&buf).as_bytes());
 		let path = conf.path.join("files").join(&hash);
 		File::create(path).unwrap().write_all(&buf).unwrap();
 		
