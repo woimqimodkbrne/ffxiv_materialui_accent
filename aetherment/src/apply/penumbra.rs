@@ -8,7 +8,7 @@ pub struct Config {
 	pub options: Vec<ConfOption>,
 	pub files: HashMap<String, PenumbraFile>,
 	pub swaps: HashMap<String, String>,
-	pub manipulations: Vec<u32>, // TODO: check if this is actually u32
+	pub manipulations: Vec<Manipulation>,
 }
 
 impl Config {
@@ -63,6 +63,98 @@ impl Config {
 			}
 		}
 	}
+}
+
+// i dont like that it will use PascalCase even in aeth datas.json, but oh well
+#[derive(Deserialize, Serialize, Clone, Debug)]
+#[serde(tag = "Type", content = "Manipulation")]
+pub enum Manipulation {
+	Eqp(ManiEqp),
+	Eqdp(ManiEqdp),
+	Imc(ManiImc),
+	Est(ManiEst),
+	Gmp(ManiGmp),
+	Rsp(ManiRsp),
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+#[serde(rename_all = "PascalCase")]
+pub struct ManiEqp {
+	pub entry: u64,
+	pub set_id: u16,
+	pub slot: String,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+#[serde(rename_all = "PascalCase")]
+pub struct ManiEqdp {
+	pub entry: u16,
+	pub set_id: u16,
+	pub slot: String,
+	pub gender: String,
+	pub race: String,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+#[serde(rename_all = "PascalCase")]
+pub struct ManiImc {
+	pub primary_id: u16,
+	pub secondary_id: u16,
+	pub variant: u16,
+	pub body_slot: String,
+	pub equip_slot: String,
+	pub object_type: String,
+	pub entry: ManiImcEntry,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+#[serde(rename_all = "PascalCase")]
+pub struct ManiImcEntry {
+	pub material_id: u8,
+	pub decal_id: u8,
+	pub vfx_id: u8,
+	pub material_animation_id: u8,
+	pub sound_id: u8,
+	pub attribute_mask: u16,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+#[serde(rename_all = "PascalCase")]
+pub struct ManiEst {
+	pub entry: u16,
+	pub set_id: u16,
+	pub slot: String,
+	pub gender: String,
+	pub race: String,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+#[serde(rename_all = "PascalCase")]
+pub struct ManiGmp {
+	pub set_id: u16,
+	pub entry: ManiGmpEntry,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+#[serde(rename_all = "PascalCase")]
+pub struct ManiGmpEntry {
+	pub enabled: bool,
+	pub animated: bool,
+	pub rotation_a: u16,
+	pub rotation_b: u16,
+	pub rotation_c: u16,
+	pub unknown_a: u8,
+	pub unknown_b: u8,
+	pub unknown_total: u8,
+	pub value: u64,
+}
+
+#[derive(Deserialize, Serialize, Clone, Debug, Default)]
+#[serde(rename_all = "PascalCase")]
+pub struct ManiRsp {
+	pub entry: f32,
+	pub sub_race: String,
+	pub attribute: String,
 }
 
 #[derive(Deserialize, Serialize, Clone, Debug)]

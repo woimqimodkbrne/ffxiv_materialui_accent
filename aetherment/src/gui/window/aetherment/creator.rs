@@ -43,6 +43,7 @@ pub struct Tab {
 	selected_mod: String,
 	curmod: Option<CurMod>,
 	newmod: String,
+	importing: bool,
 }
 
 impl Tab {
@@ -55,6 +56,7 @@ impl Tab {
 			selected_mod: "".to_owned(),
 			curmod: None,
 			newmod: String::with_capacity(64),
+			importing: false,
 		};
 		
 		t.load_mods(state);
@@ -100,6 +102,19 @@ impl Tab {
 				}
 			});
 			
+			// Footer
+			if aeth::button_icon("") { // fa-redo-alt
+				self.load_mods(state);
+			}
+			aeth::tooltip("Reload Modlist");
+			
+			imgui::same_line();
+			if aeth::button_icon("") { // fa-file-import
+				self.importing = true;
+			}
+			aeth::tooltip("Import Mod");
+			
+			imgui::same_line();
 			if aeth::button_icon("") { // fa-plus
 				let path = PathBuf::from(&state.config.local_path).join(&self.newmod);
 				std::fs::create_dir_all(&path).unwrap();
@@ -108,9 +123,39 @@ impl Tab {
 				self.load_mods(state);
 				self.load_mod(path);
 			}
+			aeth::tooltip("Create Mod");
+			
 			imgui::same_line();
 			aeth::next_max_width();
 			imgui::input_text_with_hint("##newmod", "New Mod", &mut self.newmod, imgui::InputTextFlags::None);
+			
+			// Mod Importing
+			if self.importing {
+				// dalamud filedialog doesnt support selecting a folder or file at the same time unless im stupid
+				// TODO: find a sollution
+				match aeth::file_dialog(aeth::FileDialogMode::OpenFile, "Importing Mod".to_owned(), "".to_owned(), Vec::new()) {
+					aeth::FileDialogResult::Success(path_s) => {
+						self.importing = false;
+						let path = PathBuf::from(&path_s);
+						if path.is_dir() {
+							if path.join("meta.json").exists() && path.join("default_mod.json").exists() {
+								crate::creator::import::penumbra::import(&path, PathBuf::from(&state.config.local_path).join(path.file_name().unwrap())).unwrap();
+							} else {
+								aeth::show_error("Mod Import Failed", format!("{path_s} Is not a valid penumbra directory."));
+							}
+						} else {
+							let ext = path.extension().unwrap().to_str().unwrap();
+							match ext {
+								"pap" => aeth::show_error("Mod Import Failed", "todo"),
+								"ttmp" | "ttmp2" => aeth::show_error("Mod Import Failed", "TexTool modpacks are currently unsupported"),
+								_ => aeth::show_error("Mod Import Failed", "Invalid file for importing")
+							}
+						}
+					},
+					aeth::FileDialogResult::Failed => self.importing = false, // TODO: display that it failed
+					aeth::FileDialogResult::Busy => {},
+						}
+			}
 		}).right(400.0, || {
 			if self.curmod.is_none() {return}
 			let m = self.curmod.as_mut().unwrap();

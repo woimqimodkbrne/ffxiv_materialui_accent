@@ -62,9 +62,9 @@ public class FileDialog {
 		var dir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
 		var nameS = (string)name;
 		if(mode == 0)
-			dialogs[id] = (new Dialog("OpenFileDialog", title, filter, dir, nameS, nameS.Split(".").Last(), 1, false, ImGuiFileDialogFlags.None), null);
+			dialogs[id] = (new Dialog("aethermentfiledialog", title, filter, dir, nameS, nameS.Split(".").Last(), 1, false, ImGuiFileDialogFlags.SelectOnly), null);
 		else if(mode == 1)
-			dialogs[id] = (new Dialog("SaveFileDialog", title, filter, dir, nameS, nameS.Split(".").Last(), 1, false, ImGuiFileDialogFlags.ConfirmOverwrite), null);
+			dialogs[id] = (new Dialog("aethermentfiledialog", title, filter, dir, nameS, nameS.Split(".").Last(), 1, false, ImGuiFileDialogFlags.ConfirmOverwrite), null);
 		else
 			return 0;
 		

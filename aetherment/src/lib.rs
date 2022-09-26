@@ -62,6 +62,9 @@ pub mod server {
 pub mod creator {
 	pub mod tags;
 	pub mod modpack;
+	pub mod import {
+		pub mod penumbra;
+	}
 }
 pub mod config;
 pub mod apply;
@@ -74,7 +77,7 @@ pub mod gui {
 
 // ---------------------------------------- //
 
-struct State {
+pub struct State {
 	data: Data,
 	
 	win_aetherment: gui::window::aetherment::Window,
@@ -88,7 +91,7 @@ pub struct Data {
 }
 
 #[repr(packed)]
-struct Initializers<'a> {
+pub struct Initializers<'a> {
 	binary_path: &'a str,
 	config_path: &'a str,
 	log: fn(u8, String),
@@ -106,7 +109,7 @@ struct Initializers<'a> {
 }
 
 #[no_mangle]
-extern fn initialize(init: Initializers) -> *mut State {
+pub extern fn initialize(init: Initializers) -> *mut State {
 	use gui::aeth::texture;
 	
 	unsafe {
@@ -146,19 +149,19 @@ extern fn initialize(init: Initializers) -> *mut State {
 }
 
 #[no_mangle]
-extern fn destroy(state: *mut State) {
+pub extern fn destroy(state: *mut State) {
 	log!("destroy");
 	let _state = unsafe{Box::from_raw(state)};
 }
 
 #[no_mangle]
-extern fn update_resources(_state: *mut State, fa5: *mut imgui::sys::ImFont) {
+pub extern fn update_resources(_state: *mut State, fa5: *mut imgui::sys::ImFont) {
 	// let state = unsafe{&mut *state};
 	unsafe{gui::aeth::FA5 = &mut *fa5}
 }
 
 #[no_mangle]
-extern fn draw(state: *mut State) {
+pub extern fn draw(state: *mut State) {
 	// let state = unsafe{&mut *state};
 	let state = state as usize;
 	
@@ -170,11 +173,13 @@ extern fn draw(state: *mut State) {
 			if let Err(e) = state.win_aetherment.draw(&mut state.data) {log!(err, "{:?}", e);}
 			imgui::end();
 		}
+		
+		gui::aeth::draw_error();
 	}).ok();
 }
 
 #[no_mangle]
-extern fn command(state: *mut State, args: &str) {
+pub extern fn command(state: *mut State, args: &str) {
 	let state = unsafe{&mut *state};
 	
 	match args {

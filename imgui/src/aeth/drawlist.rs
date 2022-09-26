@@ -56,7 +56,7 @@ impl DrawList for imgui::DrawList {
 	
 	fn add_text_area(&self, pos: [f32; 2], col: u32, text: &str, area: [f32; 2]) {
 		let height = imgui::get_font_size();
-		for (i, line) in super::wrap_text_area(text, area).into_iter().enumerate() {
+		for (i, (line, _)) in super::wrap_text_area(text, area).into_iter().enumerate() {
 			self.add_text(pos.add([0.0, height * i as f32]), col, line);
 		}
 	}

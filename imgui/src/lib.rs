@@ -2346,6 +2346,13 @@ pub fn get_main_viewport() -> *mut sys::ImGuiViewport {
 	unsafe{sys::igGetMainViewport()}
 }
 
+// cba making a struct for it
+pub fn get_main_viewport_center() -> [f32; 2] {
+	let mut r = [0f32; 2];
+	unsafe{sys::ImGuiViewport_GetCenter(&mut r, sys::igGetMainViewport())}
+	r
+}
+
 pub fn is_rect_visible__nil(size: [f32; 2]) -> bool {
 	unsafe{sys::igIsRectVisible_Nil(size)}
 }

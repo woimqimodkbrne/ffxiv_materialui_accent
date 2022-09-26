@@ -8,6 +8,7 @@ mod tabbar;
 mod divider;
 mod orderable_list;
 mod drawlist;
+mod error;
 
 pub use self::texture::{Texture, TextureOptions};
 pub use self::file_dialog::{FileDialogMode, FileDialogResult, FileDialogStatus, file_dialog, file_picker};
@@ -16,6 +17,7 @@ pub use self::tabbar::*;
 pub use self::divider::*;
 pub use self::orderable_list::*;
 pub use self::drawlist::*;
+pub use self::error::*;
 
 pub trait F2 {
 	fn add(&self, a: [f32; 2]) -> [f32; 2];
@@ -121,7 +123,7 @@ pub fn tooltip(label: &str) {
 }
 
 // TODO: end with ... if cut short
-pub(crate) fn wrap_text_area<'a>(text: &'a str, area: [f32; 2]) -> Vec<&'a str> {
+pub(crate) fn wrap_text_area<'a>(text: &'a str, area: [f32; 2]) -> Vec<(&'a str, f32)> {
 	lazy_static::lazy_static! {
 		static ref WORD: Regex = Regex::new(r"\b\w+[[:punct:]]*").unwrap();
 	}
@@ -131,24 +133,29 @@ pub(crate) fn wrap_text_area<'a>(text: &'a str, area: [f32; 2]) -> Vec<&'a str> 
 	let mut curline = 0;
 	let mut lineindex = 0;
 	let mut previndex = 0;
+	let mut prevlen = 0.0;
 	
 	for cap in WORD.find_iter(text) {
 		let line = &text[lineindex..cap.end()];
-		if imgui::calc_text_size(line, false, -1.0).x() > area.x() {
-			lines.push(&text[lineindex..previndex]);
+		let len = imgui::calc_text_size(line, false, -1.0).x();
+		if len > area.x() {
+			lines.push((&text[lineindex..previndex], prevlen));
 			curline += 1;
 			lineindex = cap.start();
 			previndex = lineindex;
+			prevlen = 0.0;
 			if curline >= linecount {
 				return lines;
 			}
 		} else {
 			previndex = cap.end();
+			prevlen = len;
 		}
 	}
 	
 	if lineindex != previndex {
-		lines.push(&text[lineindex..])
+		let line = &text[lineindex..];
+		lines.push((line, imgui::calc_text_size(line, false, -1.0).x()))
 	}
 	
 	lines
