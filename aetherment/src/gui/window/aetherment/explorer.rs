@@ -1,4 +1,4 @@
-use std::{fs::{File, self}, path::PathBuf, io::{Write, Cursor, BufReader, BufRead}};
+use std::{fs::{File, self}, path::PathBuf, io::{Write, Cursor, BufReader, BufRead, Read, Seek}};
 use crate::{gui::aeth::{self, F2}, GAME, apply::{self, penumbra::{self, ConfOption, PenumbraFile, FileLayer}}};
 
 mod tree;
@@ -412,7 +412,12 @@ pub fn load_file(m: &Option<Conf>, path: &str) -> Vec<u8> {
 	match m.as_ref() {
 		Some(m) => {
 			match m.datas.penumbra.as_ref().unwrap().file_ref(&m.option, &m.sub_option, path) {
-				Some(f) => GAME.file::<Vec<u8>>(&format!("{}/{}", m.path.to_str().unwrap(), f.0[0].paths[0])).unwrap(),
+				Some(f) => {
+					let mut file = File::open(format!("{}/{}", m.path.to_str().unwrap(), f.0[0].paths[0])).unwrap();
+					let mut buf = Vec::with_capacity(file.stream_len().unwrap() as usize);
+					file.read_to_end(&mut buf).unwrap();
+					buf
+				},
 				None => GAME.file::<Vec<u8>>(path).unwrap(),
 			}
 		},
