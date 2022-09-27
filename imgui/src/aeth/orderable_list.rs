@@ -6,12 +6,12 @@ F: FnMut(usize, &mut T),
 F2: FnMut(usize, &mut T) {
 	if vec.len() == 0 {return false}
 	
+	imgui::push_id(id);
 	let cur = imgui::get_state_storage().i32(imgui::get_id(id), 0);
 	let mpos = imgui::get_mouse_pos().y();
 	let h = super::frame_height();
 	let start = imgui::get_cursor_screen_pos().y();
 	let end = start + (vec.len() - 1) as f32 * (h + imgui::get_style().item_spacing.y());
-	imgui::push_id(id);
 	for i in 0..vec.len() + 1 {
 		if *cur != 0 {
 			let y = imgui::get_cursor_screen_pos().y();

@@ -263,8 +263,8 @@ pub struct TypPenumbra {
 pub struct PenumbraOption {
 	pub name: String,
 	pub files: HashMap<String, PenumbraFile>,
-	#[serde(alias = "FileSwaps")] pub swaps: HashMap<String, String>,
-	pub manipulations: Vec<u32>, // TODO: check if this is actually u32
+	pub swaps: HashMap<String, String>,
+	pub manipulations: Vec<Manipulation>,
 }
 
 #[derive(Clone, Debug)]
@@ -375,16 +375,29 @@ pub struct Layer {
 	pub files: Vec<String>,
 }
 
-pub fn load_file(path: &str) -> Option<Vec<u8>> {
-	// TODO: allow reading from mods with lower priority
-	if let Ok(mut f) = File::open(path) {
-		let mut buf = Vec::with_capacity(f.stream_len().unwrap() as usize);
-		f.read_to_end(&mut buf).unwrap();
-		Some(buf)
-	} else {
-		GAME.file::<Vec<u8>>(path).ok()
+pub fn get_load_file(root: Option<std::path::PathBuf>) -> impl Fn(&str) -> Option<Vec<u8>> {
+	move |path| -> Option<Vec<u8>> {
+		// TODO: allow reading from mods with lower priority
+		if let Some(root) = &root && let Ok(mut f) = File::open(root.join(path)) {
+			let mut buf = Vec::with_capacity(f.stream_len().unwrap() as usize);
+			f.read_to_end(&mut buf).unwrap();
+			Some(buf)
+		} else {
+			GAME.file::<Vec<u8>>(path).ok()
+		}
 	}
 }
+
+// pub fn load_file(path: &str) -> Option<Vec<u8>> {
+// 	// TODO: allow reading from mods with lower priority
+// 	if let Ok(mut f) = File::open(path) {
+// 		let mut buf = Vec::with_capacity(f.stream_len().unwrap() as usize);
+// 		f.read_to_end(&mut buf).unwrap();
+// 		Some(buf)
+// 	} else {
+// 		GAME.file::<Vec<u8>>(path).ok()
+// 	}
+// }
 
 // Might not want to return tex, idk yet
 pub fn resolve_layer(layer: &Layer, mut load_file: impl FnMut(&str) -> Option<Vec<u8>>) -> Result<Tex, String> {

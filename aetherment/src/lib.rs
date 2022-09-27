@@ -64,6 +64,7 @@ pub mod creator {
 	pub mod modpack;
 	pub mod import {
 		pub mod penumbra;
+		pub mod v1;
 	}
 }
 pub mod config;

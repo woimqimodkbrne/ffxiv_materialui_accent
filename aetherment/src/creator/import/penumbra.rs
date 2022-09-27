@@ -15,16 +15,14 @@ P2: AsRef<Path> {
 	let penumbra_meta: serde_json::Value = serde_json::from_reader(File::open(penumbra_dir.join("meta.json"))?)?;
 	File::create(target_dir.join("meta.json"))?.write_all(
 		crate::serialize_json(json!({
-			"name": penumbra_meta["Name"].as_str().unwrap(),
-			"description": penumbra_meta["Description"].as_str().unwrap(),
+			"name": penumbra_meta["Name"].as_str(),
+			"description": penumbra_meta["Description"].as_str(),
 			"nsfw": false,
 			"previews": [],
 			"contributors": [],
 			"dependencies": [],
 		})).as_bytes()
 	)?;
-	
-	let mut hashed_files = HashMap::<String, String>::new();
 	
 	#[derive(Deserialize)]
 	#[serde(rename_all = "PascalCase")]
@@ -45,6 +43,7 @@ P2: AsRef<Path> {
 	}
 	
 	// TODO: multithread
+	let mut hashed_files = HashMap::<String, String>::new();
 	let mut handle_block = |block: PenumbraBlock| -> Result<serde_json::Value, std::io::Error> {
 		let mut files = HashMap::new();
 		for (game, real) in block.files {
@@ -59,7 +58,7 @@ P2: AsRef<Path> {
 				}
 				let hash = crate::hash_str(hasher.finalize().as_bytes());
 				let path = format!("files/{hash}");
-				files.insert(game, hash.clone());
+				files.insert(game, path.clone());
 				hashed_files.insert(real.to_owned(), path);
 				fs::copy(penumbra_dir.join(&real), files_dir.join(hash))?;
 			}

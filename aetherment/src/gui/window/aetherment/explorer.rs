@@ -412,10 +412,10 @@ pub fn load_file(m: &Option<Conf>, path: &str) -> Vec<u8> {
 	match m.as_ref() {
 		Some(m) => {
 			match m.datas.penumbra.as_ref().unwrap().file_ref(&m.option, &m.sub_option, path) {
-				Some(f) => penumbra::load_file(&format!("{}/{}", m.path.to_str().unwrap(), f.0[0].paths[0])).unwrap(),
-				None => penumbra::load_file(path).unwrap(),
+				Some(f) => GAME.file::<Vec<u8>>(&format!("{}/{}", m.path.to_str().unwrap(), f.0[0].paths[0])).unwrap(),
+				None => GAME.file::<Vec<u8>>(path).unwrap(),
 			}
 		},
-		None => penumbra::load_file(path).unwrap(),
+		None => GAME.file::<Vec<u8>>(path).unwrap(),
 	}
 }

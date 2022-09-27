@@ -29,6 +29,8 @@ impl <'a> Conf<'a> {
 		
 		// TODO: redraw settings
 		// TODO: dont check every file to see if we need to create a temp file
+		let load_file = crate::apply::penumbra::get_load_file(Some(self.path.clone()));
+		
 		let mapfile = |f: &PenumbraFile| -> String {
 			if f.0.len() > 1 || f.0[0].paths.len() > 1 {
 				use crate::apply::penumbra;
@@ -38,12 +40,12 @@ impl <'a> Conf<'a> {
 				let mut tex = penumbra::resolve_layer(&penumbra::Layer {
 					value: if let Some(id) = &layer.id {self.datas.penumbra.as_ref().unwrap().options.iter().find(|v| v.id() == Some(id)).and_then(|v| Some(v.default()))} else {None},
 					files: layer.paths.clone()
-				}, &mut penumbra::load_file).expect("Failed resolving layer");
+				}, &load_file).expect("Failed resolving layer");
 				while let Some(layer) = layers.next() {
 					let l = penumbra::resolve_layer(&penumbra::Layer {
 						value: if let Some(id) = &layer.id {self.datas.penumbra.as_ref().unwrap().options.iter().find(|v| v.id() == Some(id)).and_then(|v| Some(v.default()))} else {None},
 						files: layer.paths.clone()
-					}, &mut penumbra::load_file).expect("Failed resolving layer");
+					}, &load_file).expect("Failed resolving layer");
 					l.overlay_onto(&mut tex);
 				}
 				

@@ -140,6 +140,8 @@ impl Tab {
 						if path.is_dir() {
 							if path.join("meta.json").exists() && path.join("default_mod.json").exists() {
 								crate::creator::import::penumbra::import(&path, PathBuf::from(&state.config.local_path).join(path.file_name().unwrap())).unwrap();
+							} else if path.join("options.json").exists() && path.join("elements_black").exists() {
+								crate::creator::import::v1::import(&path, PathBuf::from(&state.config.local_path).join(path.file_name().unwrap())).unwrap();
 							} else {
 								aeth::show_error("Mod Import Failed", format!("{path_s} Is not a valid penumbra directory."));
 							}
@@ -147,8 +149,8 @@ impl Tab {
 							let ext = path.extension().unwrap().to_str().unwrap();
 							match ext {
 								"pap" => aeth::show_error("Mod Import Failed", "todo"),
-								"ttmp" | "ttmp2" => aeth::show_error("Mod Import Failed", "TexTool modpacks are currently unsupported"),
-								_ => aeth::show_error("Mod Import Failed", "Invalid file for importing")
+								"ttmp" | "ttmp2" => aeth::show_error("Mod Import Failed", "TexTool modpacks are currently unsupported."),
+								_ => aeth::show_error("Mod Import Failed", "Invalid file for importing.")
 							}
 						}
 					},

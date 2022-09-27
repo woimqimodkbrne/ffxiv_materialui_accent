@@ -151,11 +151,12 @@ impl Tex {
 		}
 		
 		log!("loading {}", path);
-		let data = if let Some(root) = &self.rootpath && root.join(path).exists() {
-			penumbra::load_file(root.join(path).to_str().unwrap())
-		} else {
-			penumbra::load_file(path)
-		};
+		let data = penumbra::get_load_file(self.rootpath.clone())(path);
+		// let data = if let Some(root) = &self.rootpath && root.join(path).exists() {
+		// 	penumbra::load_file(root.join(path).to_str().unwrap())
+		// } else {
+		// 	penumbra::load_file(path)
+		// };
 		
 		if let Some(v) = data.clone() {
 			self.cache.insert(path.to_owned(), v);
