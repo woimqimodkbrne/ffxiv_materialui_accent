@@ -298,7 +298,7 @@ impl Tab {
 				drop(q2);
 				
 				log!("search");
-				let m: Vec<Mod> = match CLIENT.get(format!("{}/search.json", SERVER)).query(&[
+				let m: Vec<Mod> = match CLIENT.get(format!("{}/api/search", SERVER)).query(&[
 					("query", &q.query[..]),
 					("tags", &q.tags.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(",")[..]),
 					("page", &q.page.to_string()[..]),

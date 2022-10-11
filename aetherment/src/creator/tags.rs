@@ -18,7 +18,7 @@ lazy_static! {
 			regex: Vec<String>,
 		}
 		
-		let tagss: Vec<TagS> = match CLIENT.get(format!("{}/mod/tags.json", SERVER)).send(){
+		let tagss: Vec<TagS> = match CLIENT.get(format!("{}/api/mod/tags", SERVER)).send(){
 			Ok(v) => match v.json() {
 				Ok(v) => v,
 				Err(_) => return Vec::new(),

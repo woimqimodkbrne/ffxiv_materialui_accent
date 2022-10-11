@@ -223,6 +223,10 @@ impl<'a, W: Write + Read + Seek> ModPack<W> {
 		Ok(inner)
 	}
 	
+	pub fn into_inner(self) -> W {
+		self.inner.into_inner().unwrap()
+	}
+	
 	/// Manually mark a file as existing.
 	/// 
 	/// Useful for when creating a patch and are certain a file is the same to avoid reading and hashing it.

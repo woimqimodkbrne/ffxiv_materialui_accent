@@ -4,12 +4,17 @@ use super::F2;
 pub fn orderable_list<T, F, F2>(id: &str, vec: &mut Vec<T>, mut context_menu: F, mut draw: F2) -> bool where
 F: FnMut(usize, &mut T),
 F2: FnMut(usize, &mut T) {
+	orderable_list2(id, super::frame_height(), vec, &mut context_menu, &mut draw)
+}
+
+pub fn orderable_list2<T, F, F2>(id: &str, h: f32, vec: &mut Vec<T>, mut context_menu: F, mut draw: F2) -> bool where
+F: FnMut(usize, &mut T),
+F2: FnMut(usize, &mut T) {
 	if vec.len() == 0 {return false}
 	
 	imgui::push_id(id);
 	let cur = imgui::get_state_storage().i32(imgui::get_id(id), 0);
 	let mpos = imgui::get_mouse_pos().y();
-	let h = super::frame_height();
 	let start = imgui::get_cursor_screen_pos().y();
 	let end = start + (vec.len() - 1) as f32 * (h + imgui::get_style().item_spacing.y());
 	for i in 0..vec.len() + 1 {

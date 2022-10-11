@@ -14,6 +14,7 @@ pub struct Datas {
 impl Datas {
 	pub fn tags(&self) -> HashMap<String, Vec<String>> {
 		let mut tags = HashMap::<String, Vec<String>>::new();
+		if TAGS.len() == 0 {return tags}
 		
 		if self.dalamud.is_some() {tags.insert(TAGS[1].name.clone(), Vec::new());} // Dalamud Style
 		

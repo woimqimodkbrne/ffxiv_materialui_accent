@@ -13,9 +13,13 @@ pub static mut DROP: fn(usize) = |_| {};
 pub static mut PIN: fn(usize) -> *mut u8 = |_| {0 as *mut u8};
 pub static mut UNPIN: fn(usize) = |_| {};
 
+#[derive(Debug)]
 pub struct Texture {
 	pub width: usize,
 	pub height: usize,
+	format: i32,
+	usage: i32,
+	cpu_access_flags: i32,
 	ptr: usize,
 }
 
@@ -24,6 +28,9 @@ impl Texture {
 		Texture {
 			width: options.width as usize,
 			height: options.height as usize,
+			format: options.format,
+			usage: options.usage,
+			cpu_access_flags: options.cpu_access_flags,
 			ptr: unsafe{CREATE(options)},
 		}
 	}
@@ -32,6 +39,9 @@ impl Texture {
 		Texture {
 			width: 0,
 			height: 0,
+			format: 0,
+			usage: 0,
+			cpu_access_flags: 0,
 			ptr: 0,
 		}
 	}
@@ -40,11 +50,15 @@ impl Texture {
 		Texture {
 			width: options.width as usize,
 			height: options.height as usize,
+			format: options.format,
+			usage: options.usage,
+			cpu_access_flags: options.cpu_access_flags,
 			ptr: unsafe{CREATEDATA(options, data.to_vec())},
 		}
 	}
 	
 	pub fn draw_to(&mut self, data: &[u8]) -> Result<(), &'static str> {
+		// this doesnt care about the TextureFormat. TODO: fix that!!
 		if data.len() != self.width * self.height * 4 {
 			return Err("Invalid data size for texture dimensions");
 		}

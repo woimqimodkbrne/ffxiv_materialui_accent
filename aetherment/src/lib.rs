@@ -2,6 +2,7 @@
 // #![feature(panic_backtrace_config)]
 #![feature(seek_stream_len)]
 #![feature(let_chains)]
+#![feature(generic_associated_types)]
 
 use std::path::PathBuf;
 use ironworks::{Ironworks, sqpack::SqPack, ffxiv};
@@ -43,7 +44,7 @@ macro_rules! log {
 extern crate lazy_static;
 
 pub const SERVER: &'static str = "http://localhost:80";
-pub const SERVERFILES: &'static str = "https://files.aetherment.com";
+pub const SERVERCDN: &'static str = "https://cdn.aetherment.com";
 lazy_static! {
 	pub static ref CLIENT: req::Client = req::Client::new();
 	pub static ref GAME: ironworks::Ironworks = Ironworks::new()

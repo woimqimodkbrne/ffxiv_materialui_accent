@@ -1,5 +1,5 @@
 use std::io::Cursor;
-use crate::{CLIENT, gui::aeth::{Texture, TextureOptions}, SERVERFILES};
+use crate::{CLIENT, gui::aeth::{Texture, TextureOptions}, SERVERCDN};
 
 pub struct User {
 	pub id: i32,
@@ -10,7 +10,7 @@ pub struct User {
 
 impl User {
 	pub fn new(id: i32, name: String, token: String) -> Self {
-		let resp = CLIENT.get(format!("{}/u/{}/avatar.png", SERVERFILES, id))
+		let resp = CLIENT.get(format!("{}/u/{}/avatar.png", SERVERCDN, id))
 			.send()
 			.unwrap();
 		
