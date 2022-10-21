@@ -9,7 +9,9 @@ pub trait DrawList {
 impl DrawList for imgui::DrawList {
 	// this only exists because draw.add_image_rounded is broken
 	fn add_rect_rounded(&mut self, p1: [f32; 2], p2: [f32; 2], u: [f32; 2], v: [f32; 2], clr: u32, rounding: f32) {
-		let (urounding, vrounding) = (rounding / (p2.x() - p1.x()), rounding / (p2.y() - p1.y()));
+		let (w, h) = (p2.x() - p1.x(), p2.y() - p1.y());
+		let rounding = rounding.clamp(0.0, w.min(h) / 2.0);
+		let (urounding, vrounding) = (rounding / w, rounding / h);
 		self.prim_reserve((24 - 2) * 3, 24);
 		for i in 0..6 {
 			let r = i as f32 / 5.0 * std::f32::consts::PI / 2.0;

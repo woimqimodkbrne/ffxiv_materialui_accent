@@ -35,7 +35,7 @@ impl Texture {
 		}
 	}
 	
-	pub fn empty() -> Self {
+	pub const fn empty() -> Self {
 		Texture {
 			width: 0,
 			height: 0,

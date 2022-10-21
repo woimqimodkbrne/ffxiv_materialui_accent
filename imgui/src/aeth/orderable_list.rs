@@ -4,15 +4,16 @@ use super::F2;
 pub fn orderable_list<T, F, F2>(id: &str, vec: &mut Vec<T>, mut context_menu: F, mut draw: F2) -> bool where
 F: FnMut(usize, &mut T),
 F2: FnMut(usize, &mut T) {
-	orderable_list2(id, super::frame_height(), vec, &mut context_menu, &mut draw)
+	orderable_list2(id, [0.0, super::frame_height()], vec, &mut context_menu, &mut draw)
 }
 
-pub fn orderable_list2<T, F, F2>(id: &str, h: f32, vec: &mut Vec<T>, mut context_menu: F, mut draw: F2) -> bool where
+pub fn orderable_list2<T, F, F2>(id: &str, size: [f32; 2], vec: &mut Vec<T>, mut context_menu: F, mut draw: F2) -> bool where
 F: FnMut(usize, &mut T),
 F2: FnMut(usize, &mut T) {
 	if vec.len() == 0 {return false}
 	
 	imgui::push_id(id);
+	let h = size.y();
 	let cur = imgui::get_state_storage().i32(imgui::get_id(id), 0);
 	let mpos = imgui::get_mouse_pos().y();
 	let start = imgui::get_cursor_screen_pos().y();
@@ -22,7 +23,7 @@ F2: FnMut(usize, &mut T) {
 			let y = imgui::get_cursor_screen_pos().y();
 			let p = (mpos - (*cur >> 16) as f32).clamp(start, end);
 			if p + h / 2.0 >= y && p + h / 2.0 < y + h + imgui::get_style().item_spacing.y() {
-				imgui::dummy([0.0, h]);
+				imgui::dummy(size);
 			}
 			if i == (*cur & 0xFFFF) as usize {continue}
 		}
@@ -41,7 +42,9 @@ F2: FnMut(usize, &mut T) {
 			context_menu(i, vec.get_mut(i).unwrap());
 			imgui::end_popup();
 		}
+		imgui::begin_child("body", size, false, imgui::WindowFlags::None);
 		draw(i, vec.get_mut(i).unwrap());
+		imgui::end_child();
 		imgui::pop_id();
 	}
 	
@@ -54,7 +57,9 @@ F2: FnMut(usize, &mut T) {
 		imgui::set_cursor_screen_pos([imgui::get_cursor_screen_pos().x(), (mpos - o).clamp(start, end)]);
 		super::button_icon("");
 		imgui::same_line();
+		imgui::begin_child("body", size, false, imgui::WindowFlags::None);
 		draw(i, vec.get_mut(i).unwrap());
+		imgui::end_child();
 		imgui::pop_id();
 		
 		if !imgui::is_mouse_down(imgui::MouseButton::Left) {

@@ -9,6 +9,7 @@ const MAX_NAME_LEN: usize = 64;
 const MAX_DESC_LEN: usize = 5000;
 const MAX_CONTRIBUTORS: usize = 8;
 const MAX_DEPENDENCIES: usize = 8;
+const PREVIEW_RESOLUTION: [u32; 2] = [1620, 1080];
 
 const CONTRIBUTOR_IMG: TextureOptions = TextureOptions {
 	width: 32,
@@ -26,16 +27,6 @@ const DEPENDENCY_IMG: TextureOptions = TextureOptions {
 	cpu_access_flags: 0,
 };
 
-#[derive(Deserialize, Serialize, Debug, Default)]
-struct Meta {
-	name: String,
-	description: String,
-	contributors: Vec<(i32, String, Option<ContributorTexture>)>,
-	dependencies: Vec<(i32, String, String, Option<DependencyTexture>)>,
-	nsfw: bool,
-	previews: Vec<String>,
-}
-
 #[derive(Debug)]
 struct ContributorTexture(Texture, Vec<u8>);
 
@@ -52,7 +43,11 @@ impl<'de> Deserialize<'de> for ContributorTexture {
 	D: serde::Deserializer<'de> {
 		let v: String = Deserialize::deserialize(deserializer)?;
 		let data = base64::decode(v).unwrap();
-		Ok(ContributorTexture(Texture::with_data(CONTRIBUTOR_IMG, &data), data))
+		Ok(if data.len() == 0 {
+			ContributorTexture(Texture::empty(), data)
+		} else {
+			ContributorTexture(Texture::with_data(CONTRIBUTOR_IMG, &data), data)
+		})
 	}
 }
 
@@ -79,7 +74,11 @@ impl<'de> Deserialize<'de> for DependencyTexture {
 	D: serde::Deserializer<'de> {
 		let v: String = Deserialize::deserialize(deserializer)?;
 		let data = base64::decode(v).unwrap();
-		Ok(DependencyTexture(Texture::with_data(DEPENDENCY_IMG, &data), data))
+		Ok(if data.len() == 0 {
+			DependencyTexture(Texture::empty(), data)
+		} else {
+			DependencyTexture(Texture::with_data(DEPENDENCY_IMG, &data), data)
+		})
 	}
 }
 
@@ -101,6 +100,16 @@ struct OnlineMod {
 	version: i32,
 }
 
+#[derive(Deserialize, Serialize, Debug, Default)]
+struct Meta {
+	name: String,
+	description: String,
+	contributors: Vec<(i32, String, ContributorTexture)>,
+	dependencies: Vec<(i32, String, String, DependencyTexture)>,
+	nsfw: bool,
+	previews: Vec<String>,
+}
+
 struct CurMod {
 	meta: Meta,
 	online: Option<OnlineMod>,
@@ -108,6 +117,8 @@ struct CurMod {
 	version: [i32; 4],
 	contributors: UserSearch,
 	dependencies: ModSearch,
+	previews: HashMap<String, Texture>,
+	importing_preview: bool,
 	path: PathBuf,
 }
 
@@ -261,24 +272,27 @@ impl Tab {
 			let mut draw = imgui::get_window_draw_list();
 			
 			let mut rem = None;
-			save |= aeth::orderable_list2("##contributors", h, &mut m.meta.contributors, |i, _| {
+			save |= aeth::orderable_list2("##contributors", [300.0, h], &mut m.meta.contributors, |i, _| {
 				if imgui::button("Remove", [0.0, 0.0]) {
 					rem = Some(i);
+					save = true;
 				}
 			}, |_, entry| {
 				let pos = imgui::get_cursor_screen_pos();
 				let size = [h; 2];
-				imgui::dummy([300.0, h]);
-				draw.add_rect_filled(pos, pos.add([300.0, h]), colframe, rounding, imgui::DrawFlags::RoundCornersAll);
-				if let Some(avatar) = &entry.2 {draw.push_texture_id(avatar.resource())}
+				let w = imgui::get_column_width(-1);
+				imgui::dummy([w, h]);
+				draw.add_rect_filled(pos, pos.add([w, h]), colframe, rounding, imgui::DrawFlags::RoundCornersAll);
+				draw.push_texture_id(entry.2.resource());
 				draw.add_rect_rounded(pos, pos.add(size), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding);
-				if entry.2.is_some() {draw.pop_texture_id()}
+				draw.pop_texture_id();
 				draw.add_text(pos.add([h + 2.0, h * 0.25]), col, &entry.1);
 			});
 			if let Some(i) = rem {m.meta.contributors.remove(i);}
 			
 			if m.meta.contributors.len() < MAX_CONTRIBUTORS {
 				if imgui::input_text_with_hint("##contributors_search", "Search User", &mut m.contributors.query(), imgui::InputTextFlags::None) {m.contributors.search()}
+				let mut clear = false;
 				for entry in m.contributors.list().iter() {
 					if m.meta.contributors.iter().any(|v| v.0 == entry.id) {continue}
 					
@@ -286,23 +300,29 @@ impl Tab {
 					let size = [h; 2];
 					imgui::dummy([300.0, h]);
 					if imgui::is_item_clicked(imgui::MouseButton::Left) {
-						let data = entry.avatar.1.clone();
+						let data = entry.avatar.lock().unwrap().1.clone();
 						m.meta.contributors.push((
 							entry.id,
 							entry.name.clone(),
-							if data.len() > 0 {
-								Some(ContributorTexture(Texture::with_data(CONTRIBUTOR_IMG, &data), data))
+							if data.len() == 0 {
+								ContributorTexture(Texture::empty(), data)
 							} else {
-								None
-							}
+								ContributorTexture(Texture::with_data(CONTRIBUTOR_IMG, &data), data)
+							},
 						));
 						save = true;
+						clear = true;
 					}
 					draw.add_rect_filled(pos, pos.add([300.0, h]), colframe, rounding, imgui::DrawFlags::RoundCornersAll);
-					draw.push_texture_id(entry.avatar.0.resource());
+					draw.push_texture_id(entry.avatar.lock().unwrap().0.resource());
 					draw.add_rect_rounded(pos, pos.add(size), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding);
 					draw.pop_texture_id();
 					draw.add_text(pos.add([h + 2.0, h * 0.25]), col, &entry.name);
+				}
+				
+				if clear {
+					m.contributors.query().clear();
+					m.contributors.list().clear();
 				}
 			}
 			
@@ -310,17 +330,19 @@ impl Tab {
 			imgui::text("Dependencies");
 			let size = [h / 2.0 * 3.0, h];
 			let mut rem = None;
-			save |= aeth::orderable_list2("##dependencies", h, &mut m.meta.dependencies, |i, _| {
+			save |= aeth::orderable_list2("##dependencies", [500.0, h], &mut m.meta.dependencies, |i, _| {
 				if imgui::button("Remove", [0.0, 0.0]) {
 					rem = Some(i);
+					save = true;
 				}
 			}, |_, entry| {
 				let pos = imgui::get_cursor_screen_pos();
-				imgui::dummy([500.0, h]);
-				draw.add_rect_filled(pos, pos.add([500.0, h]), colframe, rounding, imgui::DrawFlags::RoundCornersAll);
-				if let Some(thumbnail) = &entry.3 {draw.push_texture_id(thumbnail.resource())}
+				let w = imgui::get_column_width(-1);
+				imgui::dummy([w, h]);
+				draw.add_rect_filled(pos, pos.add([w, h]), colframe, rounding, imgui::DrawFlags::RoundCornersAll);
+				draw.push_texture_id(entry.3.resource());
 				draw.add_rect_rounded(pos, pos.add(size), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding);
-				if entry.3.is_some() {draw.pop_texture_id()}
+				draw.pop_texture_id();
 				draw.add_text(pos.add([size.x() + 2.0, 0.0]), col, &entry.1);
 				draw.add_text(pos.add([size.x() + h * 0.5 + 2.0, h * 0.5]), col, &format!("by {}", entry.2));
 			});
@@ -328,31 +350,38 @@ impl Tab {
 			
 			if m.meta.dependencies.len() < MAX_DEPENDENCIES {
 				if imgui::input_text_with_hint("##dependencies_search", "Search Mod", &mut m.dependencies.query(), imgui::InputTextFlags::None) {m.dependencies.search()}
+				let mut clear = false;
 				for entry in m.dependencies.list().iter() {
 					if m.meta.dependencies.iter().any(|v| v.0 == entry.id) {continue}
 					
 					let pos = imgui::get_cursor_screen_pos();
 					imgui::dummy([500.0, h]);
 					if imgui::is_item_clicked(imgui::MouseButton::Left) {
-						let data = entry.thumbnail.1.clone();
+						let data = entry.thumbnail.lock().unwrap().1.clone();
 						m.meta.dependencies.push((
 							entry.id,
 							entry.name.clone(),
 							entry.author.clone(),
-							if data.len() > 0 {
-								Some(DependencyTexture(Texture::with_data(DEPENDENCY_IMG, &data), data))
+							if data.len() == 0 {
+								DependencyTexture(Texture::empty(), data)
 							} else {
-								None
-							}
+								DependencyTexture(Texture::with_data(DEPENDENCY_IMG, &data), data)
+							},
 						));
 						save = true;
+						clear = true;
 					}
 					draw.add_rect_filled(pos, pos.add([500.0, h]), colframe, rounding, imgui::DrawFlags::RoundCornersAll);
-					draw.push_texture_id(entry.thumbnail.0.resource());
+					draw.push_texture_id(entry.thumbnail.lock().unwrap().0.resource());
 					draw.add_rect_rounded(pos, pos.add(size), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding);
 					draw.pop_texture_id();
 					draw.add_text(pos.add([size.x() + 2.0, 0.0]), col, &entry.name);
 					draw.add_text(pos.add([size.x() + h * 0.5 + 2.0, h * 0.5]), col, &format!("by {}", entry.author));
+				}
+				
+				if clear {
+					m.dependencies.query().clear();
+					m.dependencies.list().clear();
 				}
 			}
 			
@@ -360,7 +389,87 @@ impl Tab {
 			save |= imgui::checkbox("NSFW", &mut m.meta.nsfw);
 			
 			aeth::offset([0.0, 16.0]);
-			imgui::text("Previews: TODO");
+			imgui::text("Previews (1620x1080 for best results, anything else will be resized)");
+			// imgui::begin_child("previews", [0.0, 400.0], false, imgui::WindowFlags::None);
+			aeth::child("previews", [0.0, 400.0], false, imgui::WindowFlags::AlwaysHorizontalScrollbar, || {
+				let h = imgui::get_content_region_avail().y();
+				let w = h / 2.0 * 3.0;
+				for id in &m.meta.previews {
+					let preview = &m.previews[id];
+					imgui::image(preview.resource(), [w, h], [0.0; 2], [1.0; 2], [1.0; 4], [0.0; 4]);
+					imgui::same_line();
+				}
+				
+				if imgui::button("+", [w, h]) {m.importing_preview = true}
+				if m.importing_preview {
+					match aeth::file_dialog(aeth::FileDialogMode::OpenFile, "Importing Preview".to_owned(), "".to_owned(), vec![".png".to_owned(), ".jpg".to_owned(), ".jpeg".to_owned()]) {
+						aeth::FileDialogResult::Success(path) => {
+							use image::imageops::FilterType;
+							m.importing_preview = false;
+							let preview = image::io::Reader::new(std::io::BufReader::new(File::open(path).unwrap()))
+								.with_guessed_format()
+								.unwrap()
+								.decode()
+								.unwrap();
+							
+							let w = preview.width();
+							let h = preview.height();
+							let tw = PREVIEW_RESOLUTION[0];
+							let th = PREVIEW_RESOLUTION[1];
+							
+							let img = if w == tw && h == th {
+								preview
+							} else if (w as f32 / 3.0) / (h as f32 / 2.0) == 1.0 {
+								preview.resize_exact(tw, th, FilterType::Triangle)
+							} else {
+								let mut img = preview.resize_to_fill(tw, th, FilterType::Triangle)
+									.blur(32.0);
+								
+								let scale = (th as f32 / h as f32).min(tw as f32 / w as f32);
+								let x = ((tw as f32 - w as f32 * scale) / 2.0) as i64;
+								let y = ((th as f32 - h as f32 * scale) / 2.0) as i64;
+								let w = (w as f32 * scale) as u32;
+								let h = (h as f32 * scale) as u32;
+								let preview = if scale == 1.0 {preview} else {preview.resize_exact(w, h, FilterType::Triangle)};
+								image::imageops::overlay(&mut img, &preview, x, y);
+								
+								img
+							};
+							
+							let mut data = Vec::new();
+							img.write_to(&mut Cursor::new(&mut data), image::ImageFormat::Jpeg).unwrap();
+							let hash = crate::hash_str(blake3::hash(&data).as_bytes());
+							
+							let previews_dir = m.path.join("previews");
+							std::fs::create_dir_all(&previews_dir).unwrap();
+							File::create(previews_dir.join(&hash)).unwrap().write_all(&data).unwrap();
+							
+							m.meta.previews.push(hash.clone());
+							m.previews.insert(hash, Texture::with_data(TextureOptions {
+								width: img.width() as i32,
+								height: img.height() as i32,
+								format: 28, // DXGI_FORMAT_R8G8B8A8_UNORM
+								usage: 1, // D3D11_USAGE_IMMUTABLE
+								cpu_access_flags: 0,
+							}, &img.into_rgba8()));
+							
+							save = true;
+						},
+						aeth::FileDialogResult::Failed => m.importing_preview = false,
+						aeth::FileDialogResult::Busy => {},
+					}
+				}
+			});
+			// imgui::end_child();
+			
+			// aeth::orderable_list2("##previews", [500.0, 180.0], &mut vec![1, 2, 3, 4, 5, 6], |i, _| {
+			// 	
+			// }, |_, entry| {
+			// 	imgui::checkbox("##thumbnail", &mut false);
+			// 	let pos = imgui::get_cursor_screen_pos();
+			// 	draw.add_rect_filled(pos, pos.add([270.0, 180.0]), 0xFF0000FF, 0.0, imgui::DrawFlags::None);
+			// 	imgui::text(&format!("{entry}"));
+			// });
 			
 			aeth::offset([0.0, 16.0]);
 			if imgui::input_int4("Version", &mut m.version, imgui::InputTextFlags::None) {
@@ -571,7 +680,6 @@ impl Tab {
 		
 		log!("{:?}", online);
 		self.curmod = Some(CurMod {
-			meta: m,
 			tags: serde_json::from_reader::<File, crate::apply::Datas>(File::open(path.join("datas.json")).unwrap()).unwrap().tags(),
 			version: match &online {
 				Some(v) => {
@@ -587,7 +695,26 @@ impl Tab {
 			online: online,
 			contributors: UserSearch::new(),
 			dependencies: ModSearch::new(),
+			previews: m.previews.iter().map(|v| {
+				// let img = image::open(path.join("previews").join(v)).unwrap().into_rgb8();
+				let mut img = image::io::Reader::new(std::io::BufReader::new(File::open(path.join("previews").join(v)).unwrap()));
+				img.set_format(image::ImageFormat::Jpeg);
+				let img = img.decode().unwrap();
+				
+				(
+					v.to_owned(),
+					Texture::with_data(TextureOptions {
+						width: img.width() as i32,
+						height: img.height() as i32,
+						format: 28, // DXGI_FORMAT_R8G8B8A8_UNORM
+						usage: 1, // D3D11_USAGE_IMMUTABLE
+						cpu_access_flags: 0,
+					}, &img.into_rgba8())
+				)
+			}).collect(),
+			importing_preview: false,
 			path: path,
+			meta: m,
 		});
 	}
 }
@@ -597,7 +724,7 @@ impl Tab {
 struct SearchedUser {
 	id: i32,
 	name: String,
-	avatar: (Texture, Vec<u8>),
+	avatar: Arc<Mutex<(Texture, Vec<u8>)>>,
 }
 
 struct UserSearch {
@@ -643,35 +770,37 @@ impl UserSearch {
 				struct JUser {
 					id: i32,
 					name: String,
-					avatar: Option<String>,
+					avatar: String,
 				}
 				
 				let new: Vec<SearchedUser> = match CLIENT.get(format!("{}/api/searchuser/{}", SERVER, search)).send() {
 					Ok(v) => match v.json::<Vec<JUser>>() {
 						Ok(new) => new.into_iter()
 							.map(|v| {
-								// TOOD: fetch avatars in parallel
-								SearchedUser {
-									avatar: if let Some(avatar) = v.avatar {
-										// TODO: dont use unwrap
-										let data = image::io::Reader::new(Cursor::new(CLIENT.get(format!("{}/u/{}/p/{}", SERVERCDN, v.id, avatar)).send().unwrap()
-											.bytes()
-											.unwrap()
-											.to_vec()))
-											.with_guessed_format()
-											.unwrap()
-											.decode()
-											.unwrap()
-											.resize_exact(32, 32, image::imageops::FilterType::Triangle)
-											.into_rgba8();
-										(Texture::with_data(CONTRIBUTOR_IMG, &data), data.to_vec())
-									} else {
-										// TODO: default avatar
-										(Texture::empty(), Vec::new())
-									},
+								let avatar_url = v.avatar;
+								let v = SearchedUser {
+									avatar: Arc::new(Mutex::new((Texture::empty(), Vec::new()))),
 									id: v.id,
 									name: v.name,
-								}
+								};
+								let avatar = v.avatar.clone();
+								
+								thread::spawn(move || {
+									let data = image::io::Reader::new(Cursor::new(CLIENT.get(format!("{SERVERCDN}{avatar_url}")).send().unwrap()
+										.bytes()
+										.unwrap()
+										.to_vec()))
+										.with_guessed_format()
+										.unwrap()
+										.decode()
+										.unwrap()
+										.resize_exact(32, 32, image::imageops::FilterType::Triangle)
+										.into_rgba8();
+									
+									*avatar.lock().unwrap() = (Texture::with_data(CONTRIBUTOR_IMG, &data), data.to_vec());
+								});
+								
+								v
 							}).collect(),
 						Err(_) => {
 							log!("json decode failed");
@@ -702,7 +831,7 @@ struct SearchedMod {
 	id: i32,
 	name: String,
 	author: String,
-	thumbnail: (Texture, Vec<u8>),
+	thumbnail: Arc<Mutex<(Texture, Vec<u8>)>>,
 }
 
 struct ModSearch {
@@ -749,33 +878,38 @@ impl ModSearch {
 					id: i32,
 					name: String,
 					author_name: String,
-					thumbnail: Option<String>,
+					thumbnail: String,
 				}
 				
 				let new: Vec<SearchedMod> = match CLIENT.get(format!("{}/api/search", SERVER)).query(&[("query", &search)]).send() {
 					Ok(v) => match v.json::<Vec<JMod>>() {
 						Ok(new) => new.into_iter()
 							.map(|v| {
-								SearchedMod {
-									thumbnail: if let Some(thumbnail) = v.thumbnail {
-										let data = image::io::Reader::new(Cursor::new(CLIENT.get(format!("{}/m/{}/p/{}", SERVERCDN, v.id, thumbnail)).send().unwrap()
-											.bytes()
-											.unwrap()
-											.to_vec()))
-											.with_guessed_format()
-											.unwrap()
-											.decode()
-											.unwrap()
-											.resize_exact(45, 30, image::imageops::FilterType::Triangle)
-											.into_rgba8();
-										(Texture::with_data(DEPENDENCY_IMG, &data), data.to_vec())
-									} else {
-										(Texture::empty(), Vec::new())
-									},
+								let thumbnail_url = v.thumbnail;
+								let v = SearchedMod {
+									thumbnail: Arc::new(Mutex::new((Texture::empty(), Vec::new()))),
 									id: v.id,
 									name: v.name,
 									author: v.author_name,
-								}
+								};
+								let thumbnail = v.thumbnail.clone();
+								
+								thread::spawn(move || {
+									let data = image::io::Reader::new(Cursor::new(CLIENT.get(format!("{SERVERCDN}{thumbnail_url}")).send().unwrap()
+										.bytes()
+										.unwrap()
+										.to_vec()))
+										.with_guessed_format()
+										.unwrap()
+										.decode()
+										.unwrap()
+										.resize_exact(135, 90, image::imageops::FilterType::Triangle)
+										.into_rgba8();
+									
+									*thumbnail.lock().unwrap() = (Texture::with_data(DEPENDENCY_IMG, &data), data.to_vec());
+								});
+								
+								v
 							}).collect(),
 						Err(_) => {
 							*fetching.lock().unwrap() = false;
