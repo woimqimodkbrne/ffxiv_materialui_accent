@@ -1,9 +1,9 @@
-use std::{path::PathBuf, fs::File, sync::{Arc, Mutex}, io::{Write, Cursor}, collections::HashMap, thread};
-use binrw::{BinReaderExt, BinWrite};
+use std::{path::{PathBuf, Path}, fs::File, sync::{Arc, Mutex}, io::{Write, Cursor}, collections::HashMap, thread};
+use binrw::BinReaderExt;
 use imgui::aeth::{Texture, TextureOptions, DrawList};
-use serde::{Deserialize, Serialize, Deserializer, Serializer, ser::SerializeTuple};
+use serde::{Deserialize, Serialize, Serializer};
 use serde_json::json;
-use crate::{gui::aeth::{self, F2}, CLIENT, SERVER, creator::modpack, SERVERCDN};
+use crate::{gui::aeth::{self, F2}, creator::modpack, CLIENT, SERVER, SERVERCDN};
 
 const MAX_NAME_LEN: usize = 64;
 const MAX_DESC_LEN: usize = 5000;
@@ -119,6 +119,7 @@ struct CurMod {
 	dependencies: ModSearch,
 	previews: HashMap<String, Texture>,
 	importing_preview: bool,
+	packing: (String, Option<Arc<Mutex<(usize, usize)>>>), // (patch_path, (progress, total))
 	path: PathBuf,
 }
 
@@ -152,6 +153,19 @@ impl Tab {
 	}
 	
 	pub fn draw(&mut self, state: &mut crate::Data) {
+		// wanted to do a local modal popup, couldnt figure out how to disable inputs
+		if let Some(m) = &mut self.curmod && let Some(progress) = &mut m.packing.1 {
+			let (done, total) = *progress.lock().unwrap();
+			imgui::text(&format!("Packing {} (v{}.{}.{}.{})", m.meta.name, m.version[0], m.version[1], m.version[2], m.version[3]));
+			imgui::progress_bar(done as f32 / total as f32, [300.0, 20.0], &format!("{done}/{total}"));
+			
+			if done == total && imgui::button("close", [0.0; 2]) {
+				m.packing.1 = None;
+			}
+			
+			return;
+		}
+		
 		if *self.refresh.lock().unwrap() {
 			*self.refresh.lock().unwrap() = false;
 			self.load_mods(state);
@@ -390,7 +404,6 @@ impl Tab {
 			
 			aeth::offset([0.0, 16.0]);
 			imgui::text("Previews (1620x1080 for best results, anything else will be resized)");
-			// imgui::begin_child("previews", [0.0, 400.0], false, imgui::WindowFlags::None);
 			aeth::child("previews", [0.0, 400.0], false, imgui::WindowFlags::AlwaysHorizontalScrollbar, || {
 				let h = imgui::get_content_region_avail().y();
 				let w = h / 2.0 * 3.0;
@@ -460,16 +473,6 @@ impl Tab {
 					}
 				}
 			});
-			// imgui::end_child();
-			
-			// aeth::orderable_list2("##previews", [500.0, 180.0], &mut vec![1, 2, 3, 4, 5, 6], |i, _| {
-			// 	
-			// }, |_, entry| {
-			// 	imgui::checkbox("##thumbnail", &mut false);
-			// 	let pos = imgui::get_cursor_screen_pos();
-			// 	draw.add_rect_filled(pos, pos.add([270.0, 180.0]), 0xFF0000FF, 0.0, imgui::DrawFlags::None);
-			// 	imgui::text(&format!("{entry}"));
-			// });
 			
 			aeth::offset([0.0, 16.0]);
 			if imgui::input_int4("Version", &mut m.version, imgui::InputTextFlags::None) {
@@ -506,10 +509,56 @@ impl Tab {
 			}
 			
 			imgui::new_line();
+			if save {File::create(m.path.join("meta.json")).unwrap().write_all(crate::serialize_json(json!(m.meta)).as_bytes()).unwrap()}
 			
-			if save {
-				File::create(m.path.join("meta.json")).unwrap().write_all(crate::serialize_json(json!(m.meta)).as_bytes()).unwrap();
-			}
+			aeth::offset([0.0, 16.0]);
+			imgui::text("Create Modpack");
+			imgui::set_next_item_width(400.0);
+			aeth::tab_bar("modpack tabs")
+				.tab("Standalone", || {
+					if imgui::button("Create", [0.0; 2]) {
+						let progress = Arc::new(Mutex::new((0, 0)));
+						m.packing.1 = Some(progress.clone());
+						
+						let path = m.path.join("modpacks");
+						if !path.exists() {std::fs::create_dir_all(&path).unwrap()}
+						
+						let path = path.join(format!("{}.{}.{}.{}.amp", m.version[0], m.version[1], m.version[2], m.version[3]));
+						let writer = File::create(path).unwrap();
+						let path = m.path.clone();
+						let version = (m.version[0] << 24) + (m.version[1] << 16) + (m.version[2] << 8) + m.version[3];
+						thread::spawn(move || {
+							modpack::pack(writer, path, version, None::<File>, progress).unwrap();
+						});
+					}
+				})
+				.tab("Patch", || {
+					let patch_path = &mut m.packing.0;
+					aeth::file_picker(aeth::FileDialogMode::OpenFile, "Pick modpack", "", vec![".amp".to_owned(), ".amp.patch".to_owned()], patch_path);
+					imgui::same_line();
+					imgui::input_text("Patch path", patch_path, imgui::InputTextFlags::None);
+					
+					let patch_path = Path::new(patch_path);
+					if imgui::button("Create", [0.0; 2]) && patch_path.exists() {
+						let progress = Arc::new(Mutex::new((0, 0)));
+						m.packing.1 = Some(progress.clone());
+						
+						let path = m.path.join("modpacks");
+						if !path.exists() {std::fs::create_dir_all(&path).unwrap()}
+						
+						let pack = modpack::ModPack::load(File::open(&patch_path).unwrap()).unwrap();
+						let patch_version = modpack::version_to_string(pack.version());
+						let patch = Some(pack.into_inner());
+						let path = path.join(format!("{patch_version}-{}.{}.{}.{}.amp.patch", m.version[0], m.version[1], m.version[2], m.version[3]));
+						let writer = File::create(path).unwrap();
+						let path = m.path.clone();
+						let version = (m.version[0] << 24) + (m.version[1] << 16) + (m.version[2] << 8) + m.version[3];
+						thread::spawn(move || {
+							modpack::pack(writer, path, version, patch, progress).unwrap();
+						});
+					}
+				})
+				.finish();
 			
 			// let version = (m.version[0] << 24) + (m.version[1] << 16) + (m.version[2] << 8) + m.version[3];
 			// if let Some(user) = &state.user && (m.online.is_none() || version > m.online.as_ref().unwrap().version) {
@@ -713,6 +762,7 @@ impl Tab {
 				)
 			}).collect(),
 			importing_preview: false,
+			packing: (String::with_capacity(256), None),
 			path: path,
 			meta: m,
 		});

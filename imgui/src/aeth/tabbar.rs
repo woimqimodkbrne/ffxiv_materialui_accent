@@ -53,7 +53,7 @@ impl<'a> TabBar<'a> {
 		for (i, tab) in self.tabs.iter().enumerate() {
 			let pos = [org[0] + tabw * i as f32, org[1]];
 			imgui::set_cursor_pos(pos);
-			let pos = pos.add(imgui::get_window_pos());
+			let pos = imgui::get_cursor_screen_pos();
 			imgui::dummy(tabsize);
 			if imgui::is_item_clicked(imgui::MouseButton::Left) {
 				*curtab = i as i32;
@@ -73,7 +73,8 @@ impl<'a> TabBar<'a> {
 			draw.add_text(pos.add(s.frame_padding), clrt, tab);
 		}
 		
-		let p = org.add(imgui::get_window_pos()).add(if self.docked_bottom {[0.0, tabh]} else {[0.0, 0.0]});
+		imgui::set_cursor_pos(org);
+		let p = imgui::get_cursor_screen_pos().add(if self.docked_bottom {[0.0, tabh]} else {[0.0, 0.0]});
 		draw.add_line(p, p.add([barw, 0.0]), clra, 1.0);
 		
 		*curtab = (*curtab).min(self.tabs.len() as i32 - 1);

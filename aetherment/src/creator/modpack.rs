@@ -27,7 +27,9 @@ u32 index size
 // TODO: proper error type
 pub type Error = Box<dyn std::error::Error>;
 
-pub struct ModPack<W: Write + Read + Seek> {
+// Having this as woth write+read is bad, as it wont work with BufWriter and BufReader
+#[derive(Debug)]
+pub struct ModPack<W: Write + Read + Seek + std::fmt::Debug> {
 	inner: Mutex<W>,
 	index: Mutex<Index>,
 	prev_files: HashMap<[u8; 32], Vec<String>>,
@@ -39,7 +41,7 @@ pub struct Index {
 	paths: HashMap<String, [u8; 32]>,
 }
 
-impl<'a, W: Write + Read + Seek> ModPack<W> {
+impl<'a, W: Write + Read + Seek + std::fmt::Debug> ModPack<W> {
 	pub fn new(mut writer: W, version: i32) -> Result<ModPack<W>, Error> {
 		let w = &mut writer;
 		1u8.write_to(w)?;
@@ -97,7 +99,9 @@ impl<'a, W: Write + Read + Seek> ModPack<W> {
 		let mut index = Index::default();
 		
 		reader.seek(SeekFrom::End(-4))?;
+		log!("{}", reader.stream_position().unwrap());
 		let index_len = reader.read_le::<u32>()? as i64;
+		log!("{index_len}");
 		reader.seek(SeekFrom::End(-4 - index_len))?;
 		let mut read_len = 0;
 		loop {
@@ -194,6 +198,12 @@ impl<'a, W: Write + Read + Seek> ModPack<W> {
 		self.index.lock().unwrap().clone()
 	}
 	
+	pub fn version(&self) -> i32 {
+		let mut inner = self.inner.lock().unwrap();
+		inner.seek(SeekFrom::Start(1)).unwrap();
+		inner.read_le::<i32>().unwrap()
+	}
+	
 	pub fn finish(self) -> Result<W, Error> {
 		let mut inner = self.inner.into_inner().unwrap();
 		let index = self.index.into_inner().unwrap();
@@ -256,8 +266,8 @@ impl<'a, W: Write + Read + Seek> ModPack<W> {
 	}
 }
 
-pub fn pack<W, P, R>(writer: W, mod_path: P, version: i32, prev: Option<R>, progress: &mut(usize, usize)) -> Result<(), Error> where
-W: Write + Read + Seek + std::marker::Send,
+pub fn pack<W, P, R>(writer: W, mod_path: P, version: i32, prev: Option<R>, progress: Arc<Mutex<(usize, usize)>>) -> Result<(), Error> where
+W: Write + Read + Seek + std::marker::Send + std::fmt::Debug,
 P: AsRef<Path>,
 R: Read + Seek {
 	let mod_path = mod_path.as_ref();
@@ -279,7 +289,7 @@ R: Read + Seek {
 	
 	// Modpack creation
 	for path in &files {
-		if !mod_path.join(path).exists() {Err(format!("{path} is a invalid file"))?}
+		if !mod_path.join(path).exists() {Err(format!("{path} is an invalid file"))?}
 	}
 	
 	// let releases_path = mod_path.join("releases");
@@ -291,20 +301,20 @@ R: Read + Seek {
 		None => ModPack::new(writer, version)?,
 	});
 	
-	progress.1 = files.len();
-	let progress = Mutex::new(progress);
+	progress.lock().unwrap().1 = files.len();
 	files.into_par_iter().for_each(|path| {
 		modpack.write_file(path, File::open(mod_path.join(path)).unwrap()).unwrap();
 		// *progress = (progress.0 + 1, total);
 		let mut p = progress.lock().unwrap();
-		p.0 = p.0 + 1;
+		p.0 += 1;
 	});
+	Arc::try_unwrap(modpack).unwrap().finish()?;
 	
 	Ok(())
 }
 
 pub fn unpack<W, F>(reader: W, file_handler: F) -> Result<(), Error> where
-W: Write + Read + Seek + std::marker::Send,
+W: Write + Read + Seek + std::marker::Send + std::fmt::Debug,
 F: Fn(HashSet<&str>, &[u8; 32], &[u8]) + std::marker::Sync {
 	let modpack = ModPack::load(reader)?;
 	let mut files = HashMap::new();
@@ -326,7 +336,7 @@ F: Fn(HashSet<&str>, &[u8; 32], &[u8]) + std::marker::Sync {
 }
 
 pub fn unpack_to<W, P>(reader: W, mod_path: P) -> Result<(), Error> where
-W: Write + Read + Seek + std::marker::Send,
+W: Write + Read + Seek + std::marker::Send + std::fmt::Debug,
 P: AsRef<Path> {
 	let mod_path = mod_path.as_ref();
 	let files_path = mod_path.join("files");

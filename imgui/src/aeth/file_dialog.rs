@@ -1,3 +1,8 @@
+// dalamud file dialog is super scuffed
+// doesnt allow for picking files and folders in the same operation
+// doesn't respect style and extensions are super scuffed
+// TODO: make custom file dialog
+
 use crate as imgui;
 
 #[repr(u8)]
@@ -29,8 +34,9 @@ pub fn file_dialog(mode: FileDialogMode, title: String, name: String, extensions
 	}
 }
 
-pub fn file_picker<S>(mode: FileDialogMode, title: S, name: S, extensions: Vec<String>, path: &mut String) -> bool
-where S: Into<String> {
+pub fn file_picker<S, S2>(mode: FileDialogMode, title: S, name: S, extensions: S2, path: &mut String) -> bool where
+S: Into<String>,
+S2: Into<Vec<String>> {
 	let title = title.into();
 	let picking = imgui::get_state_storage().i32(imgui::get_id(&title), 0);
 	imgui::push_id(&title);
