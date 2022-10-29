@@ -73,8 +73,10 @@ pub mod server {
 	pub mod user;
 }
 pub mod creator {
-	pub mod tags;
+	pub mod meta;
 	pub mod modpack;
+	pub mod upload;
+	pub mod tags;
 	pub mod import {
 		pub mod penumbra;
 		pub mod v1;
@@ -153,6 +155,8 @@ pub extern fn initialize(init: Initializers) -> *mut State {
 		config_path: config_path,
 		user: server::user::User::load(),
 	};
+	
+	std::tc
 	
 	Box::into_raw(Box::new(State {
 		win_aetherment: gui::window::aetherment::Window::new(&mut data),

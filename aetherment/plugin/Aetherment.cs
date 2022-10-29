@@ -28,7 +28,6 @@ public class Aetherment : IDalamudPlugin {
 	private const string maincommand = "/aetherment";
 	
 	private IntPtr state;
-	private FileDialog fileDialog;
 	private Penumbra penumbra;
 	private TextureManager textureManager;
 	private TextureFinder texFinder;
@@ -41,7 +40,6 @@ public class Aetherment : IDalamudPlugin {
 		public FFI.Str binary_path;
 		public FFI.Str config_path;
 		public IntPtr log;
-		// public IntPtr file_dialog;
 		public IntPtr t_c;
 		public IntPtr t_cd;
 		public IntPtr t_d;
@@ -56,7 +54,6 @@ public class Aetherment : IDalamudPlugin {
 	
 	public unsafe Aetherment() {
 		logDelegate = Log;
-		fileDialog = new();
 		penumbra = new();
 		textureManager = new();
 		texFinder = new();
@@ -65,7 +62,6 @@ public class Aetherment : IDalamudPlugin {
 			binary_path = Interface.AssemblyLocation.DirectoryName!,
 			config_path = Interface.ConfigDirectory.FullName,
 			log = Marshal.GetFunctionPointerForDelegate(logDelegate),
-			// file_dialog = Marshal.GetFunctionPointerForDelegate(fileDialog.openFileDialogDelegate),
 			t_c = Marshal.GetFunctionPointerForDelegate(textureManager.createTexture),
 			t_cd = Marshal.GetFunctionPointerForDelegate(textureManager.createTextureData),
 			t_d = Marshal.GetFunctionPointerForDelegate(textureManager.destroyResource),
@@ -118,7 +114,6 @@ public class Aetherment : IDalamudPlugin {
 	private void Draw() {
 		try {
 			draw(state);
-			fileDialog.Draw();
 			texFinder.Draw();
 		} catch {}
 	}

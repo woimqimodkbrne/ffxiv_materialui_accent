@@ -1,93 +1,9 @@
-use std::{path::{PathBuf, Path}, fs::File, sync::{Arc, Mutex}, io::{Write, Cursor}, collections::HashMap, thread};
+use std::{path::{PathBuf, Path}, fs::File, sync::{Arc, Mutex}, io::{Write, Cursor}, collections::HashMap, thread, time::Duration};
 use binrw::BinReaderExt;
 use imgui::aeth::{Texture, TextureOptions, DrawList};
-use serde::{Deserialize, Serialize, Serializer};
+use serde::Deserialize;
 use serde_json::json;
-use crate::{gui::aeth::{self, F2}, creator::modpack, CLIENT, SERVER, SERVERCDN};
-
-const MAX_NAME_LEN: usize = 64;
-const MAX_DESC_LEN: usize = 5000;
-const MAX_CONTRIBUTORS: usize = 8;
-const MAX_DEPENDENCIES: usize = 8;
-const PREVIEW_RESOLUTION: [u32; 2] = [1620, 1080];
-
-const CONTRIBUTOR_IMG: TextureOptions = TextureOptions {
-	width: 32,
-	height: 32,
-	format: 28, // DXGI_FORMAT_R8G8B8A8_UNORM
-	usage: 1, // D3D11_USAGE_IMMUTABLE
-	cpu_access_flags: 0,
-};
-
-const DEPENDENCY_IMG: TextureOptions = TextureOptions {
-	width: 45,
-	height: 30,
-	format: 28, // DXGI_FORMAT_R8G8B8A8_UNORM
-	usage: 1, // D3D11_USAGE_IMMUTABLE
-	cpu_access_flags: 0,
-};
-
-#[derive(Debug)]
-struct ContributorTexture(Texture, Vec<u8>);
-
-impl std::ops::Deref for ContributorTexture {
-	type Target = Texture;
-	
-	fn deref(&self) -> &Self::Target {
-		&self.0
-	}
-}
-
-impl<'de> Deserialize<'de> for ContributorTexture {
-	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-	D: serde::Deserializer<'de> {
-		let v: String = Deserialize::deserialize(deserializer)?;
-		let data = base64::decode(v).unwrap();
-		Ok(if data.len() == 0 {
-			ContributorTexture(Texture::empty(), data)
-		} else {
-			ContributorTexture(Texture::with_data(CONTRIBUTOR_IMG, &data), data)
-		})
-	}
-}
-
-impl Serialize for ContributorTexture {
-	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-	S: Serializer {
-		serializer.serialize_str(&base64::encode(&self.1))
-	}
-}
-
-#[derive(Debug)]
-struct DependencyTexture(Texture, Vec<u8>);
-
-impl std::ops::Deref for DependencyTexture {
-	type Target = Texture;
-	
-	fn deref(&self) -> &Self::Target {
-		&self.0
-	}
-}
-
-impl<'de> Deserialize<'de> for DependencyTexture {
-	fn deserialize<D>(deserializer: D) -> Result<Self, D::Error> where
-	D: serde::Deserializer<'de> {
-		let v: String = Deserialize::deserialize(deserializer)?;
-		let data = base64::decode(v).unwrap();
-		Ok(if data.len() == 0 {
-			DependencyTexture(Texture::empty(), data)
-		} else {
-			DependencyTexture(Texture::with_data(DEPENDENCY_IMG, &data), data)
-		})
-	}
-}
-
-impl Serialize for DependencyTexture {
-	fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error> where
-	S: Serializer {
-		serializer.serialize_str(&base64::encode(&self.1))
-	}
-}
+use crate::{gui::aeth::{self, F2}, creator::{meta::*, modpack}, CLIENT, SERVER, SERVERCDN};
 
 #[derive(Deserialize, Clone, Debug)]
 struct OnlineMod {
@@ -98,16 +14,6 @@ struct OnlineMod {
 	previews: Vec<String>,
 	nsfw: bool,
 	version: i32,
-}
-
-#[derive(Deserialize, Serialize, Debug, Default)]
-struct Meta {
-	name: String,
-	description: String,
-	contributors: Vec<(i32, String, ContributorTexture)>,
-	dependencies: Vec<(i32, String, String, DependencyTexture)>,
-	nsfw: bool,
-	previews: Vec<String>,
 }
 
 struct CurMod {
@@ -592,6 +498,53 @@ impl Tab {
 					}}
 				})
 				.finish();
+			
+			// TODO: make prettier
+			if let Some(user) = &state.user && imgui::button("Upload", [0.0; 2]) {
+				let auth = user.token.clone();
+				let path = m.path.clone();
+				
+				thread::spawn(move || {
+					// TODO: fetch remote data and check if we can even upload this, to save on bandwidth and the likes
+					let mut stage = 0;
+					let mut patch_notes = String::with_capacity(2000);
+					let mut modpack_path = PathBuf::new();
+					
+					loop {
+						match stage {
+							0 => match aeth::file_dialog("Select ModPack", || {
+								// TODO: allow selecting patch files if mod is already uploaded
+								aeth::FileDialog::new(path.to_string_lossy(), "")
+									.add_extension(".amp", Some("Aetherment"))
+									.finish()
+							}) {
+								aeth::FileDialogResult::Canceled => break,
+								aeth::FileDialogResult::Success(paths) => {
+									stage = 1;
+									modpack_path = paths[0].clone();
+								}
+								aeth::FileDialogResult::Busy => {},
+							},
+							1 => {
+								imgui::set_next_window_pos(imgui::get_main_viewport_center(), imgui::Cond::Always, [0.5, 0.5]);
+								imgui::set_next_window_size([1000.0, 800.0], imgui::Cond::Always);
+								imgui::begin("Patch Notes###aetherment_upload", None, imgui::WindowFlags::None);
+								imgui::input_text_multiline("##patchnotes", &mut patch_notes, [0.0, 900.0], imgui::InputTextFlags::None);
+								patch_notes.truncate(500);
+								imgui::text(&format!("{}/500", patch_notes.len()));
+								if imgui::button("Confirm", [0.0; 2]) {
+									crate::creator::upload::upload_mod(&auth, &path, &modpack_path, None, &patch_notes).unwrap();
+									break;
+								}
+								imgui::end();
+							},
+							_ => {},
+						}
+						
+						thread::sleep(Duration::from_millis(100));
+					}
+				});
+			}
 		});
 	}
 	
