@@ -4,7 +4,7 @@
 #![feature(let_chains)]
 #![feature(generic_associated_types)]
 
-use std::path::PathBuf;
+use std::path::{PathBuf, Path};
 use ironworks::{Ironworks, sqpack::SqPack, ffxiv};
 use serde::Serialize;
 use reqwest::blocking as req;
@@ -27,6 +27,18 @@ pub fn serialize_json(json: serde_json::Value) -> String {
 
 pub fn hash_str(hash: &[u8; 32]) -> String {
 	base64::encode_config(hash, base64::URL_SAFE_NO_PAD)
+}
+
+static mut CONFIG: *mut config::Config = 0 as *mut _;
+pub fn file_picker<S, F>(title: S, setup: F, path: &mut String) -> bool where
+S: AsRef<str>,
+F: FnOnce() -> imgui::aeth::FileDialog {
+	let r = imgui::aeth::file_picker(title, setup, path);
+	if r && let Some(parent) = Path::new(path).parent() &&  let Some(config) = unsafe{CONFIG.as_mut()} {
+		config.explorer_path = parent.to_string_lossy().to_string();
+	}
+	
+	r
 }
 
 static mut LOG: fn(u8, String) = |_, _| {};
@@ -97,7 +109,6 @@ pub struct Initializers<'a> {
 	binary_path: &'a str,
 	config_path: &'a str,
 	log: fn(u8, String),
-	file_dialog: fn(gui::aeth::FileDialogMode, String, String, String, &mut String) -> gui::aeth::FileDialogStatus,
 	create_texture: fn(gui::aeth::TextureOptions) -> usize,
 	create_texture_data: fn(gui::aeth::TextureOptions, Vec<u8>) -> usize,
 	drop_texture: fn(usize),
@@ -116,7 +127,6 @@ pub extern fn initialize(init: Initializers) -> *mut State {
 	
 	unsafe {
 		LOG = init.log;
-		gui::aeth::file_dialog::FILEDIALOG = init.file_dialog;
 		texture::CREATE = init.create_texture;
 		texture::CREATEDATA = init.create_texture_data;
 		texture::DROP = init.drop_texture;
@@ -171,8 +181,8 @@ pub extern fn draw(state: *mut State) {
 		let state = unsafe{&mut *(state as *mut State)};
 		if state.win_aetherment.visible {
 			imgui::set_next_window_size([1100.0, 600.0], imgui::Cond::FirstUseEver);
-			imgui::begin("Aetherment", &mut state.win_aetherment.visible, imgui::WindowFlags::None);
-			if let Err(e) = state.win_aetherment.draw(&mut state.data) {log!(err, "{:?}", e);}
+			imgui::begin("Aetherment", Some(&mut state.win_aetherment.visible), imgui::WindowFlags::None);
+			if let Err(e) = state.win_aetherment.draw(&mut state.data) {log!(err, "{:?}", e)}
 			imgui::end();
 		}
 		

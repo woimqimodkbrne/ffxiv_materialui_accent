@@ -61,7 +61,7 @@ fn generate_bindings() {
 		re_enumname.captures(s).unwrap().get(1).unwrap().as_str().to_owned()
 	};
 	
-	let mut f = File::create("./src/gui/imgui/mod.rs").unwrap();
+	let mut f = File::create("./src/lib.rs").unwrap();
 	f.write_all("#![allow(non_upper_case_globals)]
 #![allow(non_camel_case_types)]
 #![allow(non_snake_case)]
@@ -178,7 +178,7 @@ pub mod sys;\n".as_bytes()).unwrap();
 		).as_bytes()).unwrap();
 	}
 	
-	let mut f = File::create("./src/gui/imgui/bindings.rs").unwrap();
+	let mut f = File::create("./src/bindings.rs").unwrap();
 	f.write_all(bindings
 		.replace(" ImVec2,", " [f32; 2],")
 		.replace(" ImVec2)", " [f32; 2])")

@@ -3,6 +3,7 @@
 #![allow(non_snake_case)]
 #![allow(dead_code)]
 #![allow(improper_ctypes)]
+#![feature(let_chains)]
 
 use std::ffi::CString;
 
@@ -546,29 +547,58 @@ bitflags::bitflags!{pub struct TableFlags: i32 {
 }}
 
 bitflags::bitflags!{pub struct TableColumnFlags: i32 {
-	const None = 0;
-	const Disabled = 1;
-	const DefaultHide = 2;
-	const DefaultSort = 4;
-	const WidthStretch = 8;
-	const WidthFixed = 16;
-	const NoResize = 32;
-	const NoReorder = 64;
-	const NoHide = 128;
-	const NoClip = 256;
-	const NoSort = 512;
-	const NoSortAscending = 1024;
-	const NoSortDescending = 2048;
-	const NoHeaderLabel = 4096;
-	const NoHeaderWidth = 8192;
-	const PreferSortAscending = 16384;
-	const PreferSortDescending = 32768;
-	const IndentEnable = 65536;
-	const IndentDisable = 131072;
-	const IsEnabled = 16777216;
-	const IsVisible = 33554432;
-	const IsSorted = 67108864;
-	const IsHovered = 134217728;
+	// dalamud, i hate you
+	// const None = 0;
+	// const Disabled = 1;
+	// const DefaultHide = 2;
+	// const DefaultSort = 4;
+	// const WidthStretch = 8;
+	// const WidthFixed = 16;
+	// const NoResize = 32;
+	// const NoReorder = 64;
+	// const NoHide = 128;
+	// const NoClip = 256;
+	// const NoSort = 512;
+	// const NoSortAscending = 1024;
+	// const NoSortDescending = 2048;
+	// const NoHeaderLabel = 4096;
+	// const NoHeaderWidth = 8192;
+	// const PreferSortAscending = 16384;
+	// const PreferSortDescending = 32768;
+	// const IndentEnable = 65536;
+	// const IndentDisable = 131072;
+	// const IsEnabled = 16777216;
+	// const IsVisible = 33554432;
+	// const IsSorted = 67108864;
+	// const IsHovered = 134217728;
+	
+	const None = 0x0;
+	const DefaultHide = 0x1;
+	const DefaultSort = 0x2;
+	const WidthStretch = 0x4;
+	const WidthFixed = 0x8;
+	const NoResize = 0x10;
+	const NoReorder = 0x20;
+	const NoHide = 0x40;
+	const NoClip = 0x80;
+	const NoSort = 0x100;
+	const NoSortAscending = 0x200;
+	const NoSortDescending = 0x400;
+	const NoHeaderWidth = 0x800;
+	const PreferSortAscending = 0x1000;
+	const PreferSortDescending = 0x2000;
+	const IndentEnable = 0x4000;
+	const IndentDisable = 0x8000;
+	const IsEnabled = 0x100000;
+	const IsVisible = 0x200000;
+	const IsSorted = 0x400000;
+	const IsHovered = 0x800000;
+	const Disabled = 0x10000;
+	const NoHeaderLabel = 0x20000;
+	const WidthMask = 0xC;
+	const IndentMask = 0xC000;
+	const StatusMask = 0xF00000;
+	const NoDirectResize = 0x40000000;
 }}
 
 bitflags::bitflags!{pub struct TableRowFlags: i32 {
@@ -856,8 +886,8 @@ pub fn set_current_context(ctx: &mut sys::ImGuiContext) {
 	unsafe{sys::igSetCurrentContext(ctx)}
 }
 
-pub fn get_io() -> *mut sys::ImGuiIO {
-	unsafe{sys::igGetIO()}
+pub fn get_io() -> &'static sys::ImGuiIO {
+	unsafe{&*sys::igGetIO()}
 }
 
 pub fn get_style() -> &'static mut sys::ImGuiStyle {
@@ -926,9 +956,9 @@ pub fn style_colors_classic(dst: &mut sys::ImGuiStyle) {
 	unsafe{sys::igStyleColorsClassic(dst)}
 }
 
-pub fn begin(name: &str, p_open: &mut bool, flags: WindowFlags) -> bool {
+pub fn begin(name: &str, p_open: Option<&mut bool>, flags: WindowFlags) -> bool {
 	let name_ = CString::new(name).unwrap();
-	unsafe{sys::igBegin(name_.as_ptr(), p_open, flags.bits)}
+	unsafe{sys::igBegin(name_.as_ptr(), p_open.map_or_else(|| std::ptr::null_mut::<bool>(), |v| v as *mut _), flags.bits)}
 }
 
 pub fn end() {
@@ -2091,8 +2121,43 @@ pub fn table_header(label: &str) {
 	unsafe{sys::igTableHeader(label_.as_ptr())}
 }
 
-pub fn table_get_sort_specs() -> *mut sys::ImGuiTableSortSpecs {
-	unsafe{sys::igTableGetSortSpecs()}
+// pub fn table_get_sort_specs() -> *mut sys::ImGuiTableSortSpecs {
+// 	unsafe{sys::igTableGetSortSpecs()}
+// }
+
+pub fn table_get_sort_specs() -> TableSortSpecs {
+	TableSortSpecs(unsafe{sys::igTableGetSortSpecs()})
+}
+
+pub struct TableSortSpecs(*mut sys::ImGuiTableSortSpecs);
+impl TableSortSpecs {
+	pub fn column_user_id(&self) -> u32 {
+		unsafe{(*(*self.0).Specs).ColumnUserID}
+	}
+	
+	pub fn column_index(&self) -> i16 {
+		unsafe{(*(*self.0).Specs).ColumnIndex}
+	}
+	
+	pub fn column_sort_order(&self) -> i16 {
+		unsafe{(*(*self.0).Specs).SortOrder}
+	}
+	
+	pub fn column_sort_direction(&self) -> SortDirection {
+		match unsafe{(*(*self.0).Specs).SortDirection()} {
+			1 => SortDirection::Ascending,
+			2 => SortDirection::Descending,
+			_ => SortDirection::None,
+		}
+	}
+	
+	pub fn count(&self) -> i32 {
+		unsafe{(*self.0).SpecsCount}
+	}
+	
+	pub fn dirty(&self) -> bool {
+		unsafe{(*self.0).SpecsDirty}
+	}
 }
 
 pub fn table_get_column_count() -> i32 {
@@ -2433,6 +2498,18 @@ impl Storage {
 	
 	pub fn set_i32(&self, key: u32, value: i32) {
 		unsafe{sys::ImGuiStorage_SetInt(self.0, key, value)}
+	}
+	
+	pub fn ptr<T>(&self, key: u32, default: *mut T) -> &'static mut *mut T {
+		unsafe{std::mem::transmute(&mut *sys::ImGuiStorage_GetVoidPtrRef(self.0, key, default as *mut _))}
+	}
+	
+	pub fn get_ptr<T>(&self, key: u32) -> *mut T {
+		unsafe{sys::ImGuiStorage_GetVoidPtr(self.0, key) as *mut T}
+	}
+	
+	pub fn set_ptr<T>(&self, key: u32, value: *mut T) {
+		unsafe{sys::ImGuiStorage_SetVoidPtr(self.0, key, value as *mut _)}
 	}
 }
 

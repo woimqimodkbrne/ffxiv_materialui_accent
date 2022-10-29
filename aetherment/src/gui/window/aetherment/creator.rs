@@ -232,19 +232,26 @@ impl Tab {
 			
 			// Mod Importing
 			if self.importing {
-				// dalamud filedialog doesnt support selecting a folder or file at the same time unless im stupid
-				// TODO: find a sollution
-				match aeth::file_dialog(aeth::FileDialogMode::OpenFile, "Importing Mod".to_owned(), "".to_owned(), Vec::new()) {
-					aeth::FileDialogResult::Success(path_s) => {
+				match aeth::file_dialog("Importing Mod", || -> aeth::FileDialog {
+					aeth::FileDialog::new(dirs::document_dir().unwrap().to_string_lossy(), "")
+						.allow_directories(true)
+						.add_extension(".amp", Some("Aetherment"))
+						.add_extension(".amp.patch", Some("Aetherment"))
+						.add_extension(".pap", Some("Penumbra"))
+						.add_extension(".ttmp", Some("TexTools"))
+						.add_extension(".ttmp2", Some("TexTools"))
+						.finish()
+				}) {
+					aeth::FileDialogResult::Success(paths) => {
 						self.importing = false;
-						let path = PathBuf::from(&path_s);
+						let path = &paths[0];
 						if path.is_dir() {
 							if path.join("meta.json").exists() && path.join("default_mod.json").exists() {
 								crate::creator::import::penumbra::import(&path, PathBuf::from(&state.config.local_path).join(path.file_name().unwrap())).unwrap();
 							} else if path.join("options.json").exists() && path.join("elements_black").exists() {
 								crate::creator::import::v1::import(&path, PathBuf::from(&state.config.local_path).join(path.file_name().unwrap())).unwrap();
 							} else {
-								aeth::show_error("Mod Import Failed", format!("{path_s} Is not a valid penumbra directory."));
+								aeth::show_error("Mod Import Failed", format!("{path:?} Is not a valid penumbra directory."));
 							}
 						} else {
 							let ext = path.extension().unwrap().to_str().unwrap();
@@ -255,9 +262,9 @@ impl Tab {
 							}
 						}
 					},
-					aeth::FileDialogResult::Failed => self.importing = false, // TODO: display that it failed
+					aeth::FileDialogResult::Canceled => self.importing = false,
 					aeth::FileDialogResult::Busy => {},
-						}
+				}
 			}
 		}).right(400.0, || {
 			if self.curmod.is_none() {return}
@@ -415,60 +422,70 @@ impl Tab {
 				
 				if imgui::button("+", [w, h]) {m.importing_preview = true}
 				if m.importing_preview {
-					match aeth::file_dialog(aeth::FileDialogMode::OpenFile, "Importing Preview".to_owned(), "".to_owned(), vec![".png".to_owned(), ".jpg".to_owned(), ".jpeg".to_owned()]) {
-						aeth::FileDialogResult::Success(path) => {
+					match aeth::file_dialog("Importing Preview", || -> aeth::FileDialog {
+						aeth::FileDialog::new(dirs::document_dir().unwrap().to_string_lossy(), "")
+							.limit(0)
+							.add_extension(".png", Some("PNG"))
+							.add_extension(".jpg", Some("JPEG"))
+							.add_extension(".jpeg", Some("JPEG"))
+							.finish()
+					}) {
+						aeth::FileDialogResult::Success(paths) => {
 							use image::imageops::FilterType;
 							m.importing_preview = false;
-							let preview = image::io::Reader::new(std::io::BufReader::new(File::open(path).unwrap()))
-								.with_guessed_format()
-								.unwrap()
-								.decode()
-								.unwrap();
 							
-							let w = preview.width();
-							let h = preview.height();
-							let tw = PREVIEW_RESOLUTION[0];
-							let th = PREVIEW_RESOLUTION[1];
-							
-							let img = if w == tw && h == th {
-								preview
-							} else if (w as f32 / 3.0) / (h as f32 / 2.0) == 1.0 {
-								preview.resize_exact(tw, th, FilterType::Triangle)
-							} else {
-								let mut img = preview.resize_to_fill(tw, th, FilterType::Triangle)
-									.blur(32.0);
+							for path in &paths {
+								let preview = image::io::Reader::new(std::io::BufReader::new(File::open(path).unwrap()))
+									.with_guessed_format()
+									.unwrap()
+									.decode()
+									.unwrap();
 								
-								let scale = (th as f32 / h as f32).min(tw as f32 / w as f32);
-								let x = ((tw as f32 - w as f32 * scale) / 2.0) as i64;
-								let y = ((th as f32 - h as f32 * scale) / 2.0) as i64;
-								let w = (w as f32 * scale) as u32;
-								let h = (h as f32 * scale) as u32;
-								let preview = if scale == 1.0 {preview} else {preview.resize_exact(w, h, FilterType::Triangle)};
-								image::imageops::overlay(&mut img, &preview, x, y);
+								let w = preview.width();
+								let h = preview.height();
+								let tw = PREVIEW_RESOLUTION[0];
+								let th = PREVIEW_RESOLUTION[1];
 								
-								img
-							};
-							
-							let mut data = Vec::new();
-							img.write_to(&mut Cursor::new(&mut data), image::ImageFormat::Jpeg).unwrap();
-							let hash = crate::hash_str(blake3::hash(&data).as_bytes());
-							
-							let previews_dir = m.path.join("previews");
-							std::fs::create_dir_all(&previews_dir).unwrap();
-							File::create(previews_dir.join(&hash)).unwrap().write_all(&data).unwrap();
-							
-							m.meta.previews.push(hash.clone());
-							m.previews.insert(hash, Texture::with_data(TextureOptions {
-								width: img.width() as i32,
-								height: img.height() as i32,
-								format: 28, // DXGI_FORMAT_R8G8B8A8_UNORM
-								usage: 1, // D3D11_USAGE_IMMUTABLE
-								cpu_access_flags: 0,
-							}, &img.into_rgba8()));
+								let img = if w == tw && h == th {
+									preview
+								} else if (w as f32 / 3.0) / (h as f32 / 2.0) == 1.0 {
+									preview.resize_exact(tw, th, FilterType::Triangle)
+								} else {
+									let mut img = preview.resize_to_fill(tw, th, FilterType::Triangle)
+										.blur(32.0);
+									
+									let scale = (th as f32 / h as f32).min(tw as f32 / w as f32);
+									let x = ((tw as f32 - w as f32 * scale) / 2.0) as i64;
+									let y = ((th as f32 - h as f32 * scale) / 2.0) as i64;
+									let w = (w as f32 * scale) as u32;
+									let h = (h as f32 * scale) as u32;
+									let preview = if scale == 1.0 {preview} else {preview.resize_exact(w, h, FilterType::Triangle)};
+									image::imageops::overlay(&mut img, &preview, x, y);
+									
+									img
+								};
+								
+								let mut data = Vec::new();
+								img.write_to(&mut Cursor::new(&mut data), image::ImageFormat::Jpeg).unwrap();
+								let hash = crate::hash_str(blake3::hash(&data).as_bytes());
+								
+								let previews_dir = m.path.join("previews");
+								std::fs::create_dir_all(&previews_dir).unwrap();
+								File::create(previews_dir.join(&hash)).unwrap().write_all(&data).unwrap();
+								
+								m.meta.previews.push(hash.clone());
+								m.previews.insert(hash, Texture::with_data(TextureOptions {
+									width: img.width() as i32,
+									height: img.height() as i32,
+									format: 28, // DXGI_FORMAT_R8G8B8A8_UNORM
+									usage: 1, // D3D11_USAGE_IMMUTABLE
+									cpu_access_flags: 0,
+								}, &img.into_rgba8()));
+							}
 							
 							save = true;
 						},
-						aeth::FileDialogResult::Failed => m.importing_preview = false,
+						aeth::FileDialogResult::Canceled => m.importing_preview = false,
 						aeth::FileDialogResult::Busy => {},
 					}
 				}
@@ -534,118 +551,47 @@ impl Tab {
 				})
 				.tab("Patch", || {
 					let patch_path = &mut m.packing.0;
-					aeth::file_picker(aeth::FileDialogMode::OpenFile, "Pick modpack", "", vec![".amp".to_owned(), ".amp.patch".to_owned()], patch_path);
+					aeth::file_picker("Pick modpack", || -> aeth::FileDialog {
+						aeth::FileDialog::new(m.path.to_string_lossy(), "")
+							.add_extension(".amp", Some("Aetherment"))
+							.add_extension(".amp.patch", Some("Aetherment"))
+							.finish()
+					}, patch_path);
 					imgui::same_line();
 					imgui::input_text("Patch path", patch_path, imgui::InputTextFlags::None);
 					
 					let patch_path = Path::new(patch_path);
-					if imgui::button("Create", [0.0; 2]) && patch_path.exists() {
+					if imgui::button("Create", [0.0; 2]) {'create: {
+						if !patch_path.exists() {
+							aeth::show_error("Modpack Creation failed", "Patch file path is invalid");
+							break 'create;
+						}
+						
+						let pack = modpack::ModPack::load(File::open(&patch_path).unwrap()).unwrap();
+						let patch_version = pack.version();
+						let version = (m.version[0] << 24) + (m.version[1] << 16) + (m.version[2] << 8) + m.version[3];
+						if version <= patch_version {
+							aeth::show_error("Modpack Creation failed", "Version needs to be greater than patch version");
+							break 'create;
+						}
+						
 						let progress = Arc::new(Mutex::new((0, 0)));
 						m.packing.1 = Some(progress.clone());
 						
 						let path = m.path.join("modpacks");
 						if !path.exists() {std::fs::create_dir_all(&path).unwrap()}
 						
-						let pack = modpack::ModPack::load(File::open(&patch_path).unwrap()).unwrap();
-						let patch_version = modpack::version_to_string(pack.version());
+						let patch_version = modpack::version_to_string(patch_version);
 						let patch = Some(pack.into_inner());
 						let path = path.join(format!("{patch_version}-{}.{}.{}.{}.amp.patch", m.version[0], m.version[1], m.version[2], m.version[3]));
 						let writer = File::create(path).unwrap();
 						let path = m.path.clone();
-						let version = (m.version[0] << 24) + (m.version[1] << 16) + (m.version[2] << 8) + m.version[3];
 						thread::spawn(move || {
 							modpack::pack(writer, path, version, patch, progress).unwrap();
 						});
-					}
+					}}
 				})
 				.finish();
-			
-			// let version = (m.version[0] << 24) + (m.version[1] << 16) + (m.version[2] << 8) + m.version[3];
-			// if let Some(user) = &state.user && (m.online.is_none() || version > m.online.as_ref().unwrap().version) {
-			// 	if imgui::button("Upload", [0.0, 0.0]) {
-			// 		let mut req = CLIENT.post(format!("{}/mod/upload", SERVER))
-			// 			.header("Authorization", user.token.clone())
-			// 			.header("Mod-Name", m.meta.name.clone())
-			// 			.header("Mod-Description", m.meta.description.clone())
-			// 			.header("Mod-Nsfw", if m.meta.nsfw {"true"} else {"false"})
-			// 			.header("Mod-Version", version)
-			// 			.header("Mod-Patch-Notes", "") // TODO: patchnotes
-			// 			.header("Mod-Patch", if m.online.is_some() {"true"} else {"false"});
-			// 		
-			// 		// let pack;
-			// 		let mod_path = PathBuf::from(&state.config.local_path).join(&self.selected_mod);
-			// 		let releases_path = mod_path.join("releases");
-			// 		if let Some(online) = &m.online {
-			// 			if !releases_path.exists() {
-			// 				// TODO: popup
-			// 				log!(err, "Local copy out of sync from remote");
-			// 				return
-			// 			}
-			// 			
-			// 			req = req.header("Mod-Id", online.id);
-			// 			
-			// 			let version_str = modpack::version_to_string(online.version);
-			// 			let latest = match std::fs::read_dir(&releases_path)
-			// 				.unwrap()
-			// 				.into_iter()
-			// 				.find(|e| {
-			// 					let name = e.as_ref().unwrap().file_name();
-			// 					let name = name.to_str().unwrap();
-			// 					
-			// 					return name.ends_with(&format!("{version_str}.amp")) || name.ends_with(&format!("{version_str}.amp.patch"));
-			// 				}) {
-			// 				Some(v) => v.unwrap().path(),
-			// 				None => {
-			// 					log!(err, "Local copy out of sync from remote");
-			// 					return
-			// 				}
-			// 			};
-			// 			log!("online!");
-			// 			let paths = modpack::pack(mod_path.clone(), version, true, Some(latest));
-			// 			pack = paths.1.unwrap_or_else(|| paths.0.unwrap());
-			// 		} else {
-			// 			let paths = modpack::pack(mod_path.clone(), version, true, None);
-			// 			pack = paths.1.unwrap_or_else(|| paths.0.unwrap());
-			// 		}
-			// 		
-			// 		req = req.header("Content-Length", pack.metadata().unwrap().len().to_string());
-			// 		let refresh = self.refresh.clone();
-			// 		
-			// 		std::thread::spawn(move || {
-			// 			let resp = req
-			// 				.body(File::open(pack).unwrap())
-			// 				.send()
-			// 				.unwrap()
-			// 				.text()
-			// 				.unwrap();
-			// 			
-			// 			log!("upload resp: {resp}");
-			// 			
-			// 			let resp: serde_json::Value = serde_json::from_str(&resp).unwrap();
-			// 			
-			// 			if let Some(err) = resp["error"].as_str() {
-			// 				log!(err, "{err}");
-			// 				return
-			// 			}
-			// 			
-			// 			#[derive(Deserialize, Clone, Debug)]
-			// 			struct Mod {
-			// 				id: i32,
-			// 			}
-			// 			let uploaded_mod: Mod = serde_json::from_value(resp).unwrap();
-			// 			uploaded_mod.id.write_to(&mut File::create(mod_path.join("aeth")).unwrap()).unwrap();
-			// 			*refresh.lock().unwrap() = true;
-			// 		});
-			// 	}
-			// }
-			// 
-			// if imgui::button("create modpack", [0.0, 0.0]) {
-			// 	let path = PathBuf::from(&state.config.local_path).join(&self.selected_mod);
-			// 	std::thread::spawn(move || {
-			// 		crate::creator::modpack::pack(path, 1 << 24, true);
-			// 		// crate::creator::modpack::pack(path, (1 << 24) + (1 << 16), true);
-			// 	});
-			// }
 		});
 	}
 	

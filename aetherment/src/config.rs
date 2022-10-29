@@ -23,7 +23,7 @@ impl Default for Config {
 			tab_explorer: false,
 			tab_moddev: false,
 			
-			explorer_path: ".".to_owned(),
+			explorer_path: dirs::document_dir().unwrap().to_string_lossy().to_string(),
 			explorer_exts: HashMap::new(),
 			
 			json: "".to_owned(),
@@ -41,7 +41,7 @@ impl Config {
 		};
 		
 		config.path = path.as_ref().to_owned();
-		config.local_path.reserve(129);
+		config.local_path.reserve(128);
 		config
 	}
 	

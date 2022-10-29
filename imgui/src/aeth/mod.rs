@@ -11,7 +11,8 @@ mod drawlist;
 mod error;
 
 pub use self::texture::{Texture, TextureOptions};
-pub use self::file_dialog::{FileDialogMode, FileDialogResult, FileDialogStatus, file_dialog, file_picker};
+// pub use self::file_dialog::{FileDialogMode, FileDialogResult, FileDialogStatus, file_dialog, file_picker};
+pub use self::file_dialog::{FileDialog, FileDialogResult, file_dialog, file_picker};
 pub use self::scoped::*;
 pub use self::tabbar::*;
 pub use self::divider::*;
@@ -87,7 +88,7 @@ pub fn button_icon(icon: &str) -> bool {
 	let h = frame_height();
 	let pos = imgui::get_cursor_screen_pos();
 	let r = imgui::button("", [h, h]);
-	imgui::get_window_draw_list().add_text(pos.add([h, h].sub(imgui::calc_text_size(icon, false, 0.0)).div([2.0, 2.0])), imgui::get_color(imgui::Col::Text), icon);
+	imgui::get_window_draw_list().add_text(pos.add([h, h].sub(imgui::calc_text_size(&icon[..3], false, 0.0)).div([2.0, 2.0])), imgui::get_color(imgui::Col::Text), &icon[..3]);
 	imgui::pop_id();
 	imgui::pop_font();
 	imgui::pop_style_color(1);
@@ -110,6 +111,28 @@ pub fn button_icon_state(icon: &str, enabled: bool) -> bool {
 	r
 }
 
+pub fn selectable_with_icon(icon: &str, text: &str, selected: bool, flags: imgui::SelectableFlags, size: [f32; 2]) -> bool {
+	selectable_with_icon_u32(icon, imgui::get_color(imgui::Col::Text), text, selected, flags, size)
+}
+
+pub fn selectable_with_icon_u32(icon: &str, icon_clr: u32, text: &str, selected: bool, flags: imgui::SelectableFlags, size: [f32; 2]) -> bool {
+	let draw = imgui::get_window_draw_list();
+	let icon_w = imgui::get_font_size() * 1.5;
+	let pos = imgui::get_cursor_screen_pos();
+	imgui::push_id(text);
+	let r = imgui::selectable("", selected, flags, size);
+	imgui::pop_id();
+	
+	imgui::push_font(unsafe{&mut *FA5});
+	let s = imgui::calc_text_size(icon, false, -1.0).x();
+	draw.add_text(pos.add([(icon_w - s) / 2.0, 0.0]), icon_clr, icon);
+	imgui::pop_font();
+	
+	draw.add_text(pos.add([icon_w, 0.0]), imgui::get_color(imgui::Col::Text), text);
+	
+	r
+}
+
 pub fn icon(icon: &str) {
 	imgui::push_font(unsafe{&mut *FA5});
 	imgui::text(icon);
@@ -122,7 +145,7 @@ pub fn tooltip(label: &str) {
 	}
 }
 
-// TODO: end with ... if cut short
+// TODO: end with ... if cut short (use Cow as return)
 pub(crate) fn wrap_text_area<'a>(text: &'a str, area: [f32; 2]) -> Vec<(&'a str, f32)> {
 	lazy_static::lazy_static! {
 		static ref WORD: Regex = Regex::new(r"\b\w+[[:punct:]]*").unwrap();

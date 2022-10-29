@@ -164,15 +164,23 @@ impl Tex {
 		
 		data
 	}
+	
+	fn get_dialog_constructor(exts: Vec<&str>) -> impl FnOnce() -> aeth::FileDialog + '_ {
+		|| -> aeth::FileDialog {
+			let mut d = aeth::FileDialog::new("/", "");
+			for ext in exts {d = d.add_extension(ext, None)}
+			d.finish()
+		}
+	}
 }
 
 impl Viewer for Tex {
-	fn valid_imports(&self) -> Vec<String> {
-		vec![self.ext.to_owned(), ".dds".to_owned(), ".png".to_owned()]
+	fn valid_imports(&self) -> Vec<&str> {
+		vec![&self.ext, ".dds", ".png"]
 	}
 	
-	fn valid_exports(&self) -> Vec<String> {
-		vec![self.ext.to_owned(), ".dds".to_owned(), ".png".to_owned()]
+	fn valid_exports(&self) -> Vec<&str> {
+		vec![&self.ext, ".dds", ".png"]
 	}
 	
 	// TODO: use file in conf instead of a seperate clone of it
@@ -299,38 +307,37 @@ impl Viewer for Tex {
 				});
 				
 				if self.new_layer.is_some() {
-					let imports = self.valid_imports();
 					let layer = self.new_layer.as_mut().unwrap();
 					
 					imgui::set_next_window_pos(imgui::get_cursor_screen_pos(), imgui::Cond::Always, [0.0, 0.0]);
-					imgui::begin("##aetherment_newlayer", &mut true, imgui::WindowFlags::AlwaysAutoResize | /*imgui::WindowFlags::Popup |*/
-					                                                 imgui::WindowFlags::NoSavedSettings | imgui::WindowFlags::NoTitleBar /*|
-					                                                 imgui::WindowFlags::ChildWindow*/);
+					imgui::begin("##aetherment_newlayer", None, imgui::WindowFlags::AlwaysAutoResize | /*imgui::WindowFlags::Popup |*/
+					                                            imgui::WindowFlags::NoSavedSettings | imgui::WindowFlags::NoTitleBar /*|
+					                                            imgui::WindowFlags::ChildWindow*/);
 					imgui::bring_window_to_display_front(imgui::get_current_window());
 					
 					if layer.id.is_some() {
 						match conf.datas.penumbra.as_ref().unwrap().options.iter().find(|f| f.id() == layer.id.as_deref()).unwrap() {
 							ConfOption::Mask(_) => {
 								let p = layer.paths.get_mut(0).unwrap();
-								aeth::file_picker(aeth::FileDialogMode::OpenFile, "Import Image", "", imports.clone(), p);
+								crate::file_picker("Import Image", Self::get_dialog_constructor(vec![&self.ext, ".dds", ".png"]), p);
 								imgui::same_line();
 								imgui::input_text("Image", p, imgui::InputTextFlags::None);
 								
 								let p = layer.paths.get_mut(1).unwrap();
-								aeth::file_picker(aeth::FileDialogMode::OpenFile, "Import Mask", "", imports, p);
+								crate::file_picker("Import Mask", Self::get_dialog_constructor(vec![&self.ext, ".dds", ".png"]), p);
 								imgui::same_line();
 								imgui::input_text("Mask", p, imgui::InputTextFlags::None);
 							},
 							_ => {
 								let p = layer.paths.get_mut(0).unwrap();
-								aeth::file_picker(aeth::FileDialogMode::OpenFile, "Import Image", "", imports.clone(), p);
+								crate::file_picker("Import Image", Self::get_dialog_constructor(vec![&self.ext, ".dds", ".png"]), p);
 								imgui::same_line();
 								imgui::input_text("Image", p, imgui::InputTextFlags::None);
 							}
 						}
 					} else {
 						let p = layer.paths.get_mut(0).unwrap();
-						aeth::file_picker(aeth::FileDialogMode::OpenFile, "Import Image", "", imports.clone(), p);
+						crate::file_picker("Import Image", Self::get_dialog_constructor(vec![&self.ext, ".dds", ".png"]), p);
 						imgui::same_line();
 						imgui::input_text("Image", p, imgui::InputTextFlags::None);
 					}

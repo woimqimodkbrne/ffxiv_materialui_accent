@@ -82,12 +82,12 @@ impl Mtrl {
 }
 
 impl Viewer for Mtrl {
-	fn valid_imports(&self) -> Vec<String> {
-		vec![self.ext.to_owned()]
+	fn valid_imports(&self) -> Vec<&str> {
+		vec![&self.ext]
 	}
 	
-	fn valid_exports(&self) -> Vec<String> {
-		vec![self.ext.to_owned()]
+	fn valid_exports(&self) -> Vec<&str> {
+		vec![&self.ext]
 	}
 	
 	fn draw(&mut self, _state: &mut crate::Data, conf: Option<super::Conf>) {

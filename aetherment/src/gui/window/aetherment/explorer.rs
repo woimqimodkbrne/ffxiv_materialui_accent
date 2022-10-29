@@ -17,7 +17,6 @@ pub struct Tab {
 	populated_modselect: bool,
 	mod_entries: Vec<String>,
 	
-	// newmod: String,
 	importing: bool,
 	exporting: bool,
 	
@@ -38,7 +37,6 @@ impl Tab {
 			populated_modselect: false,
 			mod_entries: Vec::new(),
 			
-			// newmod: String::with_capacity(64),
 			importing: false,
 			exporting: false,
 			
@@ -141,18 +139,6 @@ impl Tab {
 						self.load_mod(&m, PathBuf::from(&state.config.local_path).join(&m));
 					}
 				}
-				
-				// if aeth::button_icon("", aeth::fa5()) { // fa-plus
-				// 	let path = PathBuf::from(&state.config.local_path).join(&self.newmod);
-				// 	fs::create_dir_all(&path).unwrap();
-				// 	File::create(path.join("datas.json")).unwrap().write_all(crate::serialize_json(json!(apply::Datas::default())).as_bytes()).unwrap();
-				// 	let m = self.newmod.clone();
-				// 	self.newmod.clear();
-				// 	self.load_mod(&m, path);
-				// }
-				// imgui::same_line();
-				// aeth::next_max_width();
-				// imgui::input_text_with_hint("##newmod", "New Mod", &mut self.newmod, imgui::InputTextFlags::None);
 			});
 		}).right(400.0, || {
 			aeth::child("viewer", [0.0, -aeth::frame_height() - imgui::get_style().item_spacing.y()], false, imgui::WindowFlags::None, || {
@@ -175,10 +161,15 @@ impl Tab {
 					if imgui::button("Import", [0.0, 0.0]) {self.importing = true}
 					if self.importing {
 						let filename = &self.path[self.path.rfind('/').unwrap() + 1..self.path.rfind('.').unwrap()];
-						match aeth::file_dialog(aeth::FileDialogMode::OpenFile, format!("Importing {}", filename), filename.to_owned(), viewer.valid_imports()) {
-							aeth::FileDialogResult::Success(path) => {
+						match aeth::file_dialog(format!("Importing {}", filename), || -> aeth::FileDialog {
+						let mut d = aeth::FileDialog::new(&state.config.explorer_path, filename);
+						for ext in viewer.valid_imports() {d = d.add_extension(ext, None)}
+						
+						d.finish()
+					}) {
+							aeth::FileDialogResult::Success(paths) => {
 								self.importing = false;
-								let path = PathBuf::from(path);
+								let path = &paths[0];
 								log!("import {:?}", path);
 								let ext = path.extension().unwrap().to_str().unwrap();
 								let mut buf = Vec::new();
@@ -196,7 +187,7 @@ impl Tab {
 								m.datas.penumbra.as_mut().unwrap().update_file(&m.opt, &m.subopt, &self.path, Some(file));
 								self.refresh_mod = true;
 							},
-							aeth::FileDialogResult::Failed => self.importing = false, // TODO: display that it failed
+							aeth::FileDialogResult::Canceled => self.importing = false,
 							aeth::FileDialogResult::Busy => {},
 						}
 					}
@@ -205,18 +196,25 @@ impl Tab {
 				
 				if imgui::button("Export", [0.0, 0.0]) {self.exporting = true}
 				if self.exporting {
-					let filename = &self.path[self.path.rfind('/').unwrap() + 1..self.path.rfind('.').unwrap()];
-					match aeth::file_dialog(aeth::FileDialogMode::SaveFile, format!("Exporting {}", filename), filename.to_owned(), viewer.valid_exports()) {
-						aeth::FileDialogResult::Success(path) => {
+					let filename = &self.path[self.path.rfind('/').unwrap() + 1..];
+					match aeth::file_dialog(format!("Exporting {}", filename), || -> aeth::FileDialog {
+						let mut d = aeth::FileDialog::new(&state.config.explorer_path, filename)
+							.save_mode(true);
+						
+						for ext in viewer.valid_exports() {d = d.add_extension(ext, None)}
+						
+						d.finish()
+					}) {
+						aeth::FileDialogResult::Success(paths) => {
 							self.exporting = false;
-							let path = PathBuf::from(path);
+							let path = &paths[0];
 							log!("export {:?}", path);
 							let ext = path.extension().unwrap().to_str().unwrap();
 							let mut buf = Vec::new();
 							viewer.save(ext, &mut buf);
 							File::create(&path).unwrap().write_all(&buf).unwrap();
 						},
-						aeth::FileDialogResult::Failed => self.exporting = false, // TODO: display that it failed
+						aeth::FileDialogResult::Canceled => self.exporting = false,
 						aeth::FileDialogResult::Busy => {},
 					}
 				}

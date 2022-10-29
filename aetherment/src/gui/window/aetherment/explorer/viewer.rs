@@ -90,8 +90,8 @@ impl <'a> Conf<'a> {
 }
 
 pub trait Viewer {
-	fn valid_imports(&self) -> Vec<String>;
-	fn valid_exports(&self) -> Vec<String>;
+	fn valid_imports(&self) -> Vec<&str>;
+	fn valid_exports(&self) -> Vec<&str>;
 	fn draw(&mut self, state: &mut crate::Data, conf: Option<Conf>);
 	fn save(&self, ext: &str, writer: &mut Vec<u8>);
 }

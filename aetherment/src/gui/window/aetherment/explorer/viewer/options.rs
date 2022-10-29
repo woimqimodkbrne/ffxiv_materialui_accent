@@ -14,11 +14,11 @@ impl Options {
 }
 
 impl Viewer for Options {
-	fn valid_imports(&self) -> Vec<String> {
+	fn valid_imports(&self) -> Vec<&str> {
 		vec![]
 	}
 	
-	fn valid_exports(&self) -> Vec<String> {
+	fn valid_exports(&self) -> Vec<&str> {
 		vec![]
 	}
 	
