@@ -184,7 +184,7 @@ impl Viewer for Tex {
 	}
 	
 	// TODO: use file in conf instead of a seperate clone of it
-	fn draw(&mut self, _state: &mut crate::Data, mut conf: Option<super::Conf>) {
+	fn draw(&mut self, state: &mut crate::Data, mut conf: Option<super::Conf>) {
 		aeth::divider("tex", true)
 		.left(200.0, || {
 			let draw = imgui::get_window_draw_list();
@@ -319,25 +319,25 @@ impl Viewer for Tex {
 						match conf.datas.penumbra.as_ref().unwrap().options.iter().find(|f| f.id() == layer.id.as_deref()).unwrap() {
 							ConfOption::Mask(_) => {
 								let p = layer.paths.get_mut(0).unwrap();
-								crate::file_picker("Import Image", Self::get_dialog_constructor(vec![&self.ext, ".dds", ".png"]), p);
+								crate::file_picker("Import Image", Self::get_dialog_constructor(vec![&self.ext, ".dds", ".png"]), p, &mut state.config);
 								imgui::same_line();
 								imgui::input_text("Image", p, imgui::InputTextFlags::None);
 								
 								let p = layer.paths.get_mut(1).unwrap();
-								crate::file_picker("Import Mask", Self::get_dialog_constructor(vec![&self.ext, ".dds", ".png"]), p);
+								crate::file_picker("Import Mask", Self::get_dialog_constructor(vec![&self.ext, ".dds", ".png"]), p, &mut state.config);
 								imgui::same_line();
 								imgui::input_text("Mask", p, imgui::InputTextFlags::None);
 							},
 							_ => {
 								let p = layer.paths.get_mut(0).unwrap();
-								crate::file_picker("Import Image", Self::get_dialog_constructor(vec![&self.ext, ".dds", ".png"]), p);
+								crate::file_picker("Import Image", Self::get_dialog_constructor(vec![&self.ext, ".dds", ".png"]), p, &mut state.config);
 								imgui::same_line();
 								imgui::input_text("Image", p, imgui::InputTextFlags::None);
 							}
 						}
 					} else {
 						let p = layer.paths.get_mut(0).unwrap();
-						crate::file_picker("Import Image", Self::get_dialog_constructor(vec![&self.ext, ".dds", ".png"]), p);
+						crate::file_picker("Import Image", Self::get_dialog_constructor(vec![&self.ext, ".dds", ".png"]), p, &mut state.config);
 						imgui::same_line();
 						imgui::input_text("Image", p, imgui::InputTextFlags::None);
 					}

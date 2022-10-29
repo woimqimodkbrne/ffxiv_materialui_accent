@@ -170,6 +170,10 @@ impl Tab {
 							aeth::FileDialogResult::Success(paths) => {
 								self.importing = false;
 								let path = &paths[0];
+								if let Some(parent) = path.parent() {
+									state.config.explorer_path = parent.to_path_buf().to_string_lossy().to_string();
+									_ = state.config.save_forced();
+								}
 								log!("import {:?}", path);
 								let ext = path.extension().unwrap().to_str().unwrap();
 								let mut buf = Vec::new();
@@ -208,6 +212,10 @@ impl Tab {
 						aeth::FileDialogResult::Success(paths) => {
 							self.exporting = false;
 							let path = &paths[0];
+							if let Some(parent) = path.parent() {
+								state.config.explorer_path = parent.to_path_buf().to_string_lossy().to_string();
+								_ = state.config.save_forced();
+							}
 							log!("export {:?}", path);
 							let ext = path.extension().unwrap().to_str().unwrap();
 							let mut buf = Vec::new();

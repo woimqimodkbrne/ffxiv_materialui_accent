@@ -56,4 +56,9 @@ impl Config {
 		}
 		Ok(())
 	}
+	
+	pub fn save_forced(&self) -> std::io::Result<()> {
+		File::create(&self.path)?.write_all(serde_json::to_string(self)?.as_bytes())?;
+		Ok(())
+	}
 }

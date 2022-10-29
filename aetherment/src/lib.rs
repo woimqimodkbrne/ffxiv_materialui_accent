@@ -29,13 +29,13 @@ pub fn hash_str(hash: &[u8; 32]) -> String {
 	base64::encode_config(hash, base64::URL_SAFE_NO_PAD)
 }
 
-static mut CONFIG: *mut config::Config = 0 as *mut _;
-pub fn file_picker<S, F>(title: S, setup: F, path: &mut String) -> bool where
+pub fn file_picker<S, F>(title: S, setup: F, path: &mut String, config: &mut config::Config) -> bool where
 S: AsRef<str>,
 F: FnOnce() -> imgui::aeth::FileDialog {
 	let r = imgui::aeth::file_picker(title, setup, path);
-	if r && let Some(parent) = Path::new(path).parent() &&  let Some(config) = unsafe{CONFIG.as_mut()} {
+	if r && let Some(parent) = Path::new(path).parent() {
 		config.explorer_path = parent.to_string_lossy().to_string();
+		_ = config.save_forced();
 	}
 	
 	r
