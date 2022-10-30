@@ -1,8 +1,8 @@
 use std::{sync::{Arc, Mutex}, thread, collections::HashSet};
-use imgui::aeth::{self, F2, DrawList};
+use imgui::aeth::{self, F2, DrawList, Texture, TextureOptions};
 use serde::Deserialize;
 use strum::{AsRefStr, EnumIter, IntoEnumIterator};
-use crate::{CLIENT, SERVER};
+use crate::{CLIENT, SERVER, SERVERCDN};
 
 #[derive(Debug, PartialEq, Eq, Clone, AsRefStr, EnumIter)]
 pub enum SearchOrderType {
@@ -41,12 +41,11 @@ pub struct SearchRequest {
 	clear: bool,
 }
 
-#[derive(Debug, Deserialize)]
 struct Mod {
 	id: i32,
 	name: String,
 	tags: Vec<i16>,
-	thumbnail: Option<String>,
+	thumbnail: Arc<Mutex<Texture>>,
 	nsfw: bool,
 	author: i32,
 	author_name: String,
@@ -239,7 +238,7 @@ impl Tab {
 	}
 	
 	fn draw_mod_node(&self, m: &Mod) {
-		let draw = imgui::get_window_draw_list();
+		let mut draw = imgui::get_window_draw_list();
 		
 		let mut pos = imgui::get_cursor_screen_pos();
 		let rounding = imgui::get_style().frame_rounding;
@@ -250,28 +249,11 @@ impl Tab {
 		pos = pos.add([1.0, 1.0]);
 		
 		// Thumbnail
-		// TOOD: thumbnail, rework upload first
 		draw.add_rect_filled(pos, pos.add(Self::THUMBNAILSIZE), 0xFF101010, rounding, imgui::DrawFlags::RoundCornersTop);
+		draw.push_texture_id(m.thumbnail.lock().unwrap().resource());
+		draw.add_rect_rounded(pos.add([1.0; 2]), pos.add(Self::THUMBNAILSIZE).sub([1.0; 2]), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding);
+		draw.pop_texture_id();
 		pos = pos.add([5.0, Self::THUMBNAILSIZE.y() + 1.0]);
-		
-		// the old stuff
-		// let pos = pos.add([1.0, 1.0]);
-		// let preview_size = [size.x() - 2.0, (size.x() - 2.0) / 3.0 * 2.0];
-		
-		// draw.add_rect_filled(pos, pos.add(preview_size), 0xFF101010, rounding, imgui::DrawFlags::None);
-		// let preview = self.get_preview(m);
-		// let scale = (preview_size.x() / preview.width as f32).min(preview_size.y() / preview.height as f32);
-		// let (w, h) = (preview.width as f32 * scale, preview.height as f32 * scale);
-		// let preview_pos = pos.add([(preview_size.x() - w) / 2.0, (preview_size.y() - h) / 2.0]);
-		// draw.add_image_rounded(preview.resource(),
-		// 	preview_pos,
-		// 	preview_pos.add([w, h]),
-		// 	[0.0, 0.0],
-		// 	[1.0, 1.0],
-		// 	0xFFFFFFFF,
-		// 	rounding - rounding.min((preview_size.x() - w).max(preview_size.y() - h) / 2.0),
-		// 	imgui::DrawFlags::None
-		// );
 		
 		// Title
 		let d = Self::NODESIZE.y() - Self::THUMBNAILSIZE.y() - imgui::get_font_size() - 1.0 - 1.0 - 1.0 - 6.0;
@@ -298,7 +280,18 @@ impl Tab {
 				drop(q2);
 				
 				log!("search");
-				let m: Vec<Mod> = match CLIENT.get(format!("{}/api/search", SERVER)).query(&[
+				
+				#[derive(Deserialize)]
+				struct Resp {
+					id: i32,
+					name: String,
+					tags: Vec<i16>,
+					thumbnail: String,
+					nsfw: bool,
+					author: i32,
+					author_name: String,
+				}
+				let m: Vec<Resp> = match CLIENT.get(format!("{SERVER}/api/search")).query(&[
 					("query", &q.query[..]),
 					("tags", &q.tags.iter().map(|v| v.to_string()).collect::<Vec<String>>().join(",")[..]),
 					("page", &q.page.to_string()[..]),
@@ -330,7 +323,41 @@ impl Tab {
 					break;
 				}
 				
-				mods.lock().unwrap().extend(m);
+				let mut mods = mods.lock().unwrap();
+				for mo in m {
+					let thumbnail = Arc::new(Mutex::new(Texture::empty()));
+					
+					mods.push(Mod {
+						id: mo.id,
+						name: mo.name,
+						tags: mo.tags,
+						thumbnail: thumbnail.clone(),
+						nsfw: mo.nsfw,
+						author: mo.author,
+						author_name: mo.author_name,
+					});
+					
+					thread::spawn(move || {
+						let t = Texture::with_data(TextureOptions {
+							width: 135,
+							height: 90,
+							format: 28, // DXGI_FORMAT_R8G8B8A8_UNORM
+							usage: 1, // D3D11_USAGE_IMMUTABLE
+							cpu_access_flags: 0,
+						}, &image::io::Reader::new(std::io::Cursor::new(CLIENT.get(format!("{SERVERCDN}{}", mo.thumbnail)).send().unwrap()
+							.bytes()
+							.unwrap()
+							.to_vec()))
+							.with_guessed_format()
+							.unwrap()
+							.decode()
+							.unwrap()
+							.into_rgba8()
+						);
+						
+						*thumbnail.lock().unwrap() = t;
+					});
+				}
 				
 				let qc = query.lock().unwrap();
 				if qc.query == q.query && qc.tags == q.tags && qc.order == q.order && qc.direction == q.direction && qc.timespan == q.timespan && qc.page == q.page {

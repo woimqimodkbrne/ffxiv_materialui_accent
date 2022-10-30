@@ -126,8 +126,6 @@ P2: AsRef<Path> {
 		multipart.extend_from_slice(boundry.as_bytes());
 		multipart.extend_from_slice("--".as_bytes());
 		
-		std::io::Write::write_all(&mut File::create(r"C:\ffxiv\aetherment\test\test2.txt").unwrap(), &multipart).unwrap();
-		
 		match client.post(format!("{SERVER}/api/mod/{mod_id}/manage"))
 			.header("Authorization", auth)
 			.header("Content-Type", format!("multipart/form-data; boundary={boundry_raw}"))
