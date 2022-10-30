@@ -527,7 +527,7 @@ impl Tab {
 						imgui::set_next_window_pos(imgui::get_main_viewport_center(), imgui::Cond::Always, [0.5, 0.5]);
 						imgui::set_next_window_size([1000.0, 800.0], imgui::Cond::Always);
 						imgui::begin("Patch Notes###aetherment_upload", None, imgui::WindowFlags::None);
-						imgui::input_text_multiline("##patchnotes", &mut m.uploading.1, [0.0, 900.0], imgui::InputTextFlags::None);
+						imgui::input_text_multiline("##patchnotes", &mut m.uploading.1, [0.0, 700.0], imgui::InputTextFlags::None);
 						m.uploading.1.truncate(500);
 						imgui::text(&format!("{}/500", m.uploading.1.len()));
 						if imgui::button("Confirm", [0.0; 2]) {
@@ -537,7 +537,7 @@ impl Tab {
 							let patchnotes = m.uploading.1.clone();
 							thread::spawn(move || {
 								// TODO: fetch remote data and check if we can even upload this, to save on bandwidth and the likes
-								crate::creator::upload::upload_mod(&auth, &path, modpack_path, None, &patchnotes).unwrap();
+								log!("{:?}", crate::creator::upload::upload_mod(&auth, &path, modpack_path, None, &patchnotes));
 							});
 							m.uploading.0 = 0;
 						}

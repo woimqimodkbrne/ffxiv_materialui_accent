@@ -1,7 +1,6 @@
 use std::{path::Path, fs::File, io::{Read, Seek}};
 use serde::Deserialize;
 use serde_json::json;
-use reqwest::blocking::multipart::{Form, Part};
 use crate::SERVER;
 use super::meta::Meta;
 
@@ -71,35 +70,70 @@ P2: AsRef<Path> {
 		#[allow(dead_code)] Success{success: bool},
 	}
 	const CHUNK_SIZE: usize = 80_000_000;
-	while let Ok(p) = modpack.stream_position() && p < modpack_len {
-		let pos = p;
-		let mut buf = vec![0u8; CHUNK_SIZE];
-		modpack.read_exact(&mut buf[..(CHUNK_SIZE.min(modpack_len as usize))]).unwrap();
+	const BUF_SIZE: usize = CHUNK_SIZE + 100_000_000;
+	while let Ok(pos) = modpack.stream_position() && pos < modpack_len {
+		// we construct our own multipart to allow custom part headers
+		let mut multipart = Vec::with_capacity(BUF_SIZE);
+		let boundry_raw = format!("{:032x}-{:032x}", rand::random::<u128>(), rand::random::<u128>());
+		let boundry = format!("--{boundry_raw}");
 		
-		let mut parts = Form::new();
 		if pos == 0 {
-			parts = parts.part(json!({"type": "Meta"}).to_string(), Part::text(json!({
+			let content = json!({
 				"name": meta.name,
 				"description": meta.description,
 				"contributors": meta.contributors.iter().map(|(id, _, _)| *id).collect::<Vec<i32>>(),
 				"dependencies": meta.dependencies.iter().map(|(id, _, _, _)| *id).collect::<Vec<i32>>(),
 				"previews": meta.previews,
-			}).to_string()));
+			}).to_string();
+			multipart.extend_from_slice(boundry.as_bytes());
+			multipart.extend_from_slice(&format!("\r\nContent-Disposition: form-data; name=meta\r\nContent-Length: {}\r\n\r\n", content.len()).as_bytes());
+			multipart.extend_from_slice(content.as_bytes());
+			multipart.extend_from_slice("\r\n".as_bytes());
 			
 			for preview_id in &meta.previews {
 				if let Ok(mut preview) = File::open(path.join("previews").join(preview_id)) {
 					let mut preview_buf = Vec::new();
 					preview.read_to_end(&mut preview_buf).unwrap();
-					parts = parts.part(json!({"type": "Preview", "id": preview_id, "thumbnail": true}).to_string(), Part::bytes(preview_buf));
+					
+					multipart.extend_from_slice(boundry.as_bytes());
+					let preview_id = preview_id.replace("\\", "\\\\").replace("\"", "\\\""); // no sneaky attempts here
+					multipart.extend_from_slice(&format!("\r\nContent-Disposition: form-data; name=preview; id=\"{preview_id}\"; thumbnail=1\r\nContent-Length: {}\r\n\r\n", preview_buf.len()).as_bytes());
+					multipart.extend(preview_buf);
+					multipart.extend_from_slice("\r\n".as_bytes());
 				}
 			}
 		}
 		
-		parts = parts.part(json!({"type": "ModPack", "offset": pos, "total_size": modpack_len, "patchnotes": patchnotes}).to_string(), Part::bytes(buf));
+		// modpack chunk
+		let chunk_size = CHUNK_SIZE.min(modpack_len as usize);
+		let mut buf = vec![0u8; chunk_size];
+		modpack.read_exact(&mut buf).unwrap();
+		
+		multipart.extend_from_slice(boundry.as_bytes());
+		multipart.extend_from_slice(&format!("\r\nContent-Disposition: form-data; name=modpack; offset={pos}; total_size={modpack_len}\r\nContent-Length: {}\r\n\r\n", chunk_size).as_bytes());
+		multipart.extend(buf);
+		multipart.extend_from_slice("\r\n".as_bytes());
+		
+		// patchnotes
+		if modpack.stream_position().unwrap() == modpack_len {
+			multipart.extend_from_slice(boundry.as_bytes());
+			multipart.extend_from_slice(&format!("\r\nContent-Disposition: form-data; name=patchnotes\r\nContent-Length: {}\r\n\r\n", patchnotes.len()).as_bytes());
+			multipart.extend_from_slice(patchnotes.as_bytes());
+			multipart.extend_from_slice("\r\n".as_bytes());
+		}
+		
+		// boundry ending
+		multipart.extend_from_slice(boundry.as_bytes());
+		multipart.extend_from_slice("--".as_bytes());
+		
+		std::io::Write::write_all(&mut File::create(r"C:\ffxiv\aetherment\test\test2.txt").unwrap(), &multipart).unwrap();
 		
 		match client.post(format!("{SERVER}/api/mod/{mod_id}/manage"))
 			.header("Authorization", auth)
-			.multipart(parts)
+			.header("Content-Type", format!("multipart/form-data; boundary={boundry_raw}"))
+			.header("Content-Length", multipart.len())
+			.body(multipart)
+			// .multipart(parts)
 			.send()
 			.map_err(|e| UploadError::ServerResponsePartial(mod_id, e.to_string()))?
 			.json::<Resp2>()
