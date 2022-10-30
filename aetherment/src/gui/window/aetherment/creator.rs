@@ -1,4 +1,4 @@
-use std::{path::{PathBuf, Path}, fs::File, sync::{Arc, Mutex}, io::{Write, Cursor}, collections::HashMap, thread};
+use std::{path::{PathBuf, Path}, fs::File, sync::{Arc, Mutex}, io::{Write, Cursor}, collections::HashMap, thread, time::SystemTime};
 use binrw::BinReaderExt;
 use imgui::aeth::{Texture, TextureOptions, DrawList};
 use serde::Deserialize;
@@ -28,6 +28,7 @@ struct CurMod {
 	packing: (String, Option<Arc<Mutex<(usize, usize)>>>), // (patch_path, (progress, total))
 	path: PathBuf,
 	uploading: (u8, String, PathBuf),
+	save: Option<SystemTime>,
 }
 
 pub struct Tab {
@@ -76,7 +77,7 @@ impl Tab {
 		if *self.refresh.lock().unwrap() {
 			*self.refresh.lock().unwrap() = false;
 			self.load_mods(state);
-			self.load_mod(PathBuf::from(&state.config.local_path).join(&self.selected_mod));
+			self.load_mod(PathBuf::from(&state.config.local_path).join(&self.selected_mod), state);
 		}
 		
 		if let Some(storage) = &self.storage {
@@ -97,7 +98,7 @@ impl Tab {
 					
 					if imgui::selectable(name, name == &self.selected_mod, imgui::SelectableFlags::None, [0.0, 0.0]) {
 						self.selected_mod = name.to_owned();
-						self.load_mod(PathBuf::from(&state.config.local_path).join(name));
+						self.load_mod(PathBuf::from(&state.config.local_path).join(name), state);
 					}
 				}
 				
@@ -129,7 +130,7 @@ impl Tab {
 				File::create(path.join("datas.json")).unwrap().write_all(crate::serialize_json(json!(crate::apply::Datas::default())).as_bytes()).unwrap();
 				self.newmod.clear();
 				self.load_mods(state);
-				self.load_mod(path);
+				self.load_mod(path, state);
 			}
 			aeth::tooltip("Create Mod");
 			
@@ -433,7 +434,12 @@ impl Tab {
 			}
 			
 			imgui::new_line();
-			if save {File::create(m.path.join("meta.json")).unwrap().write_all(crate::serialize_json(json!(m.meta)).as_bytes()).unwrap()}
+			if save {m.save = Some(SystemTime::now())}
+			
+			if let Some(save) = m.save && SystemTime::now().duration_since(save).unwrap().as_secs() > 5 {
+				save_mod(m, &state);
+				m.save = None;
+			}
 			
 			aeth::offset([0.0, 16.0]);
 			imgui::text("Create Modpack");
@@ -535,9 +541,17 @@ impl Tab {
 							let path = m.path.clone();
 							let modpack_path = m.uploading.2.clone();
 							let patchnotes = m.uploading.1.clone();
+							let refresh = self.refresh.clone();
 							thread::spawn(move || {
 								// TODO: fetch remote data and check if we can even upload this, to save on bandwidth and the likes
-								log!("{:?}", crate::creator::upload::upload_mod(&auth, &path, modpack_path, None, &patchnotes));
+								match crate::creator::upload::upload_mod(&auth, &path, modpack_path, None, &patchnotes) {
+									Ok(id) => {
+										let mut remote = File::create(path.join("aeth")).unwrap();
+										remote.write_all(&id.to_le_bytes()).unwrap();
+										*refresh.lock().unwrap() = true;
+									},
+									Err(err) => log!(err, "{err:?}"),
+								}
 							});
 							m.uploading.0 = 0;
 						}
@@ -608,7 +622,11 @@ impl Tab {
 		self.online_mods = online_mods.into_iter().filter(|m| self.mod_entries.iter().find(|v| v.1.is_some() && v.1.as_ref().unwrap().id == m.id).is_none()).collect();
 	}
 	
-	pub fn load_mod(&mut self, path: PathBuf) {
+	pub fn load_mod(&mut self, path: PathBuf, state: &mut crate::Data) {
+		if let Some(m) = &self.curmod && m.save.is_some() {
+			save_mod(m, &state);
+		}
+		
 		let mut m = match File::open(path.join("meta.json")) {
 			Ok(f) => serde_json::from_reader(f).unwrap(),
 			Err(_) => Meta {
@@ -666,7 +684,24 @@ impl Tab {
 			path: path,
 			meta: m,
 			uploading: (0, String::with_capacity(2000), PathBuf::new()),
+			save: None,
 		});
+	}
+}
+
+fn save_mod(m: &CurMod, state: &crate::Data) {
+	File::create(m.path.join("meta.json")).unwrap().write_all(crate::serialize_json(json!(m.meta)).as_bytes()).unwrap();
+	
+	if let Some(online) = &m.online && let Some(user) = &state.user {
+		log!("update online mod meta");
+		let mut allowed = Vec::new();
+		for p in &m.meta.previews {
+			if !online.previews.contains(p) {
+				allowed.push(p.to_owned());
+			}
+		}
+		
+		crate::creator::upload::update_mod_meta(&user.token, &m.path, allowed).unwrap();
 	}
 }
 
