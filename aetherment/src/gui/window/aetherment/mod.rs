@@ -1,4 +1,3 @@
-use std::time::Instant;
 use crate::gui::aeth::{self, F2, DrawList};
 
 mod settings;

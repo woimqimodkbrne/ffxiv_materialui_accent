@@ -228,6 +228,9 @@ fn handle_server(state: &mut State) {
 					Msg::Auth(token) => {
 						log!("auth attempt");
 						state.data.user = server::user::User::new(token);
+						if let Some(user) = &state.data.user {
+							_ = user.store();
+						}
 					}
 				}
 			}

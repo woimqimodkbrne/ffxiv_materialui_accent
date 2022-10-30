@@ -27,6 +27,7 @@ struct CurMod {
 	importing_preview: bool,
 	packing: (String, Option<Arc<Mutex<(usize, usize)>>>), // (patch_path, (progress, total))
 	path: PathBuf,
+	uploading: (u8, String, PathBuf),
 }
 
 pub struct Tab {
@@ -500,50 +501,50 @@ impl Tab {
 				.finish();
 			
 			// TODO: make prettier
-			if let Some(user) = &state.user && imgui::button("Upload", [0.0; 2]) {
-				let auth = user.token.clone();
-				let path = m.path.clone();
+			if let Some(user) = &state.user {
+				if imgui::button("Upload", [0.0; 2]) && m.uploading.0 == 0 {
+					m.uploading.0 = 1;
+					m.uploading.1.clear();
+				}
 				
-				thread::spawn(move || {
-					// TODO: fetch remote data and check if we can even upload this, to save on bandwidth and the likes
-					let mut stage = 0;
-					let mut patch_notes = String::with_capacity(2000);
-					let mut modpack_path = PathBuf::new();
-					
-					loop {
-						match stage {
-							0 => match aeth::file_dialog("Select ModPack", || {
-								// TODO: allow selecting patch files if mod is already uploaded
-								aeth::FileDialog::new(path.to_string_lossy(), "")
-									.add_extension(".amp", Some("Aetherment"))
-									.finish()
-							}) {
-								aeth::FileDialogResult::Canceled => break,
-								aeth::FileDialogResult::Success(paths) => {
-									stage = 1;
-									modpack_path = paths[0].clone();
-								}
-								aeth::FileDialogResult::Busy => {},
-							},
-							1 => {
-								imgui::set_next_window_pos(imgui::get_main_viewport_center(), imgui::Cond::Always, [0.5, 0.5]);
-								imgui::set_next_window_size([1000.0, 800.0], imgui::Cond::Always);
-								imgui::begin("Patch Notes###aetherment_upload", None, imgui::WindowFlags::None);
-								imgui::input_text_multiline("##patchnotes", &mut patch_notes, [0.0, 900.0], imgui::InputTextFlags::None);
-								patch_notes.truncate(500);
-								imgui::text(&format!("{}/500", patch_notes.len()));
-								if imgui::button("Confirm", [0.0; 2]) {
-									crate::creator::upload::upload_mod(&auth, &path, &modpack_path, None, &patch_notes).unwrap();
-									break;
-								}
-								imgui::end();
-							},
-							_ => {},
+				match m.uploading.0 {
+					1 => match aeth::file_dialog("Select ModPack", || {
+						// TODO: allow selecting patch files if mod is already uploaded
+						aeth::FileDialog::new(m.path.to_string_lossy(), "")
+							.add_extension(".amp", Some("Aetherment"))
+							.finish()
+					}) {
+						aeth::FileDialogResult::Canceled => {
+							m.uploading.0 = 0;
+						},
+						aeth::FileDialogResult::Success(paths) => {
+							m.uploading.0 = 2;
+							m.uploading.2 = paths[0].clone();
 						}
-						
-						thread::sleep(Duration::from_millis(100));
-					}
-				});
+						aeth::FileDialogResult::Busy => {},
+					},
+					2 => {
+						imgui::set_next_window_pos(imgui::get_main_viewport_center(), imgui::Cond::Always, [0.5, 0.5]);
+						imgui::set_next_window_size([1000.0, 800.0], imgui::Cond::Always);
+						imgui::begin("Patch Notes###aetherment_upload", None, imgui::WindowFlags::None);
+						imgui::input_text_multiline("##patchnotes", &mut m.uploading.1, [0.0, 900.0], imgui::InputTextFlags::None);
+						m.uploading.1.truncate(500);
+						imgui::text(&format!("{}/500", m.uploading.1.len()));
+						if imgui::button("Confirm", [0.0; 2]) {
+							let auth = user.token.clone();
+							let path = m.path.clone();
+							let modpack_path = m.uploading.2.clone();
+							let patchnotes = m.uploading.1.clone();
+							thread::spawn(move || {
+								// TODO: fetch remote data and check if we can even upload this, to save on bandwidth and the likes
+								crate::creator::upload::upload_mod(&auth, &path, modpack_path, None, &patchnotes).unwrap();
+							});
+							m.uploading.0 = 0;
+						}
+						imgui::end();
+					},
+					_ => {},
+				}
 			}
 		});
 	}
@@ -664,6 +665,7 @@ impl Tab {
 			packing: (String::with_capacity(256), None),
 			path: path,
 			meta: m,
+			uploading: (0, String::with_capacity(2000), PathBuf::new()),
 		});
 	}
 }
