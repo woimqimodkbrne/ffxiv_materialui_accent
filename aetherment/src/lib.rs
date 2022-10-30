@@ -4,7 +4,7 @@
 #![feature(let_chains)]
 #![feature(generic_associated_types)]
 
-use std::path::{PathBuf, Path};
+use std::{path::{PathBuf, Path}, net::TcpListener};
 use ironworks::{Ironworks, sqpack::SqPack, ffxiv};
 use serde::Serialize;
 use reqwest::blocking as req;
@@ -97,6 +97,8 @@ pub struct State {
 	data: Data,
 	
 	win_aetherment: gui::window::aetherment::Window,
+	
+	server: TcpListener,
 }
 
 pub struct Data {
@@ -156,18 +158,20 @@ pub extern fn initialize(init: Initializers) -> *mut State {
 		user: server::user::User::load(),
 	};
 	
-	std::tc
+	let server = TcpListener::bind("127.0.0.1:6577").expect("Can't' bind to port 6577");
+	server.set_nonblocking(true).expect("Can't set server to non-blocking");
 	
 	Box::into_raw(Box::new(State {
 		win_aetherment: gui::window::aetherment::Window::new(&mut data),
 		data,
+		server,
 	}))
 }
 
 #[no_mangle]
 pub extern fn destroy(state: *mut State) {
 	log!("destroy");
-	let _state = unsafe{Box::from_raw(state)};
+	let _state = unsafe{Box::from_raw(state)}.server;
 }
 
 #[no_mangle]
@@ -178,7 +182,6 @@ pub extern fn update_resources(_state: *mut State, fa5: *mut imgui::sys::ImFont)
 
 #[no_mangle]
 pub extern fn draw(state: *mut State) {
-	// let state = unsafe{&mut *state};
 	let state = state as usize;
 	
 	std::panic::catch_unwind(|| {
@@ -192,6 +195,10 @@ pub extern fn draw(state: *mut State) {
 		
 		gui::aeth::draw_error();
 	}).ok();
+	
+	// run server, most definitely shouldnt do this in draw but oh well
+	let mut state = unsafe{&mut *(state as *mut State)};
+	handle_server(&mut state);
 }
 
 #[no_mangle]
@@ -200,5 +207,32 @@ pub extern fn command(state: *mut State, args: &str) {
 	
 	match args {
 		_ => state.win_aetherment.visible = !state.win_aetherment.visible,
+	}
+}
+
+fn handle_server(state: &mut State) {
+	use std::io::{Read, Write};
+	#[derive(serde::Deserialize)]
+	enum Msg {
+		Auth(String),
+	}
+	
+	if let Ok((mut stream, _addr)) = state.server.accept() {
+		let mut buf = [0u8; 4096];
+		if let Ok(read_count) = stream.read(&mut buf) && let Ok(req) = std::str::from_utf8(&buf[..read_count]) {
+			// log!("msg received: ({req})");
+			
+			// im sure this is fine, we dont care about anything else
+			if let Some(p) = req.find("\r\n\r\n") && let Ok(msg) = serde_json::from_slice(req[p + 4..].as_bytes()) {
+				match msg {
+					Msg::Auth(token) => {
+						log!("auth attempt");
+						state.data.user = server::user::User::new(token);
+					}
+				}
+			}
+			
+			_ = stream.write(&[]);
+		}
 	}
 }
