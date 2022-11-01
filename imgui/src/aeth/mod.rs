@@ -10,6 +10,8 @@ mod orderable_list;
 mod drawlist;
 mod error;
 
+pub const RED: u32 = 0xFF3030B0;
+
 pub use self::texture::{Texture, TextureOptions};
 // pub use self::file_dialog::{FileDialogMode, FileDialogResult, FileDialogStatus, file_dialog, file_picker};
 pub use self::file_dialog::{FileDialog, FileDialogResult, file_dialog, file_picker};

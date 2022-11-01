@@ -331,6 +331,16 @@ impl Tab {
 				for id in &m.meta.previews {
 					let preview = &m.previews[id];
 					imgui::image(preview.resource(), [w, h], [0.0; 2], [1.0; 2], [1.0; 4], [0.0; 4]);
+					if imgui::is_item_clicked(imgui::MouseButton::Right) {imgui::open_popup(id, imgui::PopupFlags::MouseButtonRight)}
+					if imgui::begin_popup(id, imgui::WindowFlags::None) {
+						if imgui::button("Remove", [0.0; 2]) {
+							_ = std::fs::remove_file(m.path.join("previews").join(id));
+							if let Some(i) = m.meta.previews.iter().position(|v| v == id) {m.meta.previews.remove(i);}
+							save = true;
+							break;
+						}
+						imgui::end_popup();
+					}
 					imgui::same_line();
 				}
 				

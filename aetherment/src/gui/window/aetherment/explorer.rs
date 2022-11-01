@@ -230,7 +230,7 @@ impl Tab {
 			}
 			
 			let err = !self.valid_path;
-			if err {imgui::push_style_color(imgui::Col::FrameBg, 0xFF3030B0)}
+			if err {imgui::push_style_color(imgui::Col::FrameBg, aeth::RED)}
 			imgui::set_next_item_width(aeth::width_left());
 			if imgui::input_text("##path", &mut self.path, imgui::InputTextFlags::None) {
 				let p = self.path.clone();

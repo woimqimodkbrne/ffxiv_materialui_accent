@@ -2532,6 +2532,13 @@ pub fn calc_text_size(text: &str, hide_text_after_double_hash: bool, wrap_width:
 	r
 }
 
+pub fn calc_text_size2(text: &str) -> [f32; 2] {
+	let mut r = [0f32; 2];
+	let text_ = CString::new(text).unwrap();
+	unsafe{sys::igCalcTextSize(&mut r, text_.as_ptr(), (text_.as_ptr() as usize + text.len()) as *const _, false, -1.0)}
+	r
+}
+
 pub fn color_convert_u32_to_float4(in_: u32) -> [f32; 4] {
 	let mut r = [0f32; 4];
 	unsafe{sys::igColorConvertU32ToFloat4(&mut r, in_)}

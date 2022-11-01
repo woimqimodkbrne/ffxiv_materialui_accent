@@ -171,6 +171,7 @@ fn write_meta(path: &Path, multipart: &mut Vec<u8>, boundary: &str, meta: &Meta,
 		"contributors": meta.contributors.iter().map(|(id, _, _)| *id).collect::<Vec<i32>>(),
 		"dependencies": meta.dependencies.iter().map(|(id, _, _, _)| *id).collect::<Vec<i32>>(),
 		"previews": meta.previews,
+		"content_rating": meta.content_rating,
 	}).to_string();
 	multipart.extend_from_slice(boundary.as_bytes());
 	multipart.extend_from_slice(&format!("\r\nContent-Disposition: form-data; name=meta\r\nContent-Length: {}\r\n\r\n", content.len()).as_bytes());

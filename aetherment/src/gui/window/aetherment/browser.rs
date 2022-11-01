@@ -46,7 +46,7 @@ struct Mod {
 	name: String,
 	tags: Vec<i16>,
 	thumbnail: Arc<Mutex<Texture>>,
-	nsfw: bool,
+	content_rating: u8,
 	author: i32,
 	author_name: String,
 }
@@ -240,6 +240,7 @@ impl Tab {
 	fn draw_mod_node(&self, m: &Mod) {
 		let mut draw = imgui::get_window_draw_list();
 		
+		let size = Self::THUMBNAILSIZE;
 		let mut pos = imgui::get_cursor_screen_pos();
 		let rounding = imgui::get_style().frame_rounding;
 		imgui::dummy(Self::NODESIZE);
@@ -249,15 +250,23 @@ impl Tab {
 		pos = pos.add([1.0, 1.0]);
 		
 		// Thumbnail
-		draw.add_rect_filled(pos, pos.add(Self::THUMBNAILSIZE), 0xFF101010, rounding, imgui::DrawFlags::RoundCornersTop);
+		draw.add_rect_filled(pos, pos.add(size), 0xFF101010, rounding, imgui::DrawFlags::RoundCornersTop);
 		draw.push_texture_id(m.thumbnail.lock().unwrap().resource());
-		draw.add_rect_rounded(pos.add([1.0; 2]), pos.add(Self::THUMBNAILSIZE).sub([1.0; 2]), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding);
+		draw.add_rect_rounded(pos.add([1.0; 2]), pos.add(size).sub([1.0; 2]), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding);
 		draw.pop_texture_id();
-		pos = pos.add([5.0, Self::THUMBNAILSIZE.y() + 1.0]);
+		
+		// content rating
+		if m.content_rating != 0 {
+			let rating = content_rating(m.content_rating);
+			draw.add_rect_filled(pos.add([0.0, size.y() * 0.1]), pos.add([4.0, size.y() * 0.1 + 4.0]).add(imgui::calc_text_size2(rating)), aeth::RED, rounding, imgui::DrawFlags::RoundCornersRight);
+			draw.add_text(pos.add([2.0, size.y() * 0.1 + 2.0]), imgui::get_color(imgui::Col::Text), rating);
+		}
+		
+		pos = pos.add([5.0, size.y() + 1.0]);
 		
 		// Title
-		let d = Self::NODESIZE.y() - Self::THUMBNAILSIZE.y() - imgui::get_font_size() - 1.0 - 1.0 - 1.0 - 6.0;
-		draw.add_text_area(pos, imgui::get_color(imgui::Col::Text), &m.name, [Self::THUMBNAILSIZE.x() - 1.0 - 5.0 - 1.0, d]);
+		let d = Self::NODESIZE.y() - size.y() - imgui::get_font_size() - 1.0 - 1.0 - 1.0 - 6.0;
+		draw.add_text_area(pos, imgui::get_color(imgui::Col::Text), &m.name, [size.x() - 1.0 - 5.0 - 1.0, d]);
 		
 		// Author
 		draw.add_text(pos.add([10.0, d + 1.0]), imgui::get_color(imgui::Col::TextDisabled), &format!("by {}", m.author_name));
@@ -287,7 +296,7 @@ impl Tab {
 					name: String,
 					tags: Vec<i16>,
 					thumbnail: String,
-					nsfw: bool,
+					content_rating: u8,
 					author: i32,
 					author_name: String,
 				}
@@ -332,11 +341,12 @@ impl Tab {
 						name: mo.name,
 						tags: mo.tags,
 						thumbnail: thumbnail.clone(),
-						nsfw: mo.nsfw,
+						content_rating: mo.content_rating,
 						author: mo.author,
 						author_name: mo.author_name,
 					});
 					
+					// TODO: blur thumbnail or hide mod depending on user settings and mod content rating
 					thread::spawn(move || {
 						let t = Texture::with_data(TextureOptions {
 							width: 135,
@@ -364,5 +374,14 @@ impl Tab {
 			
 			*fetching.lock().unwrap() = false;
 		});
+	}
+}
+
+fn content_rating(rating: u8) -> &'static str {
+	match rating {
+		0 => "SFW",
+		1 => "NSFW",
+		2 => "NSFL",
+		_ => "????",
 	}
 }
