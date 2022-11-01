@@ -41,6 +41,32 @@ F: FnOnce() -> imgui::aeth::FileDialog {
 	r
 }
 
+// TODO: move to seperate file and check for outdated cache files to delete (x days not accessed or smth)
+pub fn get_resource(path: &str) -> Vec<u8> {
+	use std::{fs::File, io::{Read, Write}};
+	
+	let hash = hash_str(blake3::hash(path.as_bytes()).as_bytes());
+	let cache_dir = dirs::cache_dir().unwrap().join("Aetherment").join("cache");
+	let cache_path = cache_dir.join(&hash);
+	if let Ok(mut f) = File::open(&cache_path) {
+		let mut r = Vec::new();
+		f.read_to_end(&mut r).unwrap();
+		return r;
+	}
+	
+	let r = CLIENT.get(format!("{SERVERCDN}{path}"))
+		.send()
+		.unwrap()
+		.bytes()
+		.unwrap()
+		.to_vec();
+	
+	std::fs::create_dir_all(cache_dir).unwrap();
+	let mut f = File::create(cache_path).unwrap();
+	f.write_all(&r).unwrap();
+	r
+}
+
 static mut LOG: fn(u8, String) = |_, _| {};
 #[macro_export]
 macro_rules! log {

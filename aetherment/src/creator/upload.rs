@@ -178,7 +178,7 @@ fn write_meta(path: &Path, multipart: &mut Vec<u8>, boundary: &str, meta: &Meta,
 	multipart.extend_from_slice("\r\n".as_bytes());
 	
 	// previews
-	// TODO: only upload new previews, not all
+	// TODO: allow selecting if a preview should be the new thumbnail
 	for preview_id in &meta.previews {
 		if (allowed_previews.is_none() || allowed_previews.as_ref().unwrap().contains(&preview_id)) && let Ok(mut preview) = File::open(path.join("previews").join(preview_id)) {
 			log!("uploading preview {preview_id}");
@@ -187,7 +187,7 @@ fn write_meta(path: &Path, multipart: &mut Vec<u8>, boundary: &str, meta: &Meta,
 			
 			multipart.extend_from_slice(boundary.as_bytes());
 			let preview_id = preview_id.replace("\\", "\\\\").replace("\"", "\\\""); // no sneaky attempts here
-			multipart.extend_from_slice(&format!("\r\nContent-Disposition: form-data; name=preview; id=\"{preview_id}\"; thumbnail=1\r\nContent-Length: {}\r\n\r\n", preview_buf.len()).as_bytes());
+			multipart.extend_from_slice(&format!("\r\nContent-Disposition: form-data; name=preview; id=\"{preview_id}\"; thumbnail=0\r\nContent-Length: {}\r\n\r\n", preview_buf.len()).as_bytes());
 			multipart.extend(preview_buf);
 			multipart.extend_from_slice("\r\n".as_bytes());
 		}

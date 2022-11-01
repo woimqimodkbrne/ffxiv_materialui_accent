@@ -28,7 +28,7 @@ impl Viewer for Options {
 		let conf = conf.unwrap();
 		let options = &mut conf.datas.penumbra.as_mut().unwrap().options;
 		let mut rem = None;
-		aeth::orderable_list("options", options, |i, _| {
+		aeth::orderable_list2("options", [0.0; 2], options, |i, _| {
 			if imgui::button("Remove", [0.0, 0.0]) {
 				rem = Some(i);
 			}

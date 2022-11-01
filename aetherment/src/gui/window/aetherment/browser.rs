@@ -344,10 +344,7 @@ impl Tab {
 							format: 28, // DXGI_FORMAT_R8G8B8A8_UNORM
 							usage: 1, // D3D11_USAGE_IMMUTABLE
 							cpu_access_flags: 0,
-						}, &image::io::Reader::new(std::io::Cursor::new(CLIENT.get(format!("{SERVERCDN}{}", mo.thumbnail)).send().unwrap()
-							.bytes()
-							.unwrap()
-							.to_vec()))
+						}, &image::io::Reader::new(std::io::Cursor::new(crate::get_resource(&mo.thumbnail)))
 							.with_guessed_format()
 							.unwrap()
 							.decode()

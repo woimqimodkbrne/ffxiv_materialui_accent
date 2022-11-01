@@ -12,6 +12,7 @@ F: FnMut(usize, &mut T),
 F2: FnMut(usize, &mut T) {
 	if vec.len() == 0 {return false}
 	
+	let child = size.y() > 0.0;
 	imgui::push_id(id);
 	let h = size.y();
 	let cur = imgui::get_state_storage().i32(imgui::get_id(id), 0);
@@ -42,9 +43,9 @@ F2: FnMut(usize, &mut T) {
 			context_menu(i, vec.get_mut(i).unwrap());
 			imgui::end_popup();
 		}
-		imgui::begin_child("body", size, false, imgui::WindowFlags::None);
+		if child {imgui::begin_child("body", size, false, imgui::WindowFlags::None);}
 		draw(i, vec.get_mut(i).unwrap());
-		imgui::end_child();
+		if child {imgui::end_child();}
 		imgui::pop_id();
 	}
 	
@@ -57,9 +58,9 @@ F2: FnMut(usize, &mut T) {
 		imgui::set_cursor_screen_pos([imgui::get_cursor_screen_pos().x(), (mpos - o).clamp(start, end)]);
 		super::button_icon("");
 		imgui::same_line();
-		imgui::begin_child("body", size, false, imgui::WindowFlags::None);
+		if child {imgui::begin_child("body", size, false, imgui::WindowFlags::None);}
 		draw(i, vec.get_mut(i).unwrap());
-		imgui::end_child();
+		if child {imgui::end_child();}
 		imgui::pop_id();
 		
 		if !imgui::is_mouse_down(imgui::MouseButton::Left) {

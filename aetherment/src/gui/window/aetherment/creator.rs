@@ -3,7 +3,7 @@ use binrw::BinReaderExt;
 use imgui::aeth::{Texture, TextureOptions, DrawList};
 use serde::Deserialize;
 use serde_json::json;
-use crate::{gui::aeth::{self, F2}, creator::{meta::*, modpack}, CLIENT, SERVER, SERVERCDN};
+use crate::{gui::aeth::{self, F2}, creator::{meta::*, modpack}, CLIENT, SERVER};
 
 #[derive(Deserialize, Clone, Debug)]
 struct OnlineMod {
@@ -663,7 +663,6 @@ impl Tab {
 			contributors: UserSearch::new(),
 			dependencies: ModSearch::new(),
 			previews: m.previews.iter().map(|v| {
-				// let img = image::open(path.join("previews").join(v)).unwrap().into_rgb8();
 				let mut img = image::io::Reader::new(std::io::BufReader::new(File::open(path.join("previews").join(v)).unwrap()));
 				img.set_format(image::ImageFormat::Jpeg);
 				let img = img.decode().unwrap();
@@ -772,10 +771,7 @@ impl UserSearch {
 								let avatar = v.avatar.clone();
 								
 								thread::spawn(move || {
-									let data = image::io::Reader::new(Cursor::new(CLIENT.get(format!("{SERVERCDN}{avatar_url}")).send().unwrap()
-										.bytes()
-										.unwrap()
-										.to_vec()))
+									let data = image::io::Reader::new(Cursor::new(crate::get_resource(&avatar_url)))
 										.with_guessed_format()
 										.unwrap()
 										.decode()
@@ -881,10 +877,7 @@ impl ModSearch {
 								let thumbnail = v.thumbnail.clone();
 								
 								thread::spawn(move || {
-									let data = image::io::Reader::new(Cursor::new(CLIENT.get(format!("{SERVERCDN}{thumbnail_url}")).send().unwrap()
-										.bytes()
-										.unwrap()
-										.to_vec()))
+									let data = image::io::Reader::new(Cursor::new(crate::get_resource(&thumbnail_url)))
 										.with_guessed_format()
 										.unwrap()
 										.decode()
