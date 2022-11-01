@@ -1519,14 +1519,14 @@ pub fn checkbox_flags__uint_ptr(label: &str, flags: &mut ::std::os::raw::c_uint,
 	unsafe{sys::igCheckboxFlags_UintPtr(label_.as_ptr(), flags, flags_value)}
 }
 
-pub fn radio_button__bool(label: &str, active: bool) -> bool {
+pub fn radio_button_single(label: &str, active: bool) -> bool {
 	let label_ = CString::new(label).unwrap();
 	unsafe{sys::igRadioButton_Bool(label_.as_ptr(), active)}
 }
 
-pub fn radio_button__int_ptr(label: &str, v: &mut i32, v_button: i32) -> bool {
+pub fn radio_button(label: &str, v: &mut i32, index: i32) -> bool {
 	let label_ = CString::new(label).unwrap();
-	unsafe{sys::igRadioButton_IntPtr(label_.as_ptr(), v, v_button)}
+	unsafe{sys::igRadioButton_IntPtr(label_.as_ptr(), v, index)}
 }
 
 pub fn progress_bar(fraction: f32, size_arg: [f32; 2], overlay: &str) {

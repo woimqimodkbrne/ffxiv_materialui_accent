@@ -12,7 +12,7 @@ struct OnlineMod {
 	description: String,
 	tags: Vec<i16>,
 	previews: Vec<String>,
-	nsfw: bool,
+	content_rating: i32,
 	version: i32,
 }
 
@@ -315,7 +315,13 @@ impl Tab {
 			}
 			
 			aeth::offset([0.0, 16.0]);
-			save |= imgui::checkbox("NSFW", &mut m.meta.nsfw);
+			// save |= imgui::checkbox("NSFW", &mut m.meta.nsfw);
+			imgui::text("Content Rating");
+			save |= imgui::radio_button("SFW", &mut m.meta.content_rating, 0);
+			imgui::same_line();
+			save |= imgui::radio_button("NSFW", &mut m.meta.content_rating, 1);
+			imgui::same_line();
+			save |= imgui::radio_button("NSFL", &mut m.meta.content_rating, 2);
 			
 			aeth::offset([0.0, 16.0]);
 			imgui::text("Previews (1620x1080 for best results, anything else will be resized)");
@@ -634,7 +640,7 @@ impl Tab {
 				description: String::new(),
 				contributors: Vec::new(),
 				dependencies: Vec::new(),
-				nsfw: false,
+				content_rating: 0,
 				previews: Vec::new(),
 			}
 		};

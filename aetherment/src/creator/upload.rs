@@ -81,7 +81,7 @@ P2: AsRef<Path> {
 		}
 		
 		// modpack chunk
-		let chunk_size = CHUNK_SIZE.min(modpack_len as usize);
+		let chunk_size = CHUNK_SIZE.min((modpack_len - pos) as usize);
 		let mut buf = vec![0u8; chunk_size];
 		modpack.read_exact(&mut buf).unwrap();
 		

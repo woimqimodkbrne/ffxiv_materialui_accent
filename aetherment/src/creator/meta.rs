@@ -86,11 +86,12 @@ impl Serialize for DependencyTexture {
 }
 
 #[derive(Deserialize, Serialize, Debug, Default)]
+#[serde(default)]
 pub struct Meta {
 	pub name: String,
 	pub description: String,
 	pub contributors: Vec<(i32, String, ContributorTexture)>,
 	pub dependencies: Vec<(i32, String, String, DependencyTexture)>,
-	pub nsfw: bool,
+	pub content_rating: i32,
 	pub previews: Vec<String>,
 }
