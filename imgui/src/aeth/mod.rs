@@ -149,39 +149,129 @@ pub fn tooltip(label: &str) {
 
 // TODO: end with ... if cut short (use Cow as return)
 pub(crate) fn wrap_text_area<'a>(text: &'a str, area: [f32; 2]) -> Vec<(&'a str, f32)> {
-	lazy_static::lazy_static! {
-		static ref WORD: Regex = Regex::new(r"\b\w+[[:punct:]]*").unwrap();
-	}
+	lazy_static::lazy_static! {static ref WORD: Regex = Regex::new(r"\b\w+[[:punct:]]*").unwrap();}
 	
 	let mut lines = Vec::new();
 	let linecount = (area.y() / imgui::get_font_size()).floor() as i32;
 	let mut curline = 0;
-	let mut lineindex = 0;
-	let mut previndex = 0;
-	let mut prevlen = 0.0;
 	
-	for cap in WORD.find_iter(text) {
-		let line = &text[lineindex..cap.end()];
-		let len = imgui::calc_text_size(line, false, -1.0).x();
-		if len > area.x() {
-			lines.push((&text[lineindex..previndex], prevlen));
+	for test_seg in text.split('\n') {
+		let mut lineindex = 0;
+		let mut previndex = 0;
+		let mut prevlen = 0.0;
+		
+		for cap in WORD.find_iter(test_seg) {
+			let line = &test_seg[lineindex..cap.end()];
+			let len = imgui::calc_text_size(line, false, -1.0).x();
+			if len > area.x() {
+				lines.push((&test_seg[lineindex..previndex], prevlen));
+				curline += 1;
+				lineindex = cap.start();
+				previndex = lineindex;
+				prevlen = 0.0;
+				if curline >= linecount {
+					return lines;
+				}
+			} else {
+				previndex = cap.end();
+				prevlen = len;
+			}
+		}
+		
+		if lineindex != previndex || (lineindex == 0 && previndex == 0) {
+			let line = &test_seg[lineindex..];
+			lines.push((line, imgui::calc_text_size(line, false, -1.0).x()));
 			curline += 1;
-			lineindex = cap.start();
-			previndex = lineindex;
-			prevlen = 0.0;
 			if curline >= linecount {
 				return lines;
 			}
-		} else {
-			previndex = cap.end();
-			prevlen = len;
 		}
 	}
 	
-	if lineindex != previndex {
-		let line = &text[lineindex..];
-		lines.push((line, imgui::calc_text_size(line, false, -1.0).x()))
+	lines
+}
+
+pub enum TextAlign {
+	Left,
+	Center,
+	Right,
+}
+
+pub fn wrapped_text(text: &str, mut area: [f32; 2], align: TextAlign) {
+	if area.x() <= 0.0 {area[0] = width_left()}
+	let lines = wrap_text_area(text, if area.y() <= 0.0 {[area.x(), f32::MAX]} else {area});
+	let h = frame_height();
+	let clr = imgui::get_color(imgui::Col::Text);
+	let pos = imgui::get_cursor_screen_pos();
+	let draw = imgui::get_window_draw_list();
+	
+	imgui::dummy(if area.y() <= 0.0 {[area.x(), lines.len() as f32 * h]} else {area});
+	
+	match align {
+		TextAlign::Left => {
+			for (i, (line, _len)) in lines.into_iter().enumerate() {
+				draw.add_text(pos.add([0.0, i as f32 * h]), clr, line);
+			}
+		},
+		TextAlign::Center => {
+			for (i, (line, len)) in lines.into_iter().enumerate() {
+				draw.add_text(pos.add([(area.x() - len) / 2.0, i as f32 * h]), clr, line);
+			}
+		},
+		TextAlign::Right => {
+			for (i, (line, len)) in lines.into_iter().enumerate() {
+				draw.add_text(pos.add([area.x() - len, i as f32 * h]), clr, line);
+			}
+		}
+	}
+}
+
+// macos displays file sizes based on 1000 (KB), while windows and linux uses 1024 (KiB). windows and macos display it as KB, linux as KiB (thunar atleast, terminal stuff only use a single character)
+#[cfg(target_os = "macos")]
+const SIZE: u64 = 1000;
+#[cfg(not(target_os = "macos"))]
+const SIZE: u64 = 1024;
+
+#[cfg(target_os = "linux")]
+const AFFIXES: [&str; 5] = ["B", "KiB", "MiB", "GiB", "TiB"];
+#[cfg(not(target_os = "linux"))]
+const AFFIXES: [&str; 5] = ["B", "KB", "MB", "GB", "TB"];
+
+pub fn format_size(bytes: u64) -> String {
+	let bytes = bytes as f64;
+	for (i, affix) in AFFIXES.iter().enumerate() {
+		let unit = (SIZE.pow(i as u32)) as f64;
+		let val = bytes / unit;
+		if val < SIZE as f64 {
+			let val = (val * 10.0).round() / 10.0;
+			return format!("{val} {affix}");
+		}
 	}
 	
-	lines
+	format!("{bytes} B")
+}
+
+pub fn image(texture_id: usize, size: [f32; 2], u: [f32; 2], v: [f32; 2], clr: u32) {
+	let mut draw = imgui::get_window_draw_list();
+	let pos = imgui::get_cursor_screen_pos();
+	imgui::dummy(size);
+	draw.push_texture_id(texture_id);
+	draw.add_rect_rounded(pos, pos.add(size), u, v, clr, imgui::get_style().frame_rounding, imgui::DrawFlags::RoundCornersAll);
+	draw.pop_texture_id();
+}
+
+pub fn frame_sized<F>(scope: F) where F: FnOnce() {
+	let draw = imgui::get_window_draw_list();
+	draw.channels_split(2);
+	draw.channels_set_current(1);
+	imgui::begin_group();
+	let style = imgui::get_style();
+	offset([0.0, style.frame_padding.y()]);
+	imgui::indent_f32(style.frame_padding.x());
+	scope();
+	imgui::unindent_f32(style.frame_padding.x());
+	imgui::end_group();
+	draw.channels_set_current(0);
+	draw.add_rect_filled(imgui::get_item_rect_min(), imgui::get_item_rect_max().add(style.frame_padding), imgui::get_color(imgui::Col::FrameBg), style.frame_rounding, imgui::DrawFlags::None);
+	draw.channels_merge();
 }

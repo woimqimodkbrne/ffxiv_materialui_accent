@@ -96,6 +96,7 @@ pub mod api {
 	pub mod penumbra;
 }
 pub mod server {
+	pub mod structs;
 	pub mod user;
 }
 pub mod creator {

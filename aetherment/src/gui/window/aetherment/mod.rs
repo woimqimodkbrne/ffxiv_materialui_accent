@@ -89,7 +89,7 @@ impl Window {
 		if let Some(avatar) = avatar {
 			// draw.add_image_rounded(avatar.resource(), pos, pos.add([height * 2.0; 2]), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding, imgui::DrawFlags::RoundCornersAll)
 			draw.push_texture_id(avatar.resource());
-			draw.add_rect_rounded(pos, pos.add([height * 2.0; 2]), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding);
+			draw.add_rect_rounded(pos, pos.add([height * 2.0; 2]), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding, imgui::DrawFlags::RoundCornersAll);
 			draw.pop_texture_id();
 		} else {
 			draw.add_rect_filled(pos, pos.add([height * 2.0; 2]), 0xFF000000, rounding, imgui::DrawFlags::RoundCornersAll)

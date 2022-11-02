@@ -1053,7 +1053,7 @@ pub fn set_window_pos__vec2(pos: [f32; 2], cond: Cond) {
 	unsafe{sys::igSetWindowPos_Vec2(pos, cond as i32)}
 }
 
-pub fn set_window_size__vec2(size: [f32; 2], cond: Cond) {
+pub fn set_window_size(size: [f32; 2], cond: Cond) {
 	unsafe{sys::igSetWindowSize_Vec2(size, cond as i32)}
 }
 

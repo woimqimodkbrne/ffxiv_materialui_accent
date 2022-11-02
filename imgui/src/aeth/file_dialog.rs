@@ -5,31 +5,6 @@ use chrono::{DateTime, Local};
 use crate as imgui;
 use super::F2;
 
-// macos displays file sizes based on 1000 (KB), while windows and linux uses 1024 (KiB). windows and macos display it as KB, linux as KiB (thunar atleast, terminal stuff only use a single character)
-#[cfg(target_os = "macos")]
-const SIZE: u64 = 1000;
-#[cfg(not(target_os = "macos"))]
-const SIZE: u64 = 1024;
-
-#[cfg(target_os = "linux")]
-const AFFIXES: [&str; 5] = ["B", "KiB", "MiB", "GiB", "TiB"];
-#[cfg(not(target_os = "linux"))]
-const AFFIXES: [&str; 5] = ["B", "KB", "MB", "GB", "TB"];
-
-pub fn format_size(bytes: u64) -> String {
-	let bytes = bytes as f64;
-	for (i, affix) in AFFIXES.iter().enumerate() {
-		let unit = (SIZE.pow(i as u32)) as f64;
-		let val = bytes / unit;
-		if val < SIZE as f64 {
-			let val = (val * 10.0).round() / 10.0;
-			return format!("{val} {affix}");
-		}
-	}
-	
-	format!("{bytes} B")
-}
-
 const WHITE: u32 = 0xFFFFFFFF;
 const EXTICONS: [(&str, char, u32); 27] = [
 	// file-alt
@@ -374,7 +349,7 @@ impl FileDialog {
 						imgui::text(&created.format("%Y/%m/%d %H:%M").to_string());
 						
 						imgui::table_next_column();
-						imgui::text(&format_size(*size));
+						imgui::text(&super::format_size(*size));
 					}
 				});
 			});

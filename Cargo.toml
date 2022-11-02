@@ -14,9 +14,9 @@ lto = true
 inherits = "dev"
 
 [profile.dev_r.package.aetherment]
-opt-level = 1
+opt-level = 0
 debug = true
-strip = false
+strip = true
 incremental = true
 
 [profile.dev_r.package."*"]

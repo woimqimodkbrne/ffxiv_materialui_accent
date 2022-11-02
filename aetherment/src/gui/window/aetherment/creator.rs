@@ -213,7 +213,7 @@ impl Tab {
 				imgui::dummy([w, h]);
 				draw.add_rect_filled(pos, pos.add([w, h]), colframe, rounding, imgui::DrawFlags::RoundCornersAll);
 				draw.push_texture_id(entry.2.resource());
-				draw.add_rect_rounded(pos, pos.add(size), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding);
+				draw.add_rect_rounded(pos, pos.add(size), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding, imgui::DrawFlags::RoundCornersAll);
 				draw.pop_texture_id();
 				draw.add_text(pos.add([h + 2.0, h * 0.25]), col, &entry.1);
 			});
@@ -244,7 +244,7 @@ impl Tab {
 					}
 					draw.add_rect_filled(pos, pos.add([300.0, h]), colframe, rounding, imgui::DrawFlags::RoundCornersAll);
 					draw.push_texture_id(entry.avatar.lock().unwrap().0.resource());
-					draw.add_rect_rounded(pos, pos.add(size), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding);
+					draw.add_rect_rounded(pos, pos.add(size), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding, imgui::DrawFlags::RoundCornersAll);
 					draw.pop_texture_id();
 					draw.add_text(pos.add([h + 2.0, h * 0.25]), col, &entry.name);
 				}
@@ -270,7 +270,7 @@ impl Tab {
 				imgui::dummy([w, h]);
 				draw.add_rect_filled(pos, pos.add([w, h]), colframe, rounding, imgui::DrawFlags::RoundCornersAll);
 				draw.push_texture_id(entry.3.resource());
-				draw.add_rect_rounded(pos, pos.add(size), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding);
+				draw.add_rect_rounded(pos, pos.add(size), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding, imgui::DrawFlags::RoundCornersAll);
 				draw.pop_texture_id();
 				draw.add_text(pos.add([size.x() + 2.0, 0.0]), col, &entry.1);
 				draw.add_text(pos.add([size.x() + h * 0.5 + 2.0, h * 0.5]), col, &format!("by {}", entry.2));
@@ -302,7 +302,7 @@ impl Tab {
 					}
 					draw.add_rect_filled(pos, pos.add([500.0, h]), colframe, rounding, imgui::DrawFlags::RoundCornersAll);
 					draw.push_texture_id(entry.thumbnail.lock().unwrap().0.resource());
-					draw.add_rect_rounded(pos, pos.add(size), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding);
+					draw.add_rect_rounded(pos, pos.add(size), [0.0; 2], [1.0; 2], 0xFFFFFFFF, rounding, imgui::DrawFlags::RoundCornersAll);
 					draw.pop_texture_id();
 					draw.add_text(pos.add([size.x() + 2.0, 0.0]), col, &entry.name);
 					draw.add_text(pos.add([size.x() + h * 0.5 + 2.0, h * 0.5]), col, &format!("by {}", entry.author));
@@ -716,7 +716,11 @@ fn save_mod(m: &CurMod, state: &crate::Data) {
 			}
 		}
 		
-		crate::creator::upload::update_mod_meta(&user.token, &m.path, allowed).unwrap();
+		let auth = user.token.clone();
+		let path = m.path.clone();
+		thread::spawn(move || {
+			crate::creator::upload::update_mod_meta(&auth, &path, allowed).unwrap();
+		});
 	}
 }
 
@@ -875,7 +879,7 @@ impl ModSearch {
 				struct JMod {
 					id: i32,
 					name: String,
-					author_name: String,
+					author: crate::server::structs::IdName,
 					thumbnail: String,
 				}
 				
@@ -888,7 +892,7 @@ impl ModSearch {
 									thumbnail: Arc::new(Mutex::new((Texture::empty(), Vec::new()))),
 									id: v.id,
 									name: v.name,
-									author: v.author_name,
+									author: v.author.name,
 								};
 								let thumbnail = v.thumbnail.clone();
 								
