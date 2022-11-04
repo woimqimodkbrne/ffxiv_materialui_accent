@@ -1157,8 +1157,8 @@ pub fn set_scroll_from_pos_y__float(local_y: f32, center_y_ratio: f32) {
 	unsafe{sys::igSetScrollFromPosY_Float(local_y, center_y_ratio)}
 }
 
-pub fn push_font(font: &mut sys::ImFont) {
-	unsafe{sys::igPushFont(font)}
+pub fn push_font(font: *const sys::ImFont) {
+	unsafe{sys::igPushFont(font as *mut _)}
 }
 
 pub fn pop_font() {
@@ -1229,8 +1229,8 @@ pub fn pop_text_wrap_pos() {
 	unsafe{sys::igPopTextWrapPos()}
 }
 
-pub fn get_font() -> *mut sys::ImFont {
-	unsafe{sys::igGetFont()}
+pub fn get_font() -> *const sys::ImFont {
+	unsafe{sys::igGetFont() as *const _}
 }
 
 pub fn get_font_size() -> f32 {
@@ -2825,6 +2825,11 @@ impl DrawList {
 	pub fn add_text(&self, pos: [f32; 2], col: u32, text_begin: &str) {
 		let text_begin_ = CString::new(text_begin).unwrap();
 		unsafe{sys::ImDrawList_AddText_Vec2(self.drawlist, pos, col, text_begin_.as_ptr(), std::ptr::null())}
+	}
+	
+	pub fn add_text_font(&self, font: *const sys::ImFont, font_size: f32, pos: [f32; 2], col: u32, text: &str) {
+		let text_ = CString::new(text).unwrap();
+		unsafe{sys::ImDrawList_AddText_FontPtr(self.drawlist, font, font_size, pos, col, text_.as_ptr(), std::ptr::null(), 0.0, std::ptr::null())}
 	}
 	
 	pub fn add_text__vec2(&self, pos: [f32; 2], col: u32, text_begin: &str, text_end: &str) {

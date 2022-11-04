@@ -81,7 +81,7 @@ impl Tab {
 		}
 		
 		if let Some(storage) = &self.storage {
-			imgui::text(&format!("{} / {}", storage.1, storage.0));
+			imgui::text(&format!("{} / {}", aeth::format_size(storage.1 as u64), aeth::format_size(storage.0 as u64)));
 		}
 		
 		aeth::divider("div", false)

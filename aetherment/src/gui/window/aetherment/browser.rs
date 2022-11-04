@@ -2,7 +2,7 @@ use std::{sync::{Arc, Mutex}, thread, collections::HashSet, cell::RefCell};
 use imgui::aeth::{self, F2, DrawList, Texture, TextureOptions};
 use serde::Deserialize;
 use strum::{AsRefStr, EnumIter, IntoEnumIterator};
-use crate::{CLIENT, SERVER, SERVERCDN, server::structs::*};
+use crate::{CLIENT, SERVER, SERVERCDN, server::structs::*, creator::modpack::version_to_string};
 
 #[derive(Debug, PartialEq, Eq, Clone, AsRefStr, EnumIter)]
 pub enum SearchOrderType {
@@ -52,12 +52,11 @@ struct ModNode {
 
 #[derive(Deserialize)]
 struct Version {
-	version: u32,
-	size: u64,
+	version: i32,
+	size: i64,
 	patch: bool,
 	date: chrono::DateTime<chrono::Utc>,
 	description: String,
-	file: String,
 }
 
 struct ModPage {
@@ -73,6 +72,7 @@ struct ModPage {
 	versions: Vec<Version>,
 	
 	current_preview: i32,
+	selected_version: i32,
 }
 
 const NODESIZE: [f32; 2] = [212.0, 200.0];
@@ -354,6 +354,18 @@ impl Tab {
 				}
 				imgui::text_unformatted(&tags);
 				
+				// Version history
+				aeth::offset([0.0, frame_h]);
+				if aeth::text_clickable(&format!("Versions: {} (View History)", m.versions.len())) {imgui::open_popup("Version History", imgui::PopupFlags::None)}
+				aeth::popup_modal("Version History", &mut true, imgui::WindowFlags::None, || {
+					for v in &m.versions {
+						imgui::text(&format!("{} ({})", version_to_string(v.version), v.date));
+						aeth::wrapped_text(&v.description, [600.0, 0.0], aeth::TextAlign::Left);
+						
+						aeth::offset([0.0, frame_h]);
+					}
+				});
+				
 				// Dates
 				// TODO: format these to the users timezone and mby locale
 				aeth::offset([0.0, frame_h]);
@@ -399,7 +411,48 @@ impl Tab {
 				});
 			}
 			
-			// TODO: download and version select here
+			// Download and Version
+			let h = frame_h * 2.0;
+			let draw = imgui::get_window_draw_list();
+			let clr = imgui::get_color(imgui::Col::Text);
+			aeth::offset([0.0, imgui::get_content_region_avail().y() - h]);
+			let pos = imgui::get_cursor_pos();
+			
+			// Download
+			let size = [sidebar_w - h - 2.0, h];
+			let p = imgui::get_cursor_screen_pos();
+			if imgui::invisible_button("##download", size, imgui::ButtonFlags::None) {
+				// download it here
+			}
+			draw.add_rect_filled(p, p.add(size), imgui::get_color(if imgui::is_item_hovered() {imgui::Col::TabHovered} else {imgui::Col::TabActive}), style.frame_rounding, imgui::DrawFlags::RoundCornersLeft);
+			draw.add_text(p.add([size.x() / 2.0 - imgui::calc_text_size2("Download").x() / 2.0, style.frame_padding.y()]), clr, "Download");
+			let mut download_size = 0;
+			for i in (0..m.versions.iter().position(|v| v.version == m.selected_version).unwrap() + 1).rev() {
+				let v = &m.versions[i];
+				download_size += v.size;
+				if v.patch {break}
+			}
+			let text = format!("v{} ({})", version_to_string(m.selected_version), aeth::format_size(download_size as u64));
+			let text_size = imgui::calc_text_size2(&text);
+			draw.add_text(p.add([size.x() / 2.0 - text_size.x() / 2.0, h - text_size.y() - style.frame_padding.y()]), clr, &text);
+			
+			// Version
+			imgui::set_cursor_pos(pos.add([sidebar_w - h, 0.0]));
+			let size = [h; 2];
+			let p = imgui::get_cursor_screen_pos();
+			if imgui::invisible_button("##version", size, imgui::ButtonFlags::None) {imgui::open_popup("versionselect", imgui::PopupFlags::None)}
+			draw.add_rect_filled(p, p.add(size), imgui::get_color(if imgui::is_item_hovered() {imgui::Col::TabHovered} else {imgui::Col::TabActive}), style.frame_rounding, imgui::DrawFlags::RoundCornersRight);
+			imgui::push_font(aeth::fa5());
+			draw.add_text(p.add(size.div([2.0; 2])).sub(imgui::calc_text_size2("").div([2.0; 2])), clr, "");
+			imgui::pop_font();
+			
+			aeth::popup("versionselect", imgui::WindowFlags::None, || {
+				for v in &m.versions {
+					if imgui::selectable(&version_to_string(v.version), m.selected_version == v.version, imgui::SelectableFlags::None, [0.0; 2]) {
+						m.selected_version = v.version;
+					}
+				}
+			});
 		});
 		
 		// Content
@@ -496,6 +549,9 @@ impl Tab {
 			}
 			
 			*page.lock().unwrap() = Some(ModPage {
+				current_preview: 0,
+				selected_version: m.versions.iter().last().unwrap().version,
+				
 				id: m.id,
 				name: m.name,
 				description: m.description,
@@ -506,8 +562,6 @@ impl Tab {
 				contributors: m.contributors,
 				dependencies: m.dependencies,
 				versions: m.versions,
-				
-				current_preview: 0,
 			});
 		});
 	}

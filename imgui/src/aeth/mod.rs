@@ -63,8 +63,8 @@ impl F2 for [f32; 2] {
 }
 
 pub static mut FA5: *mut imgui::sys::ImFont = std::ptr::null_mut::<imgui::sys::ImFont>();
-pub fn fa5() -> &'static mut imgui::sys::ImFont {
-	unsafe{&mut *FA5}
+pub fn fa5() -> *const imgui::sys::ImFont {
+	unsafe{FA5 as *const _}
 }
 
 pub fn frame_height() -> f32 {
@@ -81,6 +81,14 @@ pub fn offset(xy: [f32; 2]) {
 
 pub fn next_max_width() {
 	imgui::set_next_item_width(imgui::get_column_width(-1));
+}
+
+pub fn text_clickable(text: &str) -> bool {
+	let draw = imgui::get_window_draw_list();
+	let pos = imgui::get_cursor_screen_pos();
+	let r = imgui::invisible_button(text, imgui::calc_text_size2(text), imgui::ButtonFlags::None);
+	draw.add_text(pos, imgui::get_color(if imgui::is_item_hovered() {imgui::Col::CheckMark} else {imgui::Col::Text}), text);
+	r
 }
 
 pub fn button_icon(icon: &str) -> bool {
