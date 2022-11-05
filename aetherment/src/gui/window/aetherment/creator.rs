@@ -9,10 +9,10 @@ use crate::{gui::aeth::{self, F2}, creator::{meta::*, modpack}, CLIENT, SERVER};
 struct OnlineMod {
 	id: i32,
 	name: String,
-	description: String,
-	tags: Vec<i16>,
+	#[allow(dead_code)] description: String,
+	#[allow(dead_code)] tags: Vec<i16>,
 	previews: Vec<String>,
-	content_rating: i32,
+	#[allow(dead_code)] content_rating: i32,
 	version: i32,
 }
 

@@ -1,14 +1,33 @@
+using System;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using Dalamud.Game.ClientState.Objects.Types;
+using Dalamud.Plugin.Ipc;
 
 namespace Aetherment;
 
-public class Penumbra {
+public class Penumbra : IDisposable {
+	private ICallGateSubscriber<string, object> postSettingsDraw;
+	
 	public Penumbra() {
 		redraw = Redraw;
 		redrawSelf = RedrawSelf;
 		addTempMod = AddTempMod;
 		removeTempMod = RemoveTempMod;
+		addModEntry = AddModEntry;
+		
+		postSettingsDraw = Aetherment.Interface.GetIpcSubscriber<string, object>("Penumbra.PostSettingsDraw");
+		postSettingsDraw.Subscribe(DrawSettings);
+	}
+	
+	public void Dispose() {
+		postSettingsDraw.Unsubscribe(DrawSettings);
+	}
+	
+	private static void DrawSettings(string id) {
+		if(Aetherment.state == IntPtr.Zero) return;
+		
+		draw_settings(Aetherment.state, id);
 	}
 	
 	public RedrawDelegate redraw;
@@ -41,4 +60,19 @@ public class Penumbra {
 	public byte RemoveTempMod(FFI.String id, int priority) {
 		return Aetherment.Interface.GetIpcSubscriber<string, int, byte>("Penumbra.RemoveTemporaryModAll").InvokeFunc(id, priority);
 	}
+	
+	public AddModEntryDelegate addModEntry;
+	public delegate byte AddModEntryDelegate(FFI.String id);
+	public byte AddModEntry(FFI.String id) {
+		Aetherment.Interface.GetIpcSubscriber<string, byte>("Penumbra.AddMod").InvokeFunc(id);
+		Aetherment.Interface.GetIpcSubscriber<string, string, byte>("Penumbra.ReloadMod").InvokeFunc(id, "");
+		return 0; // eh w/e, idk about what it returns
+	}
+	
+	// Returning FFI.Str seems to not work on the rust side, idk why, cba figuring out why
+	public string RootPath() {
+		return Aetherment.Interface.GetIpcSubscriber<string>("Penumbra.GetModDirectory").InvokeFunc();
+	}
+	
+	[DllImport("aetherment_core.dll")] private static extern void draw_settings(IntPtr state, FFI.Str id);
 }

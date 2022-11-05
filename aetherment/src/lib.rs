@@ -113,6 +113,7 @@ pub mod config;
 pub mod apply;
 pub mod gui {
 	pub use imgui::aeth;
+	pub mod mod_settings;
 	pub mod window {
 		pub mod aetherment;
 	}
@@ -150,6 +151,8 @@ pub struct Initializers<'a> {
 	penumbra_redraw_self: fn(),
 	penumbra_add_mod: fn(String, String, String, i32) -> u8,
 	penumbra_remove_mod: fn(String, i32) -> u8,
+	penumbra_mod_entry: fn(String) -> u8,
+	penumbra_root_path: &'a str, // this is not a static lifetime, lol
 }
 
 #[no_mangle]
@@ -169,6 +172,8 @@ pub extern fn initialize(init: Initializers) -> *mut State {
 		api::penumbra::REDRAWSELF = init.penumbra_redraw_self;
 		api::penumbra::ADDMOD = init.penumbra_add_mod;
 		api::penumbra::REMOVEMOD = init.penumbra_remove_mod;
+		api::penumbra::ADDMODENTRY = init.penumbra_mod_entry;
+		api::penumbra::ROOTPATH = Some(init.penumbra_root_path.to_owned());
 	}
 	
 	// std::panic::set_backtrace_style(BacktraceStyle::Short);
@@ -202,9 +207,12 @@ pub extern fn destroy(state: *mut State) {
 }
 
 #[no_mangle]
-pub extern fn update_resources(_state: *mut State, fa5: *mut imgui::sys::ImFont) {
+pub extern fn update_resources(_state: *mut State, fa5: *mut imgui::sys::ImFont, penumbra_root_path: &str) {
 	// let state = unsafe{&mut *state};
-	unsafe{gui::aeth::FA5 = &mut *fa5}
+	unsafe{
+		gui::aeth::FA5 = &mut *fa5;
+		api::penumbra::ROOTPATH = Some(penumbra_root_path.to_owned());
+	}
 }
 
 #[no_mangle]
@@ -226,6 +234,16 @@ pub extern fn draw(state: *mut State) {
 	// run server, most definitely shouldnt do this in draw but oh well
 	let mut state = unsafe{&mut *(state as *mut State)};
 	handle_server(&mut state);
+}
+
+#[no_mangle]
+pub extern fn draw_settings(state: *mut State, id: &str) {
+	let state = state as usize;
+	
+	std::panic::catch_unwind(|| {
+		let state = unsafe{&mut *(state as *mut State)};
+		gui::mod_settings::draw(&mut state.data, id);
+	}).ok();
 }
 
 #[no_mangle]

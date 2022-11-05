@@ -27,7 +27,7 @@ public class Aetherment : IDalamudPlugin {
 	
 	private const string maincommand = "/aetherment";
 	
-	private IntPtr state;
+	public static IntPtr state;
 	private Penumbra penumbra;
 	private TextureManager textureManager;
 	private TextureFinder texFinder;
@@ -50,6 +50,8 @@ public class Aetherment : IDalamudPlugin {
 		public IntPtr p_rs;
 		public IntPtr p_am;
 		public IntPtr p_rm;
+		public IntPtr p_ame;
+		public FFI.Str p_rp;
 	}
 	
 	public unsafe Aetherment() {
@@ -73,6 +75,8 @@ public class Aetherment : IDalamudPlugin {
 			p_rs = Marshal.GetFunctionPointerForDelegate(penumbra.redrawSelf),
 			p_am = Marshal.GetFunctionPointerForDelegate(penumbra.addTempMod),
 			p_rm = Marshal.GetFunctionPointerForDelegate(penumbra.removeTempMod),
+			p_ame = Marshal.GetFunctionPointerForDelegate(penumbra.addModEntry),
+			p_rp = penumbra.RootPath(),
 		};
 		
 		state = initialize(init);
@@ -101,14 +105,17 @@ public class Aetherment : IDalamudPlugin {
 	public void Dispose() {
 		Interface.UiBuilder.Draw -= Draw;
 		Interface.UiBuilder.AfterBuildFonts -= UpdateResources;
+		penumbra.Dispose();
 		Commands.RemoveHandler(maincommand);
 		if(watcher != null)
 			watcher.Dispose();
 		destroy(state);
+		state = IntPtr.Zero;
 	}
 	
 	public unsafe void UpdateResources() {
-		update_resources(state, (IntPtr)Dalamud.Interface.UiBuilder.IconFont.NativePtr);
+		// TODO: call this whenever penumbra root path changes
+		update_resources(state, (IntPtr)Dalamud.Interface.UiBuilder.IconFont.NativePtr, penumbra.RootPath());
 	}
 	
 	private void Draw() {
@@ -201,5 +208,5 @@ public class Aetherment : IDalamudPlugin {
 	[DllImport("aetherment_core.dll")] private static extern void destroy(IntPtr state);
 	[DllImport("aetherment_core.dll")] private static extern void draw(IntPtr state);
 	[DllImport("aetherment_core.dll")] private static extern void command(IntPtr state, FFI.Str args);
-	[DllImport("aetherment_core.dll")] private static extern void update_resources(IntPtr state, IntPtr fa5);
+	[DllImport("aetherment_core.dll")] private static extern void update_resources(IntPtr state, IntPtr fa5, FFI.Str penumbra_root_path);
 }

@@ -44,7 +44,7 @@ pub struct SearchRequest {
 struct ModNode {
 	id: i32,
 	name: String,
-	tags: Vec<i16>,
+	#[allow(dead_code)] tags: Vec<i16>,
 	thumbnail: Arc<Mutex<Texture>>,
 	content_rating: u8,
 	author: IdName
@@ -65,7 +65,7 @@ struct ModPage {
 	description: String,
 	tags: Vec<i16>,
 	previews: Vec<Arc<Mutex<Texture>>>,
-	content_rating: u8,
+	#[allow(dead_code)] content_rating: u8,
 	author: IdNameImg,
 	contributors: Vec<IdNameImg>,
 	dependencies: Vec<IdNameImg>,
@@ -114,7 +114,7 @@ impl Tab {
 		t
 	}
 	
-	pub fn draw(&mut self, _state: &mut crate::Data) {
+	pub fn draw(&mut self, state: &mut crate::Data) {
 		let mut bar = aeth::tab_bar("browser_tabs")
 			.dock_top()
 			.tab("Search", || {
@@ -146,10 +146,10 @@ impl Tab {
 		
 		let pages = self.mod_pages.borrow();
 		for (idname, m) in pages.iter() {
-			if let Some(m) = m.lock().unwrap().as_mut() {
+			if let Some(m2) = m.lock().unwrap().as_mut() {
 				bar = bar.tab(&idname.name, || {
-					imgui::push_id_i32(m.id);
-					self.draw_mod_page(m);
+					imgui::push_id_i32(m2.id);
+					self.draw_mod_page(m2, m.clone(), state);
 					imgui::pop_id();
 				});
 			} else {
@@ -319,7 +319,7 @@ impl Tab {
 		draw.add_text(pos.add([10.0, d + 1.0]), imgui::get_color(imgui::Col::TextDisabled), &format!("by {}", m.author.name));
 	}
 
-	fn draw_mod_page(&self, m: &mut ModPage) {
+	fn draw_mod_page(&self, m: &mut ModPage, m2: Arc<Mutex<Option<ModPage>>>, state: &mut crate::Data) {
 		let style = imgui::get_style();
 		let frame_h = aeth::frame_height();
 		
@@ -422,7 +422,28 @@ impl Tab {
 			let size = [sidebar_w - h - 2.0, h];
 			let p = imgui::get_cursor_screen_pos();
 			if imgui::invisible_button("##download", size, imgui::ButtonFlags::None) {
-				// download it here
+				let version = m.selected_version;
+				let token = state.user.as_ref().map(|u| u.token.to_owned());
+				thread::spawn(move || {
+					// TODO: progress bar, block other downloads, perhabs queue
+					let m = m2.lock().unwrap();
+					let m = m.as_ref().unwrap();
+					crate::apply::download::download_mod(crate::apply::download::DownloadInfo {
+						id: m.id,
+						name: &m.name,
+						description: &m.description,
+						author: &{
+							let mut a = vec![m.author.name.as_str()];
+							for c in &m.contributors {
+								a.push(&c.name);
+							}
+							
+							a.join(", ")
+						},
+						version,
+						tags: m.tags.iter().map(|t| crate::creator::tags::TAGS[*t as usize].name.as_str()).collect::<Vec<&str>>()
+					}, token.as_deref()).unwrap();
+				});
 			}
 			draw.add_rect_filled(p, p.add(size), imgui::get_color(if imgui::is_item_hovered() {imgui::Col::TabHovered} else {imgui::Col::TabActive}), style.frame_rounding, imgui::DrawFlags::RoundCornersLeft);
 			draw.add_text(p.add([size.x() / 2.0 - imgui::calc_text_size2("Download").x() / 2.0, style.frame_padding.y()]), clr, "Download");

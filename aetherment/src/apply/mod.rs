@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::creator::tags::TAGS;
 use self::penumbra::ConfOption;
 
+pub mod download;
 pub mod penumbra;
 
 #[derive(Deserialize, Serialize, Clone, Debug, Default)]

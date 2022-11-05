@@ -6,8 +6,8 @@ namespace Aetherment.FFI;
 
 [StructLayout(LayoutKind.Explicit)]
 public class Str {
-	[FieldOffset(0x0)] private IntPtr ptr;
-	[FieldOffset(0x8)] private ulong length;
+	[FieldOffset(0x0)] public IntPtr ptr;
+	[FieldOffset(0x8)] public ulong length;
 	
 	public Str(string str) {
 		var length = Encoding.UTF8.GetByteCount(str);
@@ -24,6 +24,7 @@ public class Str {
 	}
 	
 	~Str() {
+		// unsafe{PluginLog.Log($"Free str {Encoding.UTF8.GetString((byte*)ptr, (int)length)}");}
 		Marshal.FreeHGlobal(ptr);
 	}
 	

@@ -35,10 +35,10 @@ pub struct ModPack<W: Write + Read + Seek + std::fmt::Debug> {
 	prev_files: HashMap<[u8; 32], Vec<String>>,
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default)]
 pub struct Index {
-	locations: HashMap<[u8; 32], i64>,
-	paths: HashMap<String, [u8; 32]>,
+	pub locations: HashMap<[u8; 32], i64>,
+	pub paths: HashMap<String, [u8; 32]>,
 }
 
 impl<'a, W: Write + Read + Seek + std::fmt::Debug> ModPack<W> {
@@ -146,17 +146,18 @@ impl<'a, W: Write + Read + Seek + std::fmt::Debug> ModPack<W> {
 			index.locations.insert(hash.clone(), -1);
 			index.paths.insert(path.into(), hash);
 		} else {
-			let mut writer = flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::best());
-			
-			file.seek(SeekFrom::Start(0))?;
-			while let readcount = file.read(&mut buf)? && readcount != 0 {
-				writer.write_all(&buf[0..readcount])?;
-			}
-			
 			let mut inner = self.inner.lock().unwrap();
 			let offset = inner.stream_position()? as i64;
 			let mut index = self.index.lock().unwrap();
-			if index.locations.insert(hash.clone(), offset).is_none() {
+			if !index.locations.contains_key(&hash) {
+				index.locations.insert(hash.clone(), offset);
+				file.seek(SeekFrom::Start(0))?;
+				
+				let mut writer = flate2::write::ZlibEncoder::new(Vec::new(), flate2::Compression::best());
+				while let readcount = file.read(&mut buf)? && readcount != 0 {
+					writer.write_all(&buf[0..readcount])?;
+				}
+				
 				let blob = writer.finish()?;
 				inner.write_all(&(blob.len() as u32).to_le_bytes())?;
 				inner.write_all(&blob)?;
@@ -194,8 +195,8 @@ impl<'a, W: Write + Read + Seek + std::fmt::Debug> ModPack<W> {
 		index.paths.iter().filter_map(|(path, hash)| index.locations.get(hash).map_or(None, |o| if *o == -1 {None} else {Some(path.to_owned())})).collect()
 	}
 	
-	pub fn index(&self) -> Index {
-		self.index.lock().unwrap().clone()
+	pub fn index(&self) -> std::sync::MutexGuard<Index> {
+		self.index.lock().unwrap()
 	}
 	
 	pub fn version(&self) -> i32 {
