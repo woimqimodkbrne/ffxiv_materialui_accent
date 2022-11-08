@@ -11,6 +11,7 @@ pub struct DownloadInfo<'a> {
 }
 
 // TODO: queue system
+// TODO: this extracts all files into penumbra, future mods might not be for penumbra. so only extract penumbra required in there
 pub fn download_mod(info: DownloadInfo, token: Option<&str>) -> Result<(), Box<dyn std::error::Error>> {
 	let mut req = CLIENT.get(format!("{SERVER}/api/mod/{}/download/{}", info.id, info.version));
 	if let Some(token) = token {
@@ -18,7 +19,7 @@ pub fn download_mod(info: DownloadInfo, token: Option<&str>) -> Result<(), Box<d
 	}
 	
 	let downloads = req.send()?.json::<Vec<String>>()?;
-	let mod_dir = crate::api::penumbra::root_path().join(info.id.to_string());
+	let mod_dir = crate::api::penumbra::root_path().join(format!("aetherment-{}", info.id));
 	let files_dir = mod_dir.join("files");
 	fs::create_dir_all(&files_dir)?;
 	let downloads_dir = mod_dir.join("downloads");

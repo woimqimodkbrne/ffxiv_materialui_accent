@@ -1,7 +1,7 @@
 use std::{path::Path, fs::{File, self}, collections::{HashMap, HashSet}, io::{Seek, Read, Cursor, Write, SeekFrom}, sync::{Mutex, Arc}};
 use binrw::{BinWrite, BinReaderExt};
 use rayon::prelude::{IntoParallelIterator, ParallelIterator};
-use crate::apply::penumbra::ConfOption;
+use crate::apply::penumbra::MetaOption;
 
 // .amp: Aetherment Mod Pack
 // .amp.patch: Aetherment Mod Pack Patch
@@ -278,8 +278,8 @@ R: Read + Seek {
 	// Penumbra files
 	if let Some(penumbra) = &datas.penumbra {
 		penumbra.files.iter().for_each(|(_, layers)| layers.0.iter().for_each(|layer| layer.paths.iter().for_each(|p| files.push(p.as_str()))));
-		penumbra.options.iter().for_each(|o| match o {
-				ConfOption::Single(opt) | ConfOption::Multi(opt) => opt.options.iter().for_each(|o| o.files.iter().for_each(|(_, layers)| layers.0.iter().for_each(|layer| layer.paths.iter().for_each(|p| files.push(p.as_str()))))),
+		penumbra.options.iter().for_each(|o| match o.deref() {
+				MetaOption::Single(opt) | MetaOption::Multi(opt) => opt.options.iter().for_each(|o| o.files.iter().for_each(|(_, layers)| layers.0.iter().for_each(|layer| layer.paths.iter().for_each(|p| files.push(p.as_str()))))),
 				_ => {},
 			}
 		);

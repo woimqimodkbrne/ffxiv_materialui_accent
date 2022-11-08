@@ -129,7 +129,7 @@ P2: AsRef<Path> {
 		))
 	};
 	
-	let mut penumbra = penumbra::Config::default();
+	let mut penumbra = penumbra::Meta::default();
 	
 	// Non option paths
 	for rootpath in ["ui/uld", "ui/icon"] {
@@ -167,27 +167,25 @@ P2: AsRef<Path> {
 			option.options.push(sub_option);
 		}
 		
-		penumbra.options.push(penumbra::ConfOption::Single(option));
+		penumbra.options.push(penumbra::MetaOptionUnique::new(penumbra::MetaOption::Single(option)));
 	}
 	
 	// Color options, reversed insert to have correct order above non color options
 	for clr in v1_meta.color_options.into_iter().rev() {
-		penumbra.options.insert(0, penumbra::ConfOption::Rgb(penumbra::TypRgb {
-			id: clr.id,
+		penumbra.options.insert(0, penumbra::MetaOptionUnique::new_raw(clr.id, penumbra::MetaOption::Rgb(penumbra::TypRgb {
 			name: clr.name,
 			description: "".to_owned(),
 			default: [clr.default["r"] as f32 / 255.0, clr.default["g"] as f32 / 255.0, clr.default["b"] as f32 / 255.0],
-		}));
+		})));
 	}
 	
 	for id in used_mui_colors {
 		let (name, default) = mui_colors[id.as_str()];
-		penumbra.options.insert(0, penumbra::ConfOption::Rgb(penumbra::TypRgb {
-			id,
+		penumbra.options.insert(0, penumbra::MetaOptionUnique::new_raw(id, penumbra::MetaOption::Rgb(penumbra::TypRgb {
 			name: name.to_owned(),
 			description: "".to_owned(),
 			default,
-		}));
+		})));
 	}
 	
 	File::create(target_dir.join("datas.json"))?.write_all(

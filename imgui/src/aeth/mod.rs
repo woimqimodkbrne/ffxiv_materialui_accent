@@ -268,7 +268,8 @@ pub fn image(texture_id: usize, size: [f32; 2], u: [f32; 2], v: [f32; 2], clr: u
 	draw.pop_texture_id();
 }
 
-pub fn frame_sized<F>(scope: F) where F: FnOnce() {
+pub fn frame_sized<F, R>(scope: F) -> R where
+F: FnOnce() -> R {
 	let draw = imgui::get_window_draw_list();
 	draw.channels_split(2);
 	draw.channels_set_current(1);
@@ -276,10 +277,11 @@ pub fn frame_sized<F>(scope: F) where F: FnOnce() {
 	let style = imgui::get_style();
 	offset([0.0, style.frame_padding.y()]);
 	imgui::indent_f32(style.frame_padding.x());
-	scope();
+	let r = scope();
 	imgui::unindent_f32(style.frame_padding.x());
 	imgui::end_group();
 	draw.channels_set_current(0);
 	draw.add_rect_filled(imgui::get_item_rect_min(), imgui::get_item_rect_max().add(style.frame_padding), imgui::get_color(imgui::Col::FrameBg), style.frame_rounding, imgui::DrawFlags::None);
 	draw.channels_merge();
+	r
 }

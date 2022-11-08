@@ -87,7 +87,7 @@ P2: AsRef<Path> {
 					for entry in fs::read_dir(&penumbra_dir)?.filter_map(|v| {let v = v.ok()?; if v.file_name().to_str()?.starts_with("group_") {Some(v)} else {None}}) {
 						log!("{}", entry.path().file_name().unwrap().to_str().unwrap());
 						let group: PenumbraGroup = serde_json::from_reader(File::open(entry.path())?)?;
-						options.push(json!({
+						options.push((crate::random_str(8), json!({
 							"name": group.name,
 							"description": group.description,
 							"type": group.r#type.to_lowercase(),
@@ -98,7 +98,7 @@ P2: AsRef<Path> {
 								}
 								options
 							})
-						}));
+						})));
 					}
 					
 					options

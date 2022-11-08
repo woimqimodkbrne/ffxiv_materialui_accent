@@ -1,7 +1,6 @@
-using System;
+// TODO: get rid of this and use Str instead, should work for bothway now (probably)
 using System.Runtime.InteropServices;
 using System.Text;
-using Dalamud.Logging;
 
 namespace Aetherment.FFI;
 

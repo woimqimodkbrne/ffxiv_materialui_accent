@@ -1,8 +1,7 @@
-use std::{collections::HashMap, fs::File, path::{PathBuf, Path}, io::Write};
+use std::{collections::HashMap, fs::File, path::PathBuf, io::{Write, Read}};
 use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Serialize)]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 #[serde(default)]
 pub struct Config {
 	pub local_path: String,
@@ -33,31 +32,43 @@ impl Default for Config {
 }
 
 impl Config {
-	pub fn load<T>(path: T) -> Self where T: AsRef<Path> {
-		let mut config = if let Ok(f) = File::open(&path) {
-			serde_json::from_reader(f).unwrap()
+	pub fn load<T>(path: T) -> Self where
+	T: Into<PathBuf> {
+		let path = path.into();
+		let mut config = if let Ok(mut f) = File::open(&path) {
+			// serde_json::from_reader(f).unwrap()
+			let mut buf = Vec::new();
+			if f.read_to_end(&mut buf).is_ok() && let Ok(c) = serde_json::from_slice(&buf) {
+				c
+			} else {
+				Config::default()
+			}
 		} else {
 			Config::default()
 		};
 		
-		config.path = path.as_ref().to_owned();
-		config.local_path.reserve(128);
+		config.path = path;
 		config
 	}
 	
 	pub fn mark_for_changes(&mut self) {
-		self.json = serde_json::json!(self).to_string();
+		self.json = serde_json::to_string(self).unwrap();
 	}
 	
 	pub fn save(&mut self) -> std::io::Result<()> {
-		let json = serde_json::json!(self).to_string();
+		let json = serde_json::to_string(self).unwrap();
 		if self.json != json {
+			std::fs::create_dir_all(self.path.parent().unwrap())?;
 			File::create(&self.path)?.write_all(json.as_bytes())?;
 		}
 		Ok(())
 	}
 	
 	pub fn save_forced(&self) -> std::io::Result<()> {
+		if let Some(parent) = self.path.parent() {
+			std::fs::create_dir_all(parent)?;
+		}
+		
 		File::create(&self.path)?.write_all(serde_json::to_string(self)?.as_bytes())?;
 		Ok(())
 	}

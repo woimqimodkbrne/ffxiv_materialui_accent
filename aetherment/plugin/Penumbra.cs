@@ -15,6 +15,8 @@ public class Penumbra : IDisposable {
 		addTempMod = AddTempMod;
 		removeTempMod = RemoveTempMod;
 		addModEntry = AddModEntry;
+		rootPath = RootPath;
+		activeCollection = ActiveCollection;
 		
 		postSettingsDraw = Aetherment.Interface.GetIpcSubscriber<string, object>("Penumbra.PostSettingsDraw");
 		postSettingsDraw.Subscribe(DrawSettings);
@@ -27,7 +29,11 @@ public class Penumbra : IDisposable {
 	private static void DrawSettings(string id) {
 		if(Aetherment.state == IntPtr.Zero) return;
 		
-		draw_settings(Aetherment.state, id);
+		try {
+			draw_settings(Aetherment.state, id);
+		} catch(Exception e) {
+			PluginLog.Error("draw_settings somehow paniced, even tho it's supposed to catch those, wtf", e);
+		}
 	}
 	
 	public RedrawDelegate redraw;
@@ -69,9 +75,17 @@ public class Penumbra : IDisposable {
 		return 0; // eh w/e, idk about what it returns
 	}
 	
-	// Returning FFI.Str seems to not work on the rust side, idk why, cba figuring out why
-	public string RootPath() {
+	public RootPathDelegate rootPath;
+	public delegate FFI.Str RootPathDelegate();
+	public FFI.Str RootPath() {
 		return Aetherment.Interface.GetIpcSubscriber<string>("Penumbra.GetModDirectory").InvokeFunc();
+	}
+	
+	public ActiveCollectionDelegate activeCollection;
+	public delegate FFI.Str ActiveCollectionDelegate();
+	public FFI.Str ActiveCollection() {
+		// why is this named differently than what is in IPenumbraApi
+		return Aetherment.Interface.GetIpcSubscriber<string>("Penumbra.GetCurrentCollectionName").InvokeFunc();
 	}
 	
 	[DllImport("aetherment_core.dll")] private static extern void draw_settings(IntPtr state, FFI.Str id);

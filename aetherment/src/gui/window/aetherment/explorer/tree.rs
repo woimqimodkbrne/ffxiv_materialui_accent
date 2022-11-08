@@ -88,7 +88,7 @@ impl Tree {
 				if !node.is_enabled {imgui::pop_style_color(1)}
 				node.children.iter().for_each(|(_, n)| if self.nodes[*n].is_folder {r = r.or(self.draw_node(*n))});
 				node.children.iter().for_each(|(_, n)| if !self.nodes[*n].is_folder {r = r.or(self.draw_node(*n))});
-			}) && !node.is_enabled {imgui::pop_style_color(1)}
+			}).is_some() && !node.is_enabled {imgui::pop_style_color(1)}
 		} else {
 			if imgui::selectable(
 				&node.name,

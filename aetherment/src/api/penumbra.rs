@@ -28,8 +28,13 @@ S: Into<String> {
 	unsafe{ADDMODENTRY(id.into())}
 }
 
-pub(in crate) static mut ROOTPATH: Option<String> = None;
+pub(in crate) static mut ROOTPATH: fn() -> *const u128 = || {0 as *const _}; // actually returns a &str, but 'static doesn't work and idk how to handle the lifetime. transmute this
 pub fn root_path() -> PathBuf {
 	// TODO: probably should do some checks here to check if its valid
-	unsafe{ROOTPATH.as_ref().unwrap()}.into()
+	unsafe{std::mem::transmute::<_, &str>(*ROOTPATH())}.into()
+}
+
+pub(in crate) static mut ACTIVECOLLECTION: fn() -> *const u128 = || {0 as *const _};
+pub fn active_collection() -> &'static str {
+	unsafe{std::mem::transmute::<_, &str>(*ACTIVECOLLECTION())}
 }

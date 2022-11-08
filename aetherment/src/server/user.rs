@@ -1,6 +1,5 @@
-use std::io::Cursor;
 use serde::Deserialize;
-use crate::{SERVER, SERVERCDN, CLIENT, gui::aeth::{Texture, TextureOptions}};
+use crate::{SERVER, CLIENT, gui::aeth::{Texture, TextureOptions}};
 
 pub struct User {
 	pub id: i32,
@@ -29,26 +28,19 @@ impl User {
 				name: name,
 				token,
 				avatar: if let Some(avatar) = &avatar {
-					let resp_avatar = CLIENT.get(format!("{SERVERCDN}/u/{}/p/{}", id, avatar))
-						.send()
-						.ok()?;
+					let img = image::io::Reader::new(std::io::Cursor::new(crate::get_resource(&format!("/u/{id}/p/{avatar}"))))
+						.with_guessed_format()
+						.unwrap()
+						.decode()
+						.unwrap();
 					
 					Texture::with_data(TextureOptions {
-						width: 64,
-						height: 64,
+						width: img.width() as i32,
+						height: img.height() as i32,
 						format: 28, // DXGI_FORMAT_R8G8B8A8_UNORM
 						usage: 1, // D3D11_USAGE_IMMUTABLE
 						cpu_access_flags: 0,
-					}, &image::io::Reader::new(Cursor::new(resp_avatar
-						.bytes()
-						.ok()?
-						.to_vec()))
-						.with_guessed_format()
-						.ok()?
-						.decode()
-						.ok()?
-						.resize_exact(64, 64, image::imageops::FilterType::Triangle)
-						.into_rgba8())
+					}, &img.into_rgba8())
 				} else {
 					// TODO: default avatar
 					Texture::empty()

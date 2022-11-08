@@ -1,5 +1,5 @@
 use std::{fs::{File, self}, path::PathBuf, io::{Write, Cursor, BufReader, BufRead, Read, Seek}};
-use crate::{gui::aeth::{self, F2}, GAME, apply::{self, penumbra::{self, ConfOption, PenumbraFile, FileLayer}}};
+use crate::{gui::aeth::{self, F2}, GAME, apply::{self, penumbra::{self, MetaOption, PenumbraFile, FileLayer}}};
 
 mod tree;
 mod viewer;
@@ -99,7 +99,7 @@ impl Tab {
 				// aeth::combo("##optionselect", &format!("{}/{}", m.opt, m.subopt), imgui::ComboFlags::None, || {
 				if imgui::begin_combo("##optionselect", &format!("{}/{}", m.opt, m.subopt), imgui::ComboFlags::None) { // scoped kinda sucks cuz closures suck
 					let mut a = if imgui::selectable("Default", m.opt == "" && m.subopt == "", imgui::SelectableFlags::None, [0.0, 0.0]) {Some(("".to_owned(), "".to_owned()))} else {None};
-					m.datas.penumbra.as_mut().unwrap().options.iter_mut().for_each(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o {
+					m.datas.penumbra.as_mut().unwrap().options.iter_mut().for_each(|o| if let MetaOption::Multi(opt) | MetaOption::Single(opt) = o.deref() {
 						aeth::tree(&opt.name, || {
 							opt.options.iter().for_each(|o2| if imgui::selectable(&o2.name, m.opt == opt.name && m.subopt == o2.name, imgui::SelectableFlags::None, [0.0, 0.0]) {
 								a = Some((opt.name.clone(), o2.name.clone()));
@@ -139,7 +139,7 @@ impl Tab {
 						self.load_mod(&m, PathBuf::from(&state.config.local_path).join(&m));
 					}
 				}
-			});
+			}).is_some();
 		}).right(400.0, || {
 			aeth::child("viewer", [0.0, -aeth::frame_height() - imgui::get_style().item_spacing.y()], false, imgui::WindowFlags::None, || {
 				if let Some(viewer) = self.viewer.as_mut() {
@@ -252,14 +252,14 @@ impl Tab {
 		
 		let mut datas: apply::Datas = serde_json::from_reader(File::open(path.join("datas.json")).unwrap()).unwrap();
 		if datas.penumbra.is_none() {
-			datas.penumbra = Some(penumbra::Config::default());
+			datas.penumbra = Some(penumbra::Meta::default());
 		}
 		
 		datas.penumbra.as_ref().unwrap().files.keys()
 			.for_each(|p| tree.add_node(p));
 		
 		datas.penumbra.as_ref().unwrap().options.iter()
-			.for_each(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o {
+			.for_each(|o| if let MetaOption::Multi(opt) | MetaOption::Single(opt) = o.deref() {
 				opt.options.iter()
 					.for_each(|s| s.files.keys()
 						.for_each(|p| tree.add_node(p)))
@@ -292,7 +292,7 @@ impl Tab {
 				.for_each(|p| m.tree.node_state(p, true));
 		} else {
 			m.datas.penumbra.as_ref().unwrap().options.iter()
-				.for_each(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o && opt.name == m.opt {
+				.for_each(|o| if let MetaOption::Multi(opt) | MetaOption::Single(opt) = o.deref() && opt.name == m.opt {
 					opt.options.iter()
 						.filter(|s| s.name == m.subopt)
 						.for_each(|s| s.files.keys()
@@ -400,7 +400,7 @@ fn valid_path_mod(m: &Option<Mod>, path: &str) -> bool {
 		if let Some(m) = m {
 			if m.opt != "" {
 				m.datas.penumbra.as_ref().unwrap().options.iter()
-					.find_map(|o| if let ConfOption::Multi(opt) | ConfOption::Single(opt) = o && opt.name == m.opt {
+					.find_map(|o| if let MetaOption::Multi(opt) | MetaOption::Single(opt) = o.deref() && opt.name == m.opt {
 						Some(opt.options.iter().find_map(|o| if o.name == m.subopt {Some(o)} else {None})?)
 					} else {
 						None

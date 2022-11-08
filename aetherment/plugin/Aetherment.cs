@@ -38,7 +38,7 @@ public class Aetherment : IDalamudPlugin {
 	[StructLayout(LayoutKind.Sequential)]
 	private unsafe struct Initializers {
 		public FFI.Str binary_path;
-		public FFI.Str config_path;
+		// public FFI.Str config_path;
 		public IntPtr log;
 		public IntPtr t_c;
 		public IntPtr t_cd;
@@ -51,19 +51,20 @@ public class Aetherment : IDalamudPlugin {
 		public IntPtr p_am;
 		public IntPtr p_rm;
 		public IntPtr p_ame;
-		public FFI.Str p_rp;
+		public IntPtr p_rp;
+		public IntPtr p_ac;
 	}
 	
 	public unsafe Aetherment() {
-		logDelegate = Log;
+		log = Log;
 		penumbra = new();
 		textureManager = new();
 		texFinder = new();
 		
 		var init = new Initializers {
 			binary_path = Interface.AssemblyLocation.DirectoryName!,
-			config_path = Interface.ConfigDirectory.FullName,
-			log = Marshal.GetFunctionPointerForDelegate(logDelegate),
+			// config_path = Interface.ConfigDirectory.FullName,
+			log = Marshal.GetFunctionPointerForDelegate(log),
 			t_c = Marshal.GetFunctionPointerForDelegate(textureManager.createTexture),
 			t_cd = Marshal.GetFunctionPointerForDelegate(textureManager.createTextureData),
 			t_d = Marshal.GetFunctionPointerForDelegate(textureManager.destroyResource),
@@ -76,7 +77,8 @@ public class Aetherment : IDalamudPlugin {
 			p_am = Marshal.GetFunctionPointerForDelegate(penumbra.addTempMod),
 			p_rm = Marshal.GetFunctionPointerForDelegate(penumbra.removeTempMod),
 			p_ame = Marshal.GetFunctionPointerForDelegate(penumbra.addModEntry),
-			p_rp = penumbra.RootPath(),
+			p_rp = Marshal.GetFunctionPointerForDelegate(penumbra.rootPath),
+			p_ac = Marshal.GetFunctionPointerForDelegate(penumbra.activeCollection),
 		};
 		
 		state = initialize(init);
@@ -107,6 +109,7 @@ public class Aetherment : IDalamudPlugin {
 		Interface.UiBuilder.AfterBuildFonts -= UpdateResources;
 		penumbra.Dispose();
 		Commands.RemoveHandler(maincommand);
+		FFI.Str.Drop();
 		if(watcher != null)
 			watcher.Dispose();
 		destroy(state);
@@ -115,7 +118,7 @@ public class Aetherment : IDalamudPlugin {
 	
 	public unsafe void UpdateResources() {
 		// TODO: call this whenever penumbra root path changes
-		update_resources(state, (IntPtr)Dalamud.Interface.UiBuilder.IconFont.NativePtr, penumbra.RootPath());
+		update_resources(state, (IntPtr)Dalamud.Interface.UiBuilder.IconFont.NativePtr);
 	}
 	
 	private void Draw() {
@@ -193,7 +196,7 @@ public class Aetherment : IDalamudPlugin {
 		UnloadPlugin();
 	}
 	
-	private LogDelegate logDelegate;
+	private LogDelegate log;
 	private delegate void LogDelegate(byte mod, FFI.String content);
 	private void Log(byte mode, FFI.String content) {
 		if(mode == 255)
@@ -208,5 +211,5 @@ public class Aetherment : IDalamudPlugin {
 	[DllImport("aetherment_core.dll")] private static extern void destroy(IntPtr state);
 	[DllImport("aetherment_core.dll")] private static extern void draw(IntPtr state);
 	[DllImport("aetherment_core.dll")] private static extern void command(IntPtr state, FFI.Str args);
-	[DllImport("aetherment_core.dll")] private static extern void update_resources(IntPtr state, IntPtr fa5, FFI.Str penumbra_root_path);
+	[DllImport("aetherment_core.dll")] private static extern void update_resources(IntPtr state, IntPtr fa5);
 }

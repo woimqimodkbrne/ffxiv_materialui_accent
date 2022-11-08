@@ -4,12 +4,12 @@ use crate as imgui;
 
 macro_rules! scoped {
 	($name:ident, ($($param_name:ident: $param_type:ty),*), $begin:path, $end:path) => {
-		pub fn $name<F>($($param_name: $param_type,)* scope: F) -> bool where F: FnOnce() {
+		pub fn $name<F, R>($($param_name: $param_type,)* scope: F) -> Option<R> where F: FnOnce() -> R {
 			if $begin($($param_name,)*) {
-				scope();
+				let r = scope();
 				$end();
-				true
-			} else {false}
+				Some(r)
+			} else {None}
 		}
 		
 		// macro_rules! $name {
@@ -24,11 +24,11 @@ macro_rules! scoped {
 	};
 	
 	($name:ident, ($($param_name:ident: $param_type:ty),*), $begin:path>, $end:path) => {
-		pub fn $name<F>($($param_name: $param_type,)* scope: F) -> bool where F: FnOnce() {
+		pub fn $name<F, R>($($param_name: $param_type,)* scope: F) -> R where F: FnOnce() -> R {
 			$begin($($param_name,)*);
-			scope();
+			let r = scope();
 			$end();
-			true
+			r
 		}
 		
 		// macro_rules! $name {

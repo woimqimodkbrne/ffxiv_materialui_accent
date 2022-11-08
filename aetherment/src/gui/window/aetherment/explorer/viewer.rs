@@ -38,12 +38,12 @@ impl <'a> Conf<'a> {
 				let mut layers = f.0.iter();
 				let layer = layers.next().unwrap();
 				let mut tex = penumbra::resolve_layer(&penumbra::Layer {
-					value: if let Some(id) = &layer.id {self.datas.penumbra.as_ref().unwrap().options.iter().find(|v| v.id() == Some(id)).and_then(|v| Some(v.default()))} else {None},
+					value: if let Some(id) = &layer.id {self.datas.penumbra.as_ref().unwrap().options.iter().find(|v| v.unique() == id).and_then(|v| Some(v.default()))} else {None},
 					files: layer.paths.clone()
 				}, &load_file).expect("Failed resolving layer");
 				while let Some(layer) = layers.next() {
 					let l = penumbra::resolve_layer(&penumbra::Layer {
-						value: if let Some(id) = &layer.id {self.datas.penumbra.as_ref().unwrap().options.iter().find(|v| v.id() == Some(id)).and_then(|v| Some(v.default()))} else {None},
+						value: if let Some(id) = &layer.id {self.datas.penumbra.as_ref().unwrap().options.iter().find(|v| v.unique() == id).and_then(|v| Some(v.default()))} else {None},
 						files: layer.paths.clone()
 					}, &load_file).expect("Failed resolving layer");
 					l.overlay_onto(&mut tex);

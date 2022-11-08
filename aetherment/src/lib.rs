@@ -2,7 +2,7 @@
 // #![feature(panic_backtrace_config)]
 #![feature(seek_stream_len)]
 #![feature(let_chains)]
-#![feature(generic_associated_types)]
+#![feature(let_else)] // this is stable in 1.65, gotta update
 
 use std::{path::{PathBuf, Path}, net::TcpListener};
 use ironworks::{Ironworks, sqpack::SqPack, ffxiv};
@@ -12,6 +12,16 @@ use reqwest::blocking as req;
 extern crate imgui;
 
 // ---------------------------------------- //
+
+pub fn random_str(len: usize) -> String {
+	use rand::Rng;
+	
+	rand::thread_rng()
+		.sample_iter(rand::distributions::Alphanumeric)
+		.take(len)
+		.map(char::from)
+		.collect()
+}
 
 pub fn serialize_json(json: serde_json::Value) -> String {
 	let buf = Vec::new();
@@ -110,6 +120,7 @@ pub mod creator {
 	}
 }
 pub mod config;
+pub mod config_manager;
 pub mod apply;
 pub mod gui {
 	pub use imgui::aeth;
@@ -131,15 +142,15 @@ pub struct State {
 
 pub struct Data {
 	binary_path: PathBuf,
-	#[allow(dead_code)] config_path: PathBuf,
 	config: config::Config,
+	config_manager: config_manager::ConfigManager,
 	user: Option<server::user::User>,
 }
 
 #[repr(packed)]
 pub struct Initializers<'a> {
 	binary_path: &'a str,
-	config_path: &'a str,
+	// config_path: &'a str,
 	log: fn(u8, String),
 	create_texture: fn(gui::aeth::TextureOptions) -> usize,
 	create_texture_data: fn(gui::aeth::TextureOptions, Vec<u8>) -> usize,
@@ -152,7 +163,8 @@ pub struct Initializers<'a> {
 	penumbra_add_mod: fn(String, String, String, i32) -> u8,
 	penumbra_remove_mod: fn(String, i32) -> u8,
 	penumbra_mod_entry: fn(String) -> u8,
-	penumbra_root_path: &'a str, // this is not a static lifetime, lol
+	penumbra_root_path: fn() -> *const u128, // actually returns a &str, but idk how to handle the lifetime. transmute this
+	penumbra_active_collection: fn() -> *const u128,
 }
 
 #[no_mangle]
@@ -173,7 +185,8 @@ pub extern fn initialize(init: Initializers) -> *mut State {
 		api::penumbra::ADDMOD = init.penumbra_add_mod;
 		api::penumbra::REMOVEMOD = init.penumbra_remove_mod;
 		api::penumbra::ADDMODENTRY = init.penumbra_mod_entry;
-		api::penumbra::ROOTPATH = Some(init.penumbra_root_path.to_owned());
+		api::penumbra::ROOTPATH = init.penumbra_root_path;
+		api::penumbra::ACTIVECOLLECTION = init.penumbra_active_collection;
 	}
 	
 	// std::panic::set_backtrace_style(BacktraceStyle::Short);
@@ -182,11 +195,12 @@ pub extern fn initialize(init: Initializers) -> *mut State {
 		log!(err, "{}", info);
 	}));
 	
-	let config_path: PathBuf = init.config_path.into();
+	// let config_path: PathBuf = init.config_path.into();
+	let config_path = dirs::config_dir().unwrap().join("Aetherment");
 	let mut data = Data {
 		config: config::Config::load(config_path.join("config.json")),
+		config_manager: config_manager::ConfigManager::load(config_path.join("mods")),
 		binary_path: init.binary_path.into(),
-		config_path: config_path,
 		user: server::user::User::load(),
 	};
 	
@@ -207,12 +221,9 @@ pub extern fn destroy(state: *mut State) {
 }
 
 #[no_mangle]
-pub extern fn update_resources(_state: *mut State, fa5: *mut imgui::sys::ImFont, penumbra_root_path: &str) {
+pub extern fn update_resources(_state: *mut State, fa5: *mut imgui::sys::ImFont) {
 	// let state = unsafe{&mut *state};
-	unsafe{
-		gui::aeth::FA5 = &mut *fa5;
-		api::penumbra::ROOTPATH = Some(penumbra_root_path.to_owned());
-	}
+	unsafe{gui::aeth::FA5 = &mut *fa5}
 }
 
 #[no_mangle]

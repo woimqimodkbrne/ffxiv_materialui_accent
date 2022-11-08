@@ -1,6 +1,6 @@
 use std::{fs::File, io::{Cursor, Write}, collections::HashMap, sync::Mutex, path::{PathBuf, Path}};
 use noumenon::formats::{game::tex::{self, Format}, external::{dds::Dds, png::Png}};
-use crate::{gui::aeth::{self, F2}, apply::penumbra::{resolve_layer, ConfSetting, Layer as PLayer, PenumbraFile, ConfOption, FileLayer, self}};
+use crate::{gui::aeth::{self, F2}, apply::penumbra::{resolve_layer, ConfSetting, Layer as PLayer, PenumbraFile, MetaOption, FileLayer, self}};
 use super::Viewer;
 
 const TEXSIZE: i32 = 1024;
@@ -41,7 +41,7 @@ impl Tex {
 			let mut settings = HashMap::new();
 			for i in 0..f.len() {
 				let l = f.get(i).unwrap();
-				if let Some(id) = &l.id && let Some(setting) = c.datas.penumbra.as_ref().unwrap().options.iter().find(|e| e.id() == Some(&id)) {
+				if let Some(id) = &l.id && let Some(setting) = c.datas.penumbra.as_ref().unwrap().options.iter().find(|e| e.unique() == id.as_str()) {
 					settings.insert(id.clone(), setting.default());
 				}
 			}
@@ -257,7 +257,7 @@ impl Viewer for Tex {
 						imgui::text(&e.1);
 					} else {
 						if let Some(id) = &layer.id {
-							changed |= self.settings.get_mut(id).unwrap().draw(id);
+							changed |= self.settings.get_mut(id).unwrap().draw_label(id);
 						} else {
 							imgui::text("Generic Layer");
 						}
@@ -294,11 +294,11 @@ impl Viewer for Tex {
 					
 					for i in 0..conf.datas.penumbra.as_ref().unwrap().options.len() {
 						let o = conf.datas.penumbra.as_ref().unwrap().options.get(i).unwrap();
-						if !o.is_penumbra() && imgui::selectable(&format!("{} ({})", o.name(), o.id().unwrap()), false, imgui::SelectableFlags::None, [0.0, 0.0]) {
+						if !o.is_penumbra() && imgui::selectable(&format!("{} ({})", o.name(), o.unique()), false, imgui::SelectableFlags::None, [0.0, 0.0]) {
 							self.new_layer = Some(FileLayer {
-								id: Some(o.id().unwrap().to_owned()),
-								paths: match o {
-									ConfOption::Mask(_) => vec![String::with_capacity(128), String::with_capacity(128)],
+								id: Some(o.unique().to_owned()),
+								paths: match o.deref() {
+									MetaOption::Mask(_) => vec![String::with_capacity(128), String::with_capacity(128)],
 									_ => vec![String::with_capacity(128)],
 								},
 							});
@@ -316,8 +316,8 @@ impl Viewer for Tex {
 					imgui::bring_window_to_display_front(imgui::get_current_window());
 					
 					if layer.id.is_some() {
-						match conf.datas.penumbra.as_ref().unwrap().options.iter().find(|f| f.id() == layer.id.as_deref()).unwrap() {
-							ConfOption::Mask(_) => {
+						match conf.datas.penumbra.as_ref().unwrap().options.iter().find(|f| Some(f.unique()) == layer.id.as_deref()).unwrap().deref() {
+							MetaOption::Mask(_) => {
 								let p = layer.paths.get_mut(0).unwrap();
 								crate::file_picker("Import Image", Self::get_dialog_constructor(vec![&self.ext, ".dds", ".png"]), p, &mut state.config);
 								imgui::same_line();
