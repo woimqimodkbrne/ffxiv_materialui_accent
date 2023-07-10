@@ -1,0 +1,8 @@
+[package]
+name = "client"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+aetherment = {path = "../aetherment"}
+eframe = "0.22.0"
