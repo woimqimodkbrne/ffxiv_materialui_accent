@@ -23,11 +23,7 @@ impl eframe::App for CoreWrapper {
 			shadow: egui::epaint::Shadow::NONE,
 			fill: egui::Color32::TRANSPARENT,
 			stroke: egui::Stroke::NONE,
-		}).show(&ctx, |ui| {
-			egui::ScrollArea::both().show(ui, |ui| {
-				self.0.draw(ui)
-			});
-		});
+		}).show(&ctx, |ui| self.0.draw(ui));
 	}
  }
 
@@ -36,5 +32,5 @@ fn main() -> eframe::Result<()> {
 		..Default::default()
 	};
 	
-	eframe::run_native("Aetherment", options, Box::new(|_cc| Box::new(CoreWrapper(aetherment::Core::new(log)))))
+	eframe::run_native("Aetherment", options, Box::new(|cc| Box::new(CoreWrapper(aetherment::Core::new(log, cc.egui_ctx.clone())))))
 }

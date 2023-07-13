@@ -1,6 +1,5 @@
-#![allow(dead_code)]
+// used for wgpu in the past (i think?) keeping it here for possible future usage
 
-// use windows::{s, Win32::{Foundation::*, UI::WindowsAndMessaging::*}};
 use windows::{
 	s,
 	Win32::{

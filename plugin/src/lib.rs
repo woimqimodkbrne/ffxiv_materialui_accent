@@ -12,7 +12,7 @@ extern crate aetherment;
 #[allow(non_snake_case)]
 #[allow(dead_code)]
 mod imgui;
-mod handle;
+// mod handle;
 mod wndproc;
 mod texture;
 
@@ -91,8 +91,9 @@ pub extern fn initialize(init: Initializers) -> *mut State {
 		
 		wndproc::hook();
 		
+		let ctx = egui::Context::default();
 		Box::into_raw(Box::new(State {
-			ctx: egui::Context::default(),
+			ctx: ctx.clone(),
 			start: std::time::Instant::now(),
 			last: std::time::Instant::now(),
 			last_key_states: get_keyboard_state(),
@@ -101,7 +102,7 @@ pub extern fn initialize(init: Initializers) -> *mut State {
 			free_textures: Vec::new(),
 			
 			visible: true,
-			core: aetherment::Core::new(log),
+			core: aetherment::Core::new(log, ctx),
 		}))
 	}) {
 		Ok(v) => v,
@@ -241,11 +242,7 @@ pub extern fn draw(state: *mut State) {
 				shadow: egui::epaint::Shadow::NONE,
 				fill: egui::Color32::TRANSPARENT,
 				stroke: egui::Stroke::NONE,
-			}).show(&ctx, |ui| {
-				egui::ScrollArea::both().show(ui, |ui| {
-					state.core.draw(ui)
-				});
-			});
+			}).show(&ctx, |ui| state.core.draw(ui));
 		});
 		
 		// Handle textures
