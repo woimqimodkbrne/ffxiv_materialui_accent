@@ -100,6 +100,10 @@ impl Tree {
 }
 
 impl super::View for Tree {
+	fn is_tree(&self) -> bool {
+		true
+	}
+	
 	fn name(&self) -> &'static str {
 		"File Tree"
 	}

@@ -5,4 +5,4 @@ edition = "2021"
 
 [dependencies]
 aetherment = {path = "../aetherment"}
-eframe = "0.22.0"
+eframe = {version = "0.22.0", default-features = false, features = ["accesskit", "default_fonts", "wgpu"]}

@@ -20,7 +20,6 @@ features = [
 
 [dependencies]
 aetherment = {path = "../aetherment"}
-raw-window-handle = "0.5.2"
 egui = "0.22.0"
 bitflags = "2.3.3"
 # wgpu = "0.16.0"

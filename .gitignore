@@ -2,3 +2,4 @@
 plugin/plugin/bin
 plugin/plugin/obj
 Cargo.lock
+structural_ideas.txt

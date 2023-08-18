@@ -28,9 +28,24 @@ impl eframe::App for CoreWrapper {
  }
 
 fn main() -> eframe::Result<()> {
+	// #[cfg(target_os = "windows")]
+	// let backends = aetherment::Backends::DX12;
+	// #[cfg(target_os = "linux")]
+	// let backends = aetherment::Backends::VULKAN;
+	// #[cfg(target_os = "macos")]
+	// let backends = aetherment::Backends::METAL;
+	
 	let options = eframe::NativeOptions {
+		wgpu_options: eframe::egui_wgpu::WgpuConfiguration {
+			// supported_backends: backends,
+			// supported_backends: aetherment::Backends::all(),
+			..Default::default()
+		},
 		..Default::default()
 	};
 	
-	eframe::run_native("Aetherment", options, Box::new(|cc| Box::new(CoreWrapper(aetherment::Core::new(log, cc.egui_ctx.clone())))))
+	eframe::run_native("Aetherment", options, Box::new(|cc| {
+		let backend = cc.wgpu_render_state.as_ref().unwrap().adapter.get_info().backend;
+		Box::new(CoreWrapper(aetherment::Core::new(log, cc.egui_ctx.clone(), backend.into())))
+	}))
 }

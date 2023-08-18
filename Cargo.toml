@@ -4,5 +4,6 @@ members = [
 	"aetherment",
 	"plugin",
 	"client",
-	"noumenon"
+	"noumenon",
+	# "renderer",
 ]

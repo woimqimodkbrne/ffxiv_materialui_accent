@@ -1,6 +1,6 @@
 use std::{fs::File, io::BufReader};
 use egui::epaint;
-use noumenon::formats::game::Tex as GameTex;
+use noumenon::format::game::Tex as GameTex;
 
 pub struct Tex {
 	name: String,
@@ -42,14 +42,13 @@ impl Tex {
 	}
 	
 	fn load_texture_data(&mut self, ctx: egui::Context) -> Result<(), super::BacktraceError> {
+		self.data = None;
 		let data = if let Some(real_path) = &self.real_path {
-			let file = File::open(real_path)?;
+			let file = File::open(real_path).map_err(|_| super::ExplorerError::RealPath(real_path.clone()))?;
 			let mut reader = BufReader::new(file);
-			self.data = None;
 			GameTex::read(&mut reader)?
 		} else {
-			self.data = None;
-			crate::NOUMENON.file::<GameTex>(&self.path)?
+			crate::NOUMENON.as_ref().ok_or(super::ExplorerError::Path(self.path.clone()))?.file::<GameTex>(&self.path)?
 		};
 		
 		self.texture = Some(ctx.load_texture("explorer_tex", epaint::image::ColorImage::new([data.header.width as usize, data.header.height as usize], epaint::Color32::TRANSPARENT), Default::default()));
@@ -82,46 +81,20 @@ impl Tex {
 }
 
 impl super::View for Tex {
-	fn name<'a>(&'a self) -> &'a str {
+	fn name(&self) -> &str {
 		&self.name
 	}
 	
-	fn path<'a>(&'a self) -> &'a str {
+	fn path(&self) -> &str {
 		&self.path
 	}
 	
+	fn exts(&self) -> Vec<&str> {
+		vec![self.name.split(".").last().unwrap(), "dds", "png", "tiff"]
+	}
+	
 	fn render(&mut self, ui: &mut egui::Ui) -> Result<(), super::BacktraceError> {
-		let pos = ui.cursor().min;
 		let space = ui.available_size();
-		
-		// if let Some(texture) = &self.texture {
-		if self.texture.is_some() {
-			let style = ui.style();
-			egui::Window::new("Options")
-				.frame(egui::Frame {
-					inner_margin: style.spacing.window_margin,
-					outer_margin: Default::default(),
-					shadow: egui::epaint::Shadow::NONE,
-					rounding: style.visuals.window_rounding,
-					fill: style.visuals.window_fill(),
-					stroke: style.visuals.window_stroke(),
-				})
-				.drag_bounds(egui::Rect{min: pos, max: pos + space})
-				.resizable(false)
-				.show(ui.ctx(), |ui| {
-					let data = &mut self.data.as_ref().unwrap();
-					let mut changed = ui.add(egui::Slider::new(&mut self.mip, 0..=(data.header.mip_levels - 1)).text("Mip Level")).changed();
-					changed |= ui.add(egui::Slider::new(&mut self.depth, 0..=(data.header.depths - 1)).text("Depth")).changed();
-					changed |= ui.checkbox(&mut self.r, "R").changed();
-					changed |= ui.checkbox(&mut self.g, "G").changed();
-					changed |= ui.checkbox(&mut self.b, "B").changed();
-					changed |= ui.checkbox(&mut self.a, "A").changed();
-					
-					if changed {
-						self.refresh_texture()
-					}
-				});
-		}
 			
 		if let Some(texture) = &self.texture {
 			if let Some(data) = &self.data {
@@ -138,5 +111,34 @@ impl super::View for Tex {
 		}
 		
 		Ok(())
+	}
+	
+	fn render_options(&mut self, ui: &mut egui::Ui) -> Result<(), super::BacktraceError> {
+		if self.texture.is_some() {
+			let data = &mut self.data.as_ref().unwrap();
+			let mut changed = ui.add(egui::Slider::new(&mut self.mip, 0..=(data.header.mip_levels - 1)).text("Mip Level")).changed();
+			changed |= ui.add(egui::Slider::new(&mut self.depth, 0..=(data.header.depths - 1)).text("Depth")).changed();
+			ui.horizontal(|ui| {
+				changed |= ui.checkbox(&mut self.r, "R").changed();
+				changed |= ui.checkbox(&mut self.g, "G").changed();
+				changed |= ui.checkbox(&mut self.b, "B").changed();
+				changed |= ui.checkbox(&mut self.a, "A").changed();
+			});
+			
+			if changed {
+				self.refresh_texture()
+			}
+		}
+		
+		Ok(())
+	}
+	
+	fn export(&self, ext: &str, mut writer: Box<dyn super::Writer>) -> Result<(), super::BacktraceError> {
+		if let Some(data) = &self.data {
+			noumenon::Convert::Tex(data.clone()).convert(ext, &mut writer)?;
+			Ok(())
+		} else {
+			Err(super::ExplorerError::Data.into())
+		}
 	}
 }

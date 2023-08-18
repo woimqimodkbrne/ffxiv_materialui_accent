@@ -17,12 +17,16 @@ impl Error {
 }
 
 impl super::View for Error {
-	fn name<'a>(&'a self) -> &'a str {
+	fn name(&self) -> &str {
 		&self.name
 	}
 	
-	fn path<'a>(&'a self) -> &'a str {
+	fn path(&self) -> &str {
 		&self.path
+	}
+	
+	fn exts(&self) -> Vec<&str> {
+		vec![self.name.split(".").last().unwrap()]
 	}
 	
 	fn render(&mut self, ui: &mut egui::Ui) -> Result<(), super::BacktraceError> {

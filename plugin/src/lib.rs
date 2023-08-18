@@ -1,6 +1,4 @@
 #![allow(improper_ctypes_definitions)]
-// #![feature(vec_into_raw_parts)]
-// #![feature(let_chains)]
 
 use std::mem::transmute;
 use egui::epaint::ahash::HashMap;
@@ -15,12 +13,6 @@ mod imgui;
 // mod handle;
 mod wndproc;
 mod texture;
-
-// static mut LOG: fn(u8, *mut u8, usize, usize) = |_, _, _, _| {};
-// fn log(typ: aetherment::LogType, msg: String) {
-// 	let (ptr, len, cap) = msg.into_raw_parts();
-// 	unsafe{crate::LOG(typ as _, ptr, len, cap)};
-// }
 
 static mut LOG: fn(u8, *mut i8, usize) = |_, _, _| {};
 fn log(typ: aetherment::LogType, msg: String) {
@@ -41,11 +33,10 @@ pub struct State {
 	// egui
 	ctx: egui::Context,
 	start: std::time::Instant,
-	last: std::time::Instant,
 	last_key_states: [bool; 256],
 	
 	// scuffed texture handler
-	textures: HashMap<egui::TextureId, texture::Texture>,
+	textures: HashMap<u64, texture::Texture>,
 	free_textures: Vec::<egui::TextureId>,
 	
 	// // wgpu
@@ -95,14 +86,13 @@ pub extern fn initialize(init: Initializers) -> *mut State {
 		Box::into_raw(Box::new(State {
 			ctx: ctx.clone(),
 			start: std::time::Instant::now(),
-			last: std::time::Instant::now(),
 			last_key_states: get_keyboard_state(),
 			
 			textures: HashMap::default(),
 			free_textures: Vec::new(),
 			
 			visible: true,
-			core: aetherment::Core::new(log, ctx),
+			core: aetherment::Core::new(log, ctx, aetherment::Backends::DX12),
 		}))
 	}) {
 		Ok(v) => v,
@@ -225,7 +215,7 @@ pub extern fn draw(state: *mut State) {
 			pixels_per_point: Some(1.0),
 			max_texture_side: None,
 			time: Some(now.duration_since(state.start).as_secs_f64()),
-			predicted_dt: now.duration_since(state.last).as_secs_f32(),
+			predicted_dt: 0.0, // egui calculates dt as we provide time
 			modifiers,
 			events,
 			hovered_files: Vec::new(),
@@ -247,87 +237,91 @@ pub extern fn draw(state: *mut State) {
 		
 		// Handle textures
 		for id in &state.free_textures {
-			state.textures.remove(id);
+			if let egui::TextureId::Managed(id) = id {
+				state.textures.remove(id);
+			}
 		}
 		state.free_textures = out.textures_delta.free;
 		
 		for (id, img_delta) in &out.textures_delta.set {
-			match &img_delta.image {
-				egui::ImageData::Color(img) => {
-					let data: Vec<u8> = img.pixels.iter().flat_map(|v| v.to_array()).collect();
-					let size = img.size;
-					
-					let tex = match state.textures.get_mut(id){
-						Some(tex) => tex,
-						None => {
-							if img_delta.pos.is_some() {
-								log(aetherment::LogType::Error, String::from("Texture doesn't exist but wishes to update"));
-								continue;
+			if let egui::TextureId::Managed(id) = id {
+				match &img_delta.image {
+					egui::ImageData::Color(img) => {
+						let data: Vec<u8> = img.pixels.iter().flat_map(|v| v.to_array()).collect();
+						let size = img.size;
+						
+						let tex = match state.textures.get_mut(id){
+							Some(tex) => tex,
+							None => {
+								if img_delta.pos.is_some() {
+									log(aetherment::LogType::Error, String::from("Texture doesn't exist but wishes to update"));
+									continue;
+								}
+								
+								log(aetherment::LogType::Log, String::from("Creating color texture"));
+								let tex = texture::Texture::new(texture::TextureOptions {
+									width: size[0] as i32,
+									height: size[1] as i32,
+									format: texture::TextureFormat::R8g8b8a8Unorm,
+									usage: texture::TextureUsage::Dynamic,
+									cpu_access_flags: texture::TextureCpuFlags::Write,
+								});
+								
+								state.textures.insert(*id, tex);
+								state.textures.get_mut(id).unwrap()
 							}
-							
-							log(aetherment::LogType::Log, String::from("Creating color texture"));
-							let tex = texture::Texture::new(texture::TextureOptions {
-								width: size[0] as i32,
-								height: size[1] as i32,
-								format: texture::TextureFormat::R8g8b8a8Unorm,
-								usage: texture::TextureUsage::Dynamic,
-								cpu_access_flags: texture::TextureCpuFlags::Write,
-							});
-							
-							state.textures.insert(*id, tex);
-							state.textures.get_mut(id).unwrap()
+						};
+						
+						if let Err(err) = if let Some(pos) = img_delta.pos {
+							tex.draw_to_section(pos[0], pos[1], size[0], size[1], &data)
+						} else {
+							tex.draw_to(&data)
+						} {
+							log(aetherment::LogType::Error, String::from(err));
 						}
-					};
-					
-					if let Err(err) = if let Some(pos) = img_delta.pos {
-						tex.draw_to_section(pos[0], pos[1], size[0], size[1], &data)
-					} else {
-						tex.draw_to(&data)
-					} {
-						log(aetherment::LogType::Error, String::from(err));
-					}
-				},
-				egui::ImageData::Font(img) => {
-					const GAMMA: f32 = 0.55;
-					// let data: Vec<u8> = img.pixels.iter().map(|v| (v.powf(GAMMA) * 255.0 + 0.5).floor() as u8).collect();
-					let data: Vec<u8> = img.pixels.iter().flat_map(|v| [255, 255, 255, (v.powf(GAMMA) * 255.0 + 0.5).floor() as u8]).collect();
-					// let data: Vec<u8> = img.pixels.iter().flat_map(|v| {
-					// 	let a = (v.powf(GAMMA) * 255.0 + 0.5).floor() as u8;
-					// 	[a, a, a, a]
-					// }).collect();
-					let size = img.size;
-					
-					let tex = match state.textures.get_mut(id){
-						Some(tex) => tex,
-						None => {
-							if img_delta.pos.is_some() {
-								log(aetherment::LogType::Error, String::from("Texture doesn't exist but wishes to update"));
-								continue;
+					},
+					egui::ImageData::Font(img) => {
+						const GAMMA: f32 = 0.55;
+						// let data: Vec<u8> = img.pixels.iter().map(|v| (v.powf(GAMMA) * 255.0 + 0.5).floor() as u8).collect();
+						let data: Vec<u8> = img.pixels.iter().flat_map(|v| [255, 255, 255, (v.powf(GAMMA) * 255.0 + 0.5).floor() as u8]).collect();
+						// let data: Vec<u8> = img.pixels.iter().flat_map(|v| {
+						// 	let a = (v.powf(GAMMA) * 255.0 + 0.5).floor() as u8;
+						// 	[a, a, a, a]
+						// }).collect();
+						let size = img.size;
+						
+						let tex = match state.textures.get_mut(id){
+							Some(tex) => tex,
+							None => {
+								if img_delta.pos.is_some() {
+									log(aetherment::LogType::Error, String::from("Texture doesn't exist but wishes to update"));
+									continue;
+								}
+								
+								log(aetherment::LogType::Log, String::from("Creating font texture"));
+								let tex = texture::Texture::new(texture::TextureOptions {
+									width: size[0] as i32,
+									height: size[1] as i32,
+									// format: texture::TextureFormat::A8Unorm,
+									format: texture::TextureFormat::B8g8r8a8Unorm,
+									usage: texture::TextureUsage::Dynamic,
+									cpu_access_flags: texture::TextureCpuFlags::Write,
+								});
+								
+								state.textures.insert(*id, tex);
+								state.textures.get_mut(id).unwrap()
 							}
-							
-							log(aetherment::LogType::Log, String::from("Creating font texture"));
-							let tex = texture::Texture::new(texture::TextureOptions {
-								width: size[0] as i32,
-								height: size[1] as i32,
-								// format: texture::TextureFormat::A8Unorm,
-								format: texture::TextureFormat::B8g8r8a8Unorm,
-								usage: texture::TextureUsage::Dynamic,
-								cpu_access_flags: texture::TextureCpuFlags::Write,
-							});
-							
-							state.textures.insert(*id, tex);
-							state.textures.get_mut(id).unwrap()
+						};
+						
+						if let Err(err) = if let Some(pos) = img_delta.pos {
+							tex.draw_to_section(pos[0], pos[1], size[0], size[1], &data)
+						} else {
+							tex.draw_to(&data)
+						} {
+							log(aetherment::LogType::Error, String::from(err));
 						}
-					};
-					
-					if let Err(err) = if let Some(pos) = img_delta.pos {
-						tex.draw_to_section(pos[0], pos[1], size[0], size[1], &data)
-					} else {
-						tex.draw_to(&data)
-					} {
-						log(aetherment::LogType::Error, String::from(err));
-					}
-				},
+					},
+				}
 			}
 		}
 		
@@ -339,8 +333,12 @@ pub extern fn draw(state: *mut State) {
 				egui::epaint::Primitive::Mesh(mesh) => unsafe {
 					let drawlist = imgui::igGetWindowDrawList();
 					
-					let tex = state.textures.get(&mesh.texture_id).unwrap_or(&empty_tex);
-					imgui::ImDrawList_PushTextureID(drawlist, tex.resource() as _);
+					let tex = match mesh.texture_id {
+						egui::TextureId::Managed(id) => state.textures.get(&id).unwrap_or(&empty_tex).resource(),
+						egui::TextureId::User(id) => id as usize,
+					};
+					
+					imgui::ImDrawList_PushTextureID(drawlist, tex as _);
 					
 					imgui::ImDrawList_PrimReserve(drawlist, mesh.indices.len() as i32, mesh.vertices.len() as i32);
 					let offset = (*drawlist)._VtxCurrentIdx;

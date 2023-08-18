@@ -1,7 +1,6 @@
-if [ "$1" = "client release" ]; then
+if [ "$1" = "client" ] && [ "$2" = "release" ]; then
 	echo "client release"
 	cargo run --release --manifest-path=./client/Cargo.toml
-	# -f on mv does fuckall
 elif [ "$1" = "client" ]; then
 	echo "client dev"
 	cargo run --manifest-path=./client/Cargo.toml
