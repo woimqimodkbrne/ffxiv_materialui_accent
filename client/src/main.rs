@@ -2,6 +2,8 @@ use eframe::egui;
 
 extern crate aetherment;
 
+mod cli;
+
 fn log(typ: aetherment::LogType, msg: String) {
 	let typ = match typ {
 		aetherment::LogType::Log => "LOG",
@@ -27,7 +29,9 @@ impl eframe::App for CoreWrapper {
 	}
  }
 
-fn main() -> eframe::Result<()> {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+	cli::handle_cli()?;
+	
 	// #[cfg(target_os = "windows")]
 	// let backends = aetherment::Backends::DX12;
 	// #[cfg(target_os = "linux")]
@@ -47,5 +51,7 @@ fn main() -> eframe::Result<()> {
 	eframe::run_native("Aetherment", options, Box::new(|cc| {
 		let backend = cc.wgpu_render_state.as_ref().unwrap().adapter.get_info().backend;
 		Box::new(CoreWrapper(aetherment::Core::new(log, cc.egui_ctx.clone(), backend.into())))
-	}))
+	}))?;
+	
+	Ok(())
 }
