@@ -3,6 +3,8 @@ mod log;
 // mod config;
 // mod migrate;
 mod view;
+mod render_helper;
+mod resource_loader;
 
 pub use log::LogType;
 pub use renderer::Backends;
@@ -36,9 +38,9 @@ impl Core {
 		
 		Self {
 			views: egui_dock::Tree::new(vec![
+				Box::new(view::Explorer::new(ctx)),
 				Box::new(view::Debug::new()),
 				Box::new(view::Main::new()),
-				Box::new(view::Explorer::new(ctx)),
 				// Box::new(view::Debug::new()),
 			])
 		}
@@ -51,6 +53,6 @@ impl Core {
 			.draggable_tabs(false)
 			.show_close_buttons(false)
 			.tab_context_menus(false)
-			.show_inside(ui, &mut view::Viewer{});
+			.show_inside(ui, &mut view::Viewer);
 	}
 }

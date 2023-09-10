@@ -1,5 +1,4 @@
 use std::{fs::File, io::BufReader};
-use egui::epaint;
 use noumenon::format::game::Tex as GameTex;
 
 pub struct Tex {
@@ -51,7 +50,7 @@ impl Tex {
 			crate::NOUMENON.as_ref().ok_or(super::ExplorerError::Path(self.path.clone()))?.file::<GameTex>(&self.path)?
 		};
 		
-		self.texture = Some(ctx.load_texture("explorer_tex", epaint::image::ColorImage::new([data.header.width as usize, data.header.height as usize], epaint::Color32::TRANSPARENT), Default::default()));
+		self.texture = Some(ctx.load_texture("explorer_tex", egui::epaint::image::ColorImage::new([data.header.width as usize, data.header.height as usize], egui::epaint::Color32::TRANSPARENT), Default::default()));
 		self.data = Some(data);
 		self.refresh_texture();
 		
@@ -72,7 +71,7 @@ impl Tex {
 							if isa {255} else if self.a {v[3]} else {255},
 						])
 						.collect::<Vec<u8>>();
-					texture.set_partial([0; 2], egui::ColorImage::from_rgba_premultiplied([w as usize, h as usize], &slice), Default::default());
+					texture.set_partial([0; 2], egui::ColorImage::from_rgba_unmultiplied([w as usize, h as usize], &slice), Default::default());
 					self.uv.max = egui::pos2(w as f32 / data.header.width as f32, h as f32 / data.header.height as f32);
 				}
 			}

@@ -40,6 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	// let backends = aetherment::Backends::METAL;
 	
 	let options = eframe::NativeOptions {
+		initial_window_size: Some(egui::Vec2::new(1280.0, 720.0)),
 		wgpu_options: eframe::egui_wgpu::WgpuConfiguration {
 			// supported_backends: backends,
 			// supported_backends: aetherment::Backends::all(),

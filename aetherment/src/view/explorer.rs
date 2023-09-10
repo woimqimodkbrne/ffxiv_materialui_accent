@@ -1,9 +1,11 @@
 use std::{rc::Rc, sync::Mutex, cell::RefCell};
+use crate::resource_loader::{BacktraceError, ExplorerError};
 
 pub mod generic;
 pub mod error;
 pub mod tree;
 pub mod tex;
+pub mod uld;
 
 // ----------
 
@@ -23,6 +25,8 @@ impl Explorer {
 			dock: egui_dock::Tree::new(vec![{
 				let to_add = to_add.clone();
 				let mut tree = tree::Tree::new();
+				// open_viewer(ctx.clone(), to_add.clone(), &"ui/uld/jobhudwar0.uld", None);
+				open_viewer(ctx.clone(), to_add.clone(), &"ui/uld/ConfigSystem.uld", None);
 				// do smth with this, probably reload button if failed
 				_ = tree.load(Box::new(move |path, button| {
 					if button.clicked() {
@@ -50,21 +54,21 @@ impl super::View for Explorer {
 			// .show_close_buttons(false)
 			.show_inside(ui, &mut self.viewer);
 		
-		// self.dock.
-		
 		for view in self.to_add.lock().unwrap().drain(..) {
-			let mut last_leaf = None;
-			for node in self.dock.iter_mut() {
-				if node.is_leaf() {
-					last_leaf = Some(node);
+			if self.dock.len() == 1 {
+				self.dock.split_right(egui_dock::NodeIndex::root(), 0.2, vec![view]);
+			} else {
+				let mut last_leaf = None;
+				for node in self.dock.iter_mut() {
+					if node.is_leaf() {
+						last_leaf = Some(node);
+					}
+				}
+				
+				if let Some(node) = last_leaf {
+					node.append_tab(view);
 				}
 			}
-			
-			if let Some(node) = last_leaf {
-				node.append_tab(view);
-			}
-			
-			// TODO: if first make it auto split
 		}
 		
 		if let Some((dialog, tab)) = &mut self.viewer.dialog {
@@ -92,73 +96,13 @@ fn open_viewer(ctx: egui::Context, to_add: Rc<Mutex<Vec<ViewT>>>, path: &str, re
 	if let Err(err) = || -> Result<(), BacktraceError> {
 		match path.split(".").last().unwrap() {
 			"tex" | "atex" => to_add.lock().unwrap().push(Rc::new(RefCell::new(Box::new(tex::Tex::new(ctx, path, real_path)?)))),
+			"uld" => to_add.lock().unwrap().push(Rc::new(RefCell::new(Box::new(uld::Uld::new(path, real_path)?)))),
 			_ => to_add.lock().unwrap().push(Rc::new(RefCell::new(Box::new(generic::Generic::new(path, real_path)?)))),
 		}
 		
 		Ok(())
 	}() {
 		to_add.lock().unwrap().push(Rc::new(RefCell::new(Box::new(error::Error::new(path, real_path, err)))))
-	}
-}
-
-// ----------
-
-pub type BacktraceError = Box<dyn std::error::Error>;
-
-// #[derive(Debug)]
-// pub struct BacktraceError {
-// 	#[allow(dead_code)]
-// 	err: Box<dyn std::any::Any + Send + 'static>,
-// 	backtrace: backtrace::Backtrace,
-// }
-// 
-// // impl BacktraceError {
-// // 	pub fn new(err: Box<dyn std::any::Any + Send + 'static>) -> Self {
-// // 		Self {
-// // 			err,
-// // 			backtrace: backtrace::Backtrace::new(),
-// // 		}
-// // 	}
-// // }
-// 
-// impl<E> From<E> for BacktraceError where
-// E: std::error::Error + Send + Sync + 'static {
-// 	fn from(err: E) -> Self {
-// 		Self {
-// 			err: Box::new(err),
-// 			backtrace: backtrace::Backtrace::new(),
-// 		}
-// 	}
-// }
-// 
-// impl std::fmt::Display for BacktraceError {
-// 	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-// 		write!(f, "{:?}", self.backtrace)
-// 	}
-// }
-
-#[derive(Debug)]
-pub enum ExplorerError {
-	Path(String),
-	RealPath(String),
-	Data,
-}
-
-impl std::fmt::Display for ExplorerError {
-	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-		match self {
-			Self::Path(path) => write!(f, "Invalid game path: {:?}", path),
-			Self::RealPath(path) => write!(f, "Invalid real path: {:?}", path),
-			Self::Data => write!(f, "File is invalid"),
-		}
-	}
-}
-
-impl std::error::Error for ExplorerError {
-	fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
-		match self {
-			_ => None,
-		}
 	}
 }
 
@@ -189,9 +133,9 @@ impl egui_dock::TabViewer for Viewer {
 		tab.borrow().name().into()
 	}
 	
-	fn id(&mut self, tab: &mut Self::Tab) -> egui::Id {
-		egui::Id::new(tab.borrow().name())
-	}
+	// fn id(&mut self, tab: &mut Self::Tab) -> egui::Id {
+	// 	egui::Id::new(tab.borrow().name())
+	// }
 	
 	fn ui(&mut self, ui: &mut egui::Ui, tab_raw: &mut Self::Tab) {
 		let mut tab = tab_raw.borrow_mut();
@@ -199,12 +143,7 @@ impl egui_dock::TabViewer for Viewer {
 		let space = ui.available_size();
 		
 		if let Err(err) = tab.render(ui) {
-			ui.horizontal_centered(|ui| {
-				ui.vertical_centered(|ui| {
-					ui.label(egui::RichText::new(format!("{:?}", err))
-						.color(egui::epaint::Color32::RED))
-				})
-			});
+			render_error(ui, &err);
 		} else if !tab.is_tree() {
 			let style = ui.style();
 			egui::Window::new("Options")
@@ -221,12 +160,7 @@ impl egui_dock::TabViewer for Viewer {
 				.resizable(false)
 				.show(ui.ctx(), |ui| {
 					if let Err(err) = tab.render_options(ui) {
-						ui.horizontal_centered(|ui| {
-							ui.vertical_centered(|ui| {
-								ui.label(egui::RichText::new(format!("{:?}", err))
-									.color(egui::epaint::Color32::RED))
-							})
-						});
+						render_error(ui, &err);
 					}
 					
 					let exts = tab.exts();
@@ -256,4 +190,13 @@ impl egui_dock::TabViewer for Viewer {
 	fn on_close(&mut self, tab: &mut Self::Tab) -> bool {
 		!tab.borrow().is_tree()
 	}
+}
+
+pub fn render_error(ui: &mut egui::Ui, err: &BacktraceError) {
+	ui.horizontal_centered(|ui| {
+		ui.vertical_centered(|ui| {
+			ui.label(egui::RichText::new(format!("{:?}", err))
+				.color(egui::epaint::Color32::RED))
+		})
+	});
 }
