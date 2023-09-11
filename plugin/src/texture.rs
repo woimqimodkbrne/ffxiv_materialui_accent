@@ -1,7 +1,7 @@
 #![allow(non_upper_case_globals)]
 #![allow(dead_code)]
 
-// TODO: convert str errors to enum type errors
+// TODO: replace this when renderer gets implemented
 
 #[repr(C)]
 pub struct TextureOptions {
@@ -18,6 +18,7 @@ pub enum TextureFormat {
 	Unknown = 0,
 	A8Unorm = 65,
 	R8g8b8a8Unorm = 28,
+	R8g8b8a8UnormSrgb = 29,
 	B8g8r8a8Unorm = 87,
 }
 
@@ -27,6 +28,7 @@ impl TextureFormat {
 			TextureFormat::Unknown => 0,
 			TextureFormat::A8Unorm => 1,
 			TextureFormat::R8g8b8a8Unorm => 4,
+			TextureFormat::R8g8b8a8UnormSrgb => 4,
 			TextureFormat::B8g8r8a8Unorm => 4,
 		}
 	}
@@ -59,9 +61,9 @@ pub static mut UNPIN: fn(usize) = |_| {};
 pub struct Texture {
 	pub width: usize,
 	pub height: usize,
-	format: TextureFormat,
-	usage: TextureUsage,
-	cpu_access_flags: TextureCpuFlags,
+	pub format: TextureFormat,
+	pub usage: TextureUsage,
+	pub cpu_access_flags: TextureCpuFlags,
 	ptr: usize,
 }
 
@@ -96,28 +98,7 @@ impl Texture {
 		unsafe {
 			let dataptr = PIN(self.ptr);
 			for (i, v) in data.into_iter().enumerate() {
-				*dataptr.offset(i as isize) = *v;
-			}
-			UNPIN(self.ptr);
-		}
-		
-		Ok(())
-	}
-	
-	pub fn draw_to_section(&mut self, x: usize, y: usize, w: usize, h: usize, data: &[u8]) -> Result<(), &'static str> {
-		let byte_count = self.format.byte_count();
-		let bytes_per_line = w * byte_count;
-		
-		if data.len() != w * h * byte_count {
-			return Err("Invalid data size for texture dimensions");
-		} else if x + w > self.width || y + h > self.height {
-			return Err("Section extends beyond texture borders");
-		}
-		
-		unsafe {
-			let dataptr = PIN(self.ptr);
-			for (i, v) in data.into_iter().enumerate() {
-				*dataptr.offset((y * bytes_per_line + x * byte_count + i % bytes_per_line + i / bytes_per_line * (self.width * byte_count)) as isize) = *v;
+				*dataptr.add(i) = *v;
 			}
 			UNPIN(self.ptr);
 		}

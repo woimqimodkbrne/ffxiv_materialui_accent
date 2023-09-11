@@ -141,7 +141,7 @@ fn wndproc(hwnd: HWND, umsg: u32, wparam: WPARAM, lparam: LPARAM) -> LRESULT {
 			EVENTS.lock().unwrap().push(egui::Event::PointerGone);
 		}
 		
-		// can'y use these as dalamud captures them and doesn't pass them along
+		// can't use these as dalamud captures them and doesn't pass them along
 		// WM_LBUTTONDOWN => key_event(egui::PointerButton::Primary, true),
 		// WM_LBUTTONUP => key_event(egui::PointerButton::Primary, false),
 		// WM_RBUTTONDOWN => key_event(egui::PointerButton::Secondary, true),
