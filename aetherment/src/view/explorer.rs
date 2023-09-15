@@ -77,12 +77,26 @@ impl super::View for Explorer {
 					if let Some(ext) = path.extension() {
 						let ext = ext.to_string_lossy();
 						
-						if let Ok(file) = std::fs::File::create(path) {
-							match tab.borrow().export(&ext, Box::new(std::io::BufWriter::new(file))) {
-								Ok(()) => log!("File saved successfully to {path:?}"),
-								Err(err) => log!(err, "Failed saving file {err}"),
+						match dialog.dialog_type() {
+							egui_file::DialogType::SaveFile => {
+								if let Ok(file) = std::fs::File::create(path) {
+									match tab.borrow().export(&ext, Box::new(std::io::BufWriter::new(file))) {
+										Ok(()) => log!("File saved successfully to {path:?}"),
+										Err(err) => log!(err, "Failed saving file {err}"),
+									}
+								}
 							}
+							
+							egui_file::DialogType::OpenFile => {
+								log!(err, "TODO: import");
+							}
+							
+							_ => {}
 						}
+					}
+					
+					if let Some(parent) = path.parent() {
+						crate::config().config.file_dialog_path = parent.to_owned();
 					}
 				}
 				
@@ -133,57 +147,37 @@ impl egui_dock::TabViewer for Viewer {
 		tab.borrow().name().into()
 	}
 	
-	// fn id(&mut self, tab: &mut Self::Tab) -> egui::Id {
-	// 	egui::Id::new(tab.borrow().name())
-	// }
-	
 	fn ui(&mut self, ui: &mut egui::Ui, tab_raw: &mut Self::Tab) {
-		let mut tab = tab_raw.borrow_mut();
-		let pos = ui.cursor().min;
-		let space = ui.available_size();
-		
-		if let Err(err) = tab.render(ui) {
+		if let Err(err) = tab_raw.borrow_mut().render(ui) {
 			render_error(ui, &err);
-		} else if !tab.is_tree() {
-			let style = ui.style();
-			egui::Window::new("Options")
-				.frame(egui::Frame {
-					inner_margin: style.spacing.window_margin,
-					outer_margin: Default::default(),
-					shadow: egui::epaint::Shadow::NONE,
-					rounding: style.visuals.window_rounding,
-					fill: style.visuals.window_fill(),
-					stroke: style.visuals.window_stroke(),
-				})
-				.id(egui::Id::new(tab.path()))
-				.drag_bounds(egui::Rect{min: pos, max: pos + space})
-				.resizable(false)
-				.show(ui.ctx(), |ui| {
-					if let Err(err) = tab.render_options(ui) {
-						render_error(ui, &err);
-					}
-					
-					let exts = tab.exts();
-					if exts.len() > 0 {
-						// ui.separator();
-						ui.add_space(10.0);
-						
-						ui.horizontal(|ui| {
-							if ui.button("Import").clicked() && self.dialog.is_none() {
-								log!(err, "TODO: import");
-							}
-							
-							if ui.button("Export").clicked() && self.dialog.is_none() {
-								// TODO: save last location and open it there
-								let mut dialog = egui_file::FileDialog::save_file(dirs::document_dir())
-									.default_filename(tab.name())
-									.title(tab.name());
-								dialog.open();
-								self.dialog = Some((dialog, tab_raw.clone()));
-							}
-						});
-					}
-				});
+		}
+	}
+	
+	fn context_menu(&mut self, ui: &mut egui::Ui, tab_raw: &mut Self::Tab) {
+		let mut tab = tab_raw.borrow_mut();
+		if let Err(err) = tab.render_options(ui) {
+			render_error(ui, &err);
+		}
+		
+		let exts = tab.exts();
+		if exts.len() > 0 {
+			if ui.button("Import").clicked() && self.dialog.is_none() {
+				let mut dialog = egui_file::FileDialog::open_file(Some(crate::config().config.file_dialog_path.clone()))
+					.default_filename(tab.name())
+					.title(tab.name());
+				dialog.open();
+				self.dialog = Some((dialog, tab_raw.clone()));
+			}
+			
+			if ui.button("Export").clicked() && self.dialog.is_none() {
+				let mut dialog = egui_file::FileDialog::save_file(Some(crate::config().config.file_dialog_path.clone()))
+					.default_filename(tab.name())
+					.title(tab.name());
+				dialog.open();
+				self.dialog = Some((dialog, tab_raw.clone()));
+			}
+			
+			ui.separator();
 		}
 	}
 	
