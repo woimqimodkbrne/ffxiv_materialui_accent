@@ -1,28 +1,34 @@
 #[macro_use]
 mod log;
-// mod config;
+mod config;
 // mod migrate;
 mod view;
 mod render_helper;
 mod resource_loader;
 
 pub use log::LogType;
-pub use renderer::Backends;
+// pub use renderer::Backends;
 
+// static mut BACKEND: renderer::Backends = renderer::Backends::empty();
+// pub(crate) fn get_backend() -> renderer::Backends {
+// 	unsafe{BACKEND.clone()}
+// }
+
+static MODREPO: &str = "https://mods.aetherment.com/list.json";
+
+static mut CONFIG: Option<config::ConfigManager> = None;
+pub fn config() -> &'static mut config::ConfigManager {
+	unsafe{CONFIG.get_or_insert_with(|| config::ConfigManager::load(&dirs::config_dir().unwrap().join("Aetherment").join("config.json")))}
+}
+
+static mut NOUMENON: Option<Option<noumenon::Noumenon>> = None;
 #[cfg(feature = "plugin")]
-lazy_static::lazy_static! {
-	pub static ref NOUMENON: Option<noumenon::Noumenon> = noumenon::get_noumenon(Some(std::env::current_exe().unwrap().parent().unwrap().parent().unwrap()));
+pub fn noumenon() -> Option<&'static noumenon::Noumenon> {
+	unsafe{NOUMENON.get_or_insert_with(|| noumenon::get_noumenon(Some(std::env::current_exe().unwrap().parent().unwrap().parent().unwrap()))).as_ref()}
 }
-
 #[cfg(not(feature = "plugin"))]
-lazy_static::lazy_static! {
-	// TODO: load from config if entry exists
-	pub static ref NOUMENON: Option<noumenon::Noumenon> = noumenon::get_noumenon(None::<&str>);
-}
-
-static mut BACKEND: renderer::Backends = renderer::Backends::empty();
-pub(crate) fn get_backend() -> renderer::Backends {
-	unsafe{BACKEND.clone()}
+pub fn noumenon() -> Option<&'static noumenon::Noumenon> {
+	unsafe{NOUMENON.get_or_insert_with(|| noumenon::get_noumenon(None::<&str>)).as_ref()}
 }
 
 pub struct Core {
@@ -30,19 +36,19 @@ pub struct Core {
 }
 
 impl Core {
-	pub fn new(log: fn(log::LogType, String), ctx: egui::Context, backend: renderer::Backends) -> Self {
+	pub fn new(log: fn(log::LogType, String), ctx: egui::Context/*, backend: renderer::Backends*/) -> Self {
 		unsafe {
 			log::LOG = log;
-			BACKEND = backend;
+			// BACKEND = backend;
 		}
 		
 		Self {
 			views: egui_dock::Tree::new(vec![
+				Box::new(view::Settings::new()),
 				Box::new(view::Explorer::new(ctx)),
 				Box::new(view::Debug::new()),
 				Box::new(view::Main::new()),
-				// Box::new(view::Debug::new()),
-			])
+			]),
 		}
 	}
 	

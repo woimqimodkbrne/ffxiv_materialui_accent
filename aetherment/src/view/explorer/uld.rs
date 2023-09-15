@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use noumenon::format::game::{uld, Uld as GameUld, Tex as GameTex};
-use crate::{NOUMENON, resource_loader::load_file, render_helper::{RendererExtender, EnumTools}};
+use crate::{resource_loader::load_file, render_helper::{RendererExtender, EnumTools}};
 
 mod enum_tools;
 mod component;
@@ -224,7 +224,7 @@ impl Tab for Asset {
 		
 		ui.horizontal(|ui| {
 			if ui.button("➕ Add new asset").clicked() {
-				if NOUMENON.as_ref().unwrap().file::<GameTex>(&self.add).is_ok() && data.assets.iter().find(|v| v.path.to_ascii_lowercase() == self.add.to_ascii_lowercase()).is_none() {
+				if crate::noumenon().as_ref().unwrap().file::<GameTex>(&self.add).is_ok() && data.assets.iter().find(|v| v.path.to_ascii_lowercase() == self.add.to_ascii_lowercase()).is_none() {
 					data.assets.push(uld::UldTexture {
 						id: data.assets.iter().map(|v| v.id).max().unwrap_or(0) + 1,
 						path: self.add.clone(),

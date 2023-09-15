@@ -47,7 +47,7 @@ impl Tex {
 			let mut reader = BufReader::new(file);
 			GameTex::read(&mut reader)?
 		} else {
-			crate::NOUMENON.as_ref().ok_or(super::ExplorerError::Path(self.path.clone()))?.file::<GameTex>(&self.path)?
+			crate::noumenon().as_ref().ok_or(super::ExplorerError::Path(self.path.clone()))?.file::<GameTex>(&self.path)?
 		};
 		
 		self.texture = Some(ctx.load_texture("explorer_tex", egui::epaint::image::ColorImage::new([data.header.width as usize, data.header.height as usize], egui::epaint::Color32::TRANSPARENT), Default::default()));

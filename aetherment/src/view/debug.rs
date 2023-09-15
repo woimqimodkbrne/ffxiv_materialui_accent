@@ -1,8 +1,12 @@
-pub struct Debug {}
+pub struct Debug {
+	texture: Option<egui::TextureHandle>,
+}
 
 impl Debug {
 	pub fn new() -> Self {
-		Self {}
+		Self {
+			texture: None,
+		}
 	}
 }
 
@@ -12,6 +16,12 @@ impl super::View for Debug {
 	}
 	
 	fn render(&mut self, ui: &mut egui::Ui) {
+		let texture: &egui::TextureHandle = self.texture.get_or_insert_with(|| {
+			ui.ctx().load_texture("", egui::ColorImage::example(), Default::default())
+		});
+		
+		ui.image(texture, egui::vec2(400.0, 400.0));
+		
 		ui.ctx().clone().style_ui(ui);
 	}
 }

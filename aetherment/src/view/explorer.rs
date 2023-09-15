@@ -1,4 +1,4 @@
-use std::{rc::Rc, sync::Mutex, cell::RefCell};
+use std::{rc::Rc, cell::RefCell};
 use crate::resource_loader::{BacktraceError, ExplorerError};
 
 pub mod generic;
@@ -13,13 +13,13 @@ type ViewT = Rc<RefCell<Box<dyn View>>>;
 
 pub struct Explorer {
 	dock: egui_dock::Tree<ViewT>,
-	to_add: Rc<Mutex<Vec<ViewT>>>,
+	to_add: Rc<RefCell<Vec<ViewT>>>,
 	viewer: Viewer,
 }
 
 impl Explorer {
 	pub fn new(ctx: egui::Context) -> Self {
-		let to_add = Rc::new(Mutex::new(Vec::new()));
+		let to_add = Rc::new(RefCell::new(Vec::new()));
 		
 		Self {
 			dock: egui_dock::Tree::new(vec![{
@@ -54,7 +54,7 @@ impl super::View for Explorer {
 			// .show_close_buttons(false)
 			.show_inside(ui, &mut self.viewer);
 		
-		for view in self.to_add.lock().unwrap().drain(..) {
+		for view in self.to_add.borrow_mut().drain(..) {
 			if self.dock.len() == 1 {
 				self.dock.split_right(egui_dock::NodeIndex::root(), 0.2, vec![view]);
 			} else {
@@ -92,17 +92,17 @@ impl super::View for Explorer {
 	}
 }
 
-fn open_viewer(ctx: egui::Context, to_add: Rc<Mutex<Vec<ViewT>>>, path: &str, real_path: Option<&str>) {
+fn open_viewer(ctx: egui::Context, to_add: Rc<RefCell<Vec<ViewT>>>, path: &str, real_path: Option<&str>) {
 	if let Err(err) = || -> Result<(), BacktraceError> {
 		match path.split(".").last().unwrap() {
-			"tex" | "atex" => to_add.lock().unwrap().push(Rc::new(RefCell::new(Box::new(tex::Tex::new(ctx, path, real_path)?)))),
-			"uld" => to_add.lock().unwrap().push(Rc::new(RefCell::new(Box::new(uld::Uld::new(path, real_path)?)))),
-			_ => to_add.lock().unwrap().push(Rc::new(RefCell::new(Box::new(generic::Generic::new(path, real_path)?)))),
+			"tex" | "atex" => to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(tex::Tex::new(ctx, path, real_path)?)))),
+			"uld" => to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(uld::Uld::new(path, real_path)?)))),
+			_ => to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(generic::Generic::new(path, real_path)?)))),
 		}
 		
 		Ok(())
 	}() {
-		to_add.lock().unwrap().push(Rc::new(RefCell::new(Box::new(error::Error::new(path, real_path, err)))))
+		to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(error::Error::new(path, real_path, err)))))
 	}
 }
 

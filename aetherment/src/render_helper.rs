@@ -4,6 +4,7 @@ pub trait RendererExtender {
 	fn num_edit_range<Num: egui::emath::Numeric>(&mut self, value: &mut Num, label: impl Into<egui::WidgetText>, range: std::ops::RangeInclusive<Num>) -> egui::Response;
 	fn num_multi_edit<Num: egui::emath::Numeric>(&mut self, values: &mut [Num], label: impl Into<egui::WidgetText>) -> egui::Response;
 	fn enum_combo<Enum: EnumTools + PartialEq>(&mut self, value: &mut Enum, label: impl Into<egui::WidgetText>);
+	fn helptext(&mut self, text: impl Into<egui::WidgetText>);
 }
 
 impl RendererExtender for egui::Ui {
@@ -53,6 +54,10 @@ impl RendererExtender for egui::Ui {
 					ui.selectable_value(value, item, name);
 				}
 			});
+	}
+	
+	fn helptext(&mut self, text: impl Into<egui::WidgetText>) {
+		self.label("❓").on_hover_text(text);
 	}
 }
 

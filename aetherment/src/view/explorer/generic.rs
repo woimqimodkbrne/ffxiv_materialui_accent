@@ -29,7 +29,7 @@ impl Generic {
 			file.read_to_end(&mut buf)?;
 			buf
 		} else {
-			crate::NOUMENON.as_ref().ok_or(super::ExplorerError::Path(self.path.clone()))?.file::<Vec<u8>>(&self.path)?
+			crate::noumenon().as_ref().ok_or(super::ExplorerError::Path(self.path.clone()))?.file::<Vec<u8>>(&self.path)?
 		};
 		
 		self.data = Some(data);

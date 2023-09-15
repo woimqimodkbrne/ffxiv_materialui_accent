@@ -107,7 +107,7 @@ pub extern fn initialize(init: Initializers) -> *mut State {
 			},
 			
 			visible: true,
-			core: aetherment::Core::new(log, ctx, aetherment::Backends::DX12),
+			core: aetherment::Core::new(log, ctx/*, aetherment::Backends::DX12*/),
 		}))
 	}) {
 		Ok(v) => v,

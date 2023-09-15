@@ -1,6 +1,9 @@
 mod main;
 pub use main::Main as Main;
 
+mod settings;
+pub use settings::Settings as Settings;
+
 mod explorer;
 pub use explorer::Explorer as Explorer;
 

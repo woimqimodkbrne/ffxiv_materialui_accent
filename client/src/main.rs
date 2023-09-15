@@ -50,8 +50,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 	};
 	
 	eframe::run_native("Aetherment", options, Box::new(|cc| {
-		let backend = cc.wgpu_render_state.as_ref().unwrap().adapter.get_info().backend;
-		Box::new(CoreWrapper(aetherment::Core::new(log, cc.egui_ctx.clone(), backend.into())))
+		let _backend = cc.wgpu_render_state.as_ref().unwrap().adapter.get_info().backend;
+		Box::new(CoreWrapper(aetherment::Core::new(log, cc.egui_ctx.clone()/*, backend.into()*/)))
 	}))?;
 	
 	Ok(())

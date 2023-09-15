@@ -70,6 +70,6 @@ T: noumenon::File {
 		file.read_to_end(&mut buf)?;
 		Ok(noumenon::File::read(&buf)?)
 	} else {
-		Ok(crate::NOUMENON.as_ref().ok_or(ExplorerError::Path(path.to_string()))?.file::<T>(path)?)
+		Ok(crate::noumenon().as_ref().ok_or(ExplorerError::Path(path.to_string()))?.file::<T>(path)?)
 	}
 }
