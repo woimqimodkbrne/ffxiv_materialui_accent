@@ -56,8 +56,8 @@ impl std::hash::Hash for Option {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub enum OptionSettings {
-	Single(ValueFiles),
-	Multi(ValueFiles),
+	SingleFiles(ValueFiles),
+	MultiFiles(ValueFiles),
 	Rgb(ValueRgb),
 	Rgba(ValueRgba),
 	Grayscale(ValueSingle),
@@ -71,8 +71,8 @@ impl EnumTools for OptionSettings {
 	
 	fn to_str(&self) -> &'static str {
 		match self {
-			Self::Single(_) => "Single",
-			Self::Multi(_) => "Multi",
+			Self::SingleFiles(_) => "Single Files",
+			Self::MultiFiles(_) => "Multi Files",
 			Self::Rgb(_) => "RGB",
 			Self::Rgba(_) => "RGBA",
 			Self::Grayscale(_) => "Grayscale",
@@ -82,7 +82,7 @@ impl EnumTools for OptionSettings {
 	}
 	
 	fn iter() -> Self::Iterator {
-		[Self::Single(Default::default()), Self::Multi(Default::default()), Self::Rgb(Default::default()), Self::Rgba(Default::default()), Self::Grayscale(Default::default()), Self::Opacity(Default::default()), Self::Mask(Default::default())].into_iter()
+		[Self::SingleFiles(Default::default()), Self::MultiFiles(Default::default()), Self::Rgb(Default::default()), Self::Rgba(Default::default()), Self::Grayscale(Default::default()), Self::Opacity(Default::default()), Self::Mask(Default::default())].into_iter()
 	}
 }
 

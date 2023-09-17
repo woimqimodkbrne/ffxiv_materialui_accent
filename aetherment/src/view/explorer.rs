@@ -1,4 +1,4 @@
-use std::{rc::Rc, cell::RefCell, fs::File, io::Read};
+use std::{rc::Rc, cell::RefCell, fs::File, io::Read, collections::HashMap};
 use crate::resource_loader::{BacktraceError, ExplorerError};
 
 pub mod error;
@@ -12,10 +12,13 @@ pub mod uld;
 // ----------
 
 type ViewT = Rc<RefCell<Box<dyn View>>>;
+type ModsMap = Rc<RefCell<HashMap<String, Rc<RefCell<crate::modman::meta::Meta>>>>>; // wtf am i doing
 
 pub struct Explorer {
 	dock: egui_dock::Tree<ViewT>,
 	to_add: Rc<RefCell<Vec<ViewT>>>,
+	#[allow(dead_code)] tree_data: Rc<RefCell<tree::TreeData>>,
+	#[allow(dead_code)] mods: ModsMap,
 	viewer: Viewer,
 }
 
@@ -23,51 +26,59 @@ impl Explorer {
 	pub fn new(ctx: egui::Context) -> Self {
 		let to_add = Rc::new(RefCell::new(Vec::new()));
 		
+		// open_viewer(ctx.clone(), to_add.clone(), &"ui/uld/jobhudwar0.uld", None);
+		open_viewer(ctx.clone(), to_add.clone(), &"ui/uld/ConfigSystem.uld", None);
+		
+		let tree_data = Rc::new(RefCell::new(tree::TreeData {
+			mod_trees: Vec::new(),
+			game_paths: {
+				let to_add = to_add.clone();
+				let ctx = ctx.clone();
+				tree::LazyTree::new(Box::new(move |path, button| {
+					if button.clicked() {
+						open_viewer(ctx.clone(), to_add.clone(), &path, None)
+					}
+				}))
+			},
+		}));
+		
+		let mods = Rc::new(RefCell::new(HashMap::new()));
+		
+		let tree = tree::Tree::new(
+			tree_data.clone(),
+			{
+				let tree_data = tree_data.clone();
+				let mods = mods.clone();
+				let to_add = to_add.clone();
+				let ctx = ctx.clone();
+				Box::new(move |mod_path| {
+					open_mod(ctx.clone(), to_add.clone(), mod_path, tree_data.clone(), mods.clone())
+				})
+			},
+		);
+		
+		let config = crate::config();
+		for m in &config.config.mod_paths {
+			open_mod(ctx.clone(), to_add.clone(), m, tree_data.clone(), mods.clone());
+		}
+		
+		let data = || -> Result<Vec<u8>, BacktraceError> {
+			let mut f = File::open(dirs::cache_dir().unwrap().join("Aetherment").join("paths"))?;
+			let mut data = Vec::new();
+			f.read_to_end(&mut data)?;
+			Ok(data)
+		}();
+		
+		// do smth with this, probably reload button if failed
+		if let Ok(data) = data {
+			_ = tree_data.borrow_mut().game_paths.load(data);
+		}
+		
 		Self {
-			dock: egui_dock::Tree::new(vec![{
-				// open_viewer(ctx.clone(), to_add.clone(), &"ui/uld/jobhudwar0.uld", None);
-				open_viewer(ctx.clone(), to_add.clone(), &"ui/uld/ConfigSystem.uld", None);
-				
-				let mut tree = tree::Tree::new(
-					Vec::new(),
-					{
-						let to_add = to_add.clone();
-						let ctx = ctx.clone();
-						tree::LazyTree::new(Box::new(move |path, button| {
-							if button.clicked() {
-								open_viewer(ctx.clone(), to_add.clone(), &path, None)
-							}
-						}))
-					},
-					{
-						let to_add = to_add.clone();
-						let ctx = ctx.clone();
-						Box::new(move |mod_path, mod_trees| {
-							open_mod(ctx.clone(), to_add.clone(), mod_path, mod_trees)
-						})
-					},
-				);
-				
-				let config = crate::config();
-				for m in &config.config.mod_paths {
-					open_mod(ctx.clone(), to_add.clone(), m, &mut tree.mod_trees);
-				}
-				
-				let data = || -> Result<Vec<u8>, BacktraceError> {
-					let mut f = File::open(dirs::cache_dir().unwrap().join("Aetherment").join("paths"))?;
-					let mut data = Vec::new();
-					f.read_to_end(&mut data)?;
-					Ok(data)
-				}();
-				
-				// do smth with this, probably reload button if failed
-				if let Ok(data) = data {
-					_ = tree.game_paths.load(data);
-				}
-				
-				Rc::new(RefCell::new(Box::new(tree)))
-			}]),
+			dock: egui_dock::Tree::new(vec![Rc::new(RefCell::new(Box::new(tree)))]),
 			to_add,
+			tree_data,
+			mods,
 			viewer: Viewer{dialog: None}
 		}
 	}
@@ -138,7 +149,9 @@ impl super::View for Explorer {
 	}
 }
 
-fn open_mod(_ctx: egui::Context, to_add: Rc<RefCell<Vec<ViewT>>>, mod_path: &std::path::Path, mod_trees: &mut Vec<(String, std::path::PathBuf, tree::StaticTree)>) {
+fn open_mod(ctx: egui::Context, to_add: Rc<RefCell<Vec<ViewT>>>, mod_path: &std::path::Path, tree_data: Rc<RefCell<tree::TreeData>>, mods: ModsMap) {
+	use crate::modman::meta::*;
+	
 	let config = crate::config();
 	if !config.config.mod_paths.contains(&mod_path.to_owned()) {
 		config.config.mod_paths.push(mod_path.to_owned());
@@ -147,24 +160,65 @@ fn open_mod(_ctx: egui::Context, to_add: Rc<RefCell<Vec<ViewT>>>, mod_path: &std
 	
 	let mod_name = mod_path.file_name().unwrap().to_str().unwrap().to_owned();
 	let mod_path = mod_path.to_owned();
-	mod_trees.push((
-		mod_path.file_name().unwrap().to_str().unwrap().to_owned(),
-		mod_path.clone(),
-		tree::StaticTree::new(Box::new(move |path, button| {
+	
+	if let Err(err) = (|| -> Result<_, BacktraceError> {
+		let meta = serde_json::from_reader(std::io::BufReader::new(File::open(mod_path.join("meta.json"))?))?;
+		mods.borrow_mut().insert(mod_name.clone(), Rc::new(RefCell::new(meta)));
+		
+		Ok(())
+	})() {
+		log!(err, "Failed opening mod {err:?}");
+		return
+	}
+	
+	let mut tree = {
+		let mod_path = mod_path.clone();
+		let tree_data = tree_data.clone();
+		let mods = mods.clone();
+		tree::StaticTree::new(Box::new(move |path, real_path, _options, button| {
 			if button.clicked() {
-				if path == "Meta" {
-					if let Err(err) = || -> Result<(), BacktraceError> {
-						to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(modmeta::ModMeta::new(mod_name.clone(), mod_path.join("meta.json"))?))));
-						Ok(())
-					}() {
-						to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(error::Error::new("_modmeta", Some(&path), err)))))
+				let mod_trees = &tree_data.borrow().mod_trees;
+				if let Some((mod_name, mod_path, _mod_tree)) = mod_trees.iter().find(|(_, path, _)| path == &mod_path) {
+					if let Some(meta) = mods.borrow().get(mod_name) {
+						if path == "\0meta" {
+							if let Err(err) = || -> Result<(), BacktraceError> {
+								to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(modmeta::ModMeta::new(mod_name.clone(), mod_path.join("meta.json"), meta.clone())?))));
+								Ok(())
+							}() {
+								to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(error::Error::new("_modmeta", Some(&path), err)))))
+							}
+						} else {
+							if let Some(real_path) = real_path {
+								open_viewer(ctx.clone(), to_add.clone(), &path, Some(&mod_path.join("files").join(real_path).to_string_lossy().to_string()));
+							} else {
+								log!(err, "No real path {path} (???)");
+							}
+						}
 					}
-				} else {
-					log!("TODO: mod files opening")
-					// open_viewer(ctx.clone(), to_add.clone(), "", None)
 				}
 			}
 		}))
+	};
+	
+	let m = mods.borrow_mut();
+	let meta = m.get(&mod_name).unwrap().borrow_mut();
+	for (game, real) in &meta.files {
+		tree.add_path(game, real, None);
+	}
+	for option in &meta.options {
+		if let OptionSettings::SingleFiles(f) | OptionSettings::MultiFiles(f) = &option.settings {
+			for sub_option in &f.options {
+				for (game, real) in &sub_option.files {
+					tree.add_path(game, real, Some((option.name.clone(), sub_option.name.clone())));
+				}
+			}
+		}
+	}
+	
+	tree_data.borrow_mut().mod_trees.push((
+		mod_path.file_name().unwrap().to_str().unwrap().to_owned(),
+		mod_path.clone(),
+		tree
 	));
 }
 

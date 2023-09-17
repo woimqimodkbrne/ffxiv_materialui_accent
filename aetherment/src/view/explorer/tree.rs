@@ -52,7 +52,7 @@ impl LazyTree {
 			});
 		}
 		
-		branch.sort_by(|a, b| 
+		branch.sort_by(|a, b|
 			(if a.offset == 0 && b.offset != 0 {Ordering::Greater} else if a.offset != 0 && b.offset == 0 {Ordering::Less} else {Ordering::Equal})
 			.then(a.name.to_ascii_lowercase().cmp(&b.name.to_ascii_lowercase()))
 		);
@@ -78,17 +78,19 @@ impl LazyTree {
 
 struct StaticBranch {
 	name: String,
+	option: Option<(String, String)>,
+	real_path: Option<String>,
 	disabled: bool,
 	branches: Vec<StaticBranch>,
 }
 
 pub struct StaticTree {
 	branches: Vec<StaticBranch>,
-	entryfn: Box<dyn Fn(String, egui::Response)>,
+	entryfn: Box<dyn Fn(String, Option<String>, Option<(String, String)>, egui::Response)>,
 }
 
 impl StaticTree {
-	pub fn new(entryfn: Box<dyn Fn(String, egui::Response)>) -> Self {
+	pub fn new(entryfn: Box<dyn Fn(String, Option<String>, Option<(String, String)>, egui::Response)>) -> Self {
 		Self {
 			branches: Vec::new(),
 			entryfn,
@@ -99,7 +101,43 @@ impl StaticTree {
 	// 	// todo?
 	// }
 	
-	fn render_branch(ui: &mut egui::Ui, branch: &StaticBranch, path: String, mut disabled: bool, entryfn: &Box<dyn Fn(String, egui::Response)>) {
+	pub fn add_path(&mut self, path: &str, real_path: &str, option: Option<(String, String)>) {
+		fn sort_branch(branches: &mut Vec<StaticBranch>) {
+			// TODO: include option strings in sort
+			branches.sort_by(|a, b|
+				(if a.branches.len() == 0 && b.branches.len() != 0 {Ordering::Greater} else if a.branches.len() != 0 && b.branches.len() == 0 {Ordering::Less} else {Ordering::Equal})
+				.then(a.name.to_ascii_lowercase().cmp(&b.name.to_ascii_lowercase())));
+		}
+		
+		let segs = path.split("/").collect::<Vec<_>>();
+		let mut branches = &mut self.branches;
+		for i in 0..(segs.len() - 1) {
+			let seg = segs[i];
+			if !branches.iter().any(|branch| branch.name == seg) {
+				branches.push(StaticBranch {
+					name: seg.to_string(),
+					option: None,
+					real_path: None,
+					disabled: false,
+					branches: Vec::new(),
+				});
+				sort_branch(branches);
+			}
+			
+			branches = &mut branches.iter_mut().find(|branch| branch.name == seg).unwrap().branches;
+		}
+		
+		branches.push(StaticBranch {
+			name: segs.last().unwrap().to_string(),
+			option: option,
+			real_path: Some(real_path.to_string()),
+			disabled: false,
+			branches: Vec::new(),
+		});
+		sort_branch(branches);
+	}
+	
+	fn render_branch(ui: &mut egui::Ui, branch: &StaticBranch, path: String, mut disabled: bool, entryfn: &Box<dyn Fn(String, Option<String>, Option<(String, String)>, egui::Response)>) {
 		disabled = disabled || branch.disabled;
 		if branch.branches.len() != 0 {
 			ui.collapsing(&branch.name, |ui| {
@@ -108,7 +146,13 @@ impl StaticTree {
 				}
 			});
 		} else {
-			entryfn(path, ui.add_enabled(!disabled, egui::Button::new(&branch.name)));
+			let resp = if let Some((option, sub_option)) = &branch.option {
+				egui::Button::new(format!("{} [{option}][{sub_option}]", branch.name))
+			} else {
+				egui::Button::new(&branch.name)
+			};
+			
+			entryfn(path, branch.real_path.clone(), branch.option.clone(), ui.add_enabled(!disabled, resp));
 		}
 	}
 }
@@ -123,18 +167,21 @@ enum OpenMod {
 	CreateReq(PathBuf),
 }
 
-pub struct Tree {
+pub struct TreeData {
 	pub mod_trees: Vec<(String, PathBuf, StaticTree)>,
 	pub game_paths: LazyTree,
-	openmodfn: Box<dyn Fn(&Path, &mut Vec<(String, PathBuf, StaticTree)>)>,
+}
+
+pub struct Tree {
+	data: Rc<std::cell::RefCell<TreeData>>,
+	openmodfn: Box<dyn Fn(&Path)>,
 	opening_mod: OpenMod,
 }
 
 impl Tree {
-	pub fn new(mod_trees: Vec<(String, PathBuf, StaticTree)>, game_paths: LazyTree, openmodfn: Box<dyn Fn(&Path, &mut Vec<(String, PathBuf, StaticTree)>)>) -> Self {
+	pub fn new(data: Rc<std::cell::RefCell<TreeData>>, openmodfn: Box<dyn Fn(&Path)>) -> Self {
 		Self {
-			mod_trees,
-			game_paths,
+			data,
 			openmodfn,
 			opening_mod: OpenMod::None,
 		}
@@ -145,7 +192,7 @@ impl Tree {
 		let mut meta_file = File::create(path.join("meta.json")).unwrap();
 		serde_json::to_writer_pretty(&mut meta_file, &meta).unwrap();
 		
-		(self.openmodfn)(path, &mut self.mod_trees);
+		(self.openmodfn)(path);
 	}
 }
 
@@ -164,9 +211,9 @@ impl super::View for Tree {
 	
 	fn render(&mut self, ui: &mut egui::Ui) -> Result<(), super::BacktraceError> {
 		let mut delete = None;
-		for (mod_name, mod_path, mod_tree) in &self.mod_trees {
+		for (mod_name, mod_path, mod_tree) in &self.data.borrow().mod_trees {
 			ui.collapsing(mod_name, |ui| {
-				(mod_tree.entryfn)("Meta".to_string(), ui.button("Meta"));
+				(mod_tree.entryfn)("\0meta".to_string(), None, None, ui.button("Meta"));
 				
 				ui.collapsing("Files", |ui| {
 					for branch in &mod_tree.branches {
@@ -181,7 +228,7 @@ impl super::View for Tree {
 		}
 		
 		if let Some(mod_path) = delete {
-			self.mod_trees.retain(|(_, path, _)| path != &mod_path);
+			self.data.borrow_mut().mod_trees.retain(|(_, path, _)| path != &mod_path);
 			crate::config().config.mod_paths.retain(|path| path != &mod_path);
 			_ = crate::config().save_forced();
 		}
@@ -204,7 +251,7 @@ impl super::View for Tree {
 					}
 					
 					if path.join("meta.json").exists() {
-						(self.openmodfn)(&path, &mut self.mod_trees);
+						(self.openmodfn)(&path);
 					} else {
 						self.opening_mod = OpenMod::CreateReq(path);
 					}
@@ -231,8 +278,8 @@ impl super::View for Tree {
 		ui.add_space(20.0);
 		
 		ui.collapsing("Game Paths", |ui| {
-			for branch in &mut self.game_paths.branches {
-				LazyTree::render_branch(&self.game_paths.data, ui, branch, branch.name.to_string(), &self.game_paths.entryfn);
+			for branch in &mut self.data.borrow_mut().game_paths.branches {
+				LazyTree::render_branch(&self.data.borrow().game_paths.data, ui, branch, branch.name.to_string(), &self.data.borrow().game_paths.entryfn);
 			}
 		});
 		

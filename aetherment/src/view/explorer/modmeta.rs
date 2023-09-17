@@ -1,21 +1,17 @@
-use std::{fs::File, path::PathBuf};
-use binrw::io::BufReader;
+use std::{fs::File, path::PathBuf, rc::Rc, cell::RefCell};
 use crate::{render_helper::RendererExtender, modman::meta::*};
 
 pub struct ModMeta {
 	name: String,
 	path: PathBuf,
-	meta: crate::modman::meta::Meta,
+	meta: Rc<RefCell<crate::modman::meta::Meta>>,
 }
 
 impl ModMeta {
-	pub fn new(name: impl Into<String>, path: impl Into<PathBuf>) -> Result<Self, super::BacktraceError> {
-		let path = path.into();
-		let meta = serde_json::from_reader(BufReader::new(File::open(&path)?))?;
-		
+	pub fn new(name: impl Into<String>, path: impl Into<PathBuf>, meta: Rc<RefCell<crate::modman::meta::Meta>>) -> Result<Self, super::BacktraceError> {
 		Ok(Self {
 			name: name.into(),
-			path,
+			path: path.into(),
 			meta,
 		})
 	}
@@ -31,7 +27,7 @@ impl super::View for ModMeta {
 	}
 	
 	fn render(&mut self, ui: &mut egui::Ui) -> Result<(), super::BacktraceError> {
-		let meta = &mut self.meta;
+		let mut meta = self.meta.borrow_mut();
 		let org = meta.clone(); // this aint the best way to do it but its easy
 		
 		ui.label("Name");
@@ -103,8 +99,8 @@ impl super::View for ModMeta {
 					ui.text_edit_singleline(&mut option.name);
 					ui.text_edit_multiline(&mut option.description);
 					match &mut option.settings {
-						OptionSettings::Single(v) => render_value_files(ui, v, false),
-						OptionSettings::Multi(v) => render_value_files(ui, v, true),
+						OptionSettings::SingleFiles(v) => render_value_files(ui, v, false),
+						OptionSettings::MultiFiles(v) => render_value_files(ui, v, true),
 						OptionSettings::Rgb(v) => render_value_rgb(ui, v),
 						OptionSettings::Rgba(v) => render_value_rgba(ui, v),
 						OptionSettings::Grayscale(v) => render_value_single(ui, v),
@@ -127,13 +123,13 @@ impl super::View for ModMeta {
 			meta.options.push(Option {
 				name: "New option".to_owned(),
 				description: String::new(),
-				settings: OptionSettings::Single(Default::default()),
+				settings: OptionSettings::SingleFiles(Default::default()),
 			});
 		}
 		
 		// save on changes
-		if meta != &org {
-			serde_json::to_writer_pretty(&mut File::create(&self.path)?, &meta)?;
+		if *meta != org {
+			serde_json::to_writer_pretty(&mut File::create(&self.path)?, &*meta)?;
 		}
 		
 		Ok(())
