@@ -2,6 +2,7 @@
 mod log;
 mod config;
 // mod migrate;
+mod modman;
 mod view;
 mod render_helper;
 mod resource_loader;
@@ -44,8 +45,8 @@ impl Core {
 		
 		Self {
 			views: egui_dock::Tree::new(vec![
-				Box::new(view::Settings::new()),
 				Box::new(view::Explorer::new(ctx)),
+				Box::new(view::Settings::new()),
 				Box::new(view::Debug::new()),
 				Box::new(view::Main::new()),
 			]),

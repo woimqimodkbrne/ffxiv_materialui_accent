@@ -1,28 +1,6 @@
-use std::{io::{Read, Seek, SeekFrom}, collections::HashMap, ops::{Deref, DerefMut}, fs::File, rc::Rc, cmp::Ordering};
+use std::{io::{Read, Seek, SeekFrom}, collections::HashMap, ops::{Deref, DerefMut}, fs::File, rc::Rc, cmp::Ordering, path::{PathBuf, Path}};
 use binrw::BinWrite;
 use flate2::read::GzDecoder;
-
-// TODO: seperate website as to not overload perchbird and know when to download a new version
-// also perhabs add a logger to the plugin to contribute
-// and probably put the path file creation on the server so it only has to be done once
-const PATHSURL: &'static str = "https://rl2.perchbird.dev/download/export/CurrentPathList.gz";
-
-#[derive(Debug, Default)]
-struct Branch<'a>(HashMap<&'a str, Branch<'a>>);
-impl<'a> Deref for Branch<'a> {
-	type Target = HashMap<&'a str, Branch<'a>>;
-	
-	fn deref(&self) -> &Self::Target {
-		&self.0
-	}
-}
-
-impl<'a> DerefMut for Branch<'a> {
-	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.0
-	}
-}
-
 
 struct LazyBranch {
 	name: Rc<str>,
@@ -30,29 +8,26 @@ struct LazyBranch {
 	branches: Option<Vec<LazyBranch>>,
 }
 
-pub struct Tree {
+pub struct LazyTree {
 	data: Vec<u8>,
 	branches: Vec<LazyBranch>,
 	entryfn: Box<dyn Fn(String, egui::Response)>,
 }
 
-impl Tree {
-	pub fn new() -> Self {
+impl LazyTree {
+	pub fn new(entryfn: Box<dyn Fn(String, egui::Response)>) -> Self {
 		Self {
 			branches: Vec::new(),
 			data: Vec::new(),
-			entryfn: Box::new(|_, _| {}),
+			entryfn,
 		}
 	}
 	
-	pub fn load(&mut self, entryfn: Box<dyn Fn(String, egui::Response)>) -> Result<(), super::BacktraceError> {
-		let mut f = File::open(dirs::cache_dir().unwrap().join("Aetherment").join("paths"))?;
-		let mut data = Vec::new();
-		f.read_to_end(&mut data)?;
+	pub fn load(&mut self, data: impl Into<Vec<u8>>) -> Result<(), super::BacktraceError> {
+		let data = data.into();
 		
 		self.branches = Self::load_branch(&data, 0)?;
 		self.data = data;
-		self.entryfn = Box::new(entryfn);
 		
 		Ok(())
 	}
@@ -99,6 +74,81 @@ impl Tree {
 	}
 }
 
+// ----------
+
+struct StaticBranch {
+	name: String,
+	disabled: bool,
+	branches: Vec<StaticBranch>,
+}
+
+pub struct StaticTree {
+	branches: Vec<StaticBranch>,
+	entryfn: Box<dyn Fn(String, egui::Response)>,
+}
+
+impl StaticTree {
+	pub fn new(entryfn: Box<dyn Fn(String, egui::Response)>) -> Self {
+		Self {
+			branches: Vec::new(),
+			entryfn,
+		}
+	}
+	
+	// pub fn set_disabled(&mut self, disabled: bool, path: &str) {
+	// 	// todo?
+	// }
+	
+	fn render_branch(ui: &mut egui::Ui, branch: &StaticBranch, path: String, mut disabled: bool, entryfn: &Box<dyn Fn(String, egui::Response)>) {
+		disabled = disabled || branch.disabled;
+		if branch.branches.len() != 0 {
+			ui.collapsing(&branch.name, |ui| {
+				for branch in &branch.branches {
+					Self::render_branch(ui, branch, format!("{path}/{}", branch.name), disabled, entryfn);
+				}
+			});
+		} else {
+			entryfn(path, ui.add_enabled(!disabled, egui::Button::new(&branch.name)));
+		}
+	}
+}
+
+// ----------
+
+
+#[derive(Debug)]
+enum OpenMod {
+	None,
+	Dialog(egui_file::FileDialog),
+	CreateReq(PathBuf),
+}
+
+pub struct Tree {
+	pub mod_trees: Vec<(String, PathBuf, StaticTree)>,
+	pub game_paths: LazyTree,
+	openmodfn: Box<dyn Fn(&Path, &mut Vec<(String, PathBuf, StaticTree)>)>,
+	opening_mod: OpenMod,
+}
+
+impl Tree {
+	pub fn new(mod_trees: Vec<(String, PathBuf, StaticTree)>, game_paths: LazyTree, openmodfn: Box<dyn Fn(&Path, &mut Vec<(String, PathBuf, StaticTree)>)>) -> Self {
+		Self {
+			mod_trees,
+			game_paths,
+			openmodfn,
+			opening_mod: OpenMod::None,
+		}
+	}
+	
+	fn create_mod(&mut self, path: &std::path::Path) {
+		let meta = crate::modman::meta::Meta::default();
+		let mut meta_file = File::create(path.join("meta.json")).unwrap();
+		serde_json::to_writer_pretty(&mut meta_file, &meta).unwrap();
+		
+		(self.openmodfn)(path, &mut self.mod_trees);
+	}
+}
+
 impl super::View for Tree {
 	fn is_tree(&self) -> bool {
 		true
@@ -113,11 +163,103 @@ impl super::View for Tree {
 	}
 	
 	fn render(&mut self, ui: &mut egui::Ui) -> Result<(), super::BacktraceError> {
-		for branch in &mut self.branches {
-			Self::render_branch(&self.data, ui, branch, branch.name.to_string(), &self.entryfn);
+		let mut delete = None;
+		for (mod_name, mod_path, mod_tree) in &self.mod_trees {
+			ui.collapsing(mod_name, |ui| {
+				(mod_tree.entryfn)("Meta".to_string(), ui.button("Meta"));
+				
+				ui.collapsing("Files", |ui| {
+					for branch in &mod_tree.branches {
+						StaticTree::render_branch(ui, branch, branch.name.to_string(), false, &mod_tree.entryfn);
+					}
+				});
+			}).header_response.context_menu(|ui| {
+				if ui.button("Remove from list").clicked() {
+					delete = Some(mod_path.clone());
+				}
+			});
 		}
 		
+		if let Some(mod_path) = delete {
+			self.mod_trees.retain(|(_, path, _)| path != &mod_path);
+			crate::config().config.mod_paths.retain(|path| path != &mod_path);
+			_ = crate::config().save_forced();
+		}
+		
+		if ui.button("📂 Open mod").clicked() && matches!(self.opening_mod, OpenMod::None) {
+			let mut dialog = egui_file::FileDialog::select_folder(Some(crate::config().config.file_dialog_path.clone()))
+				.title("Open mod folder");
+			dialog.open();
+			self.opening_mod = OpenMod::Dialog(dialog);
+		}
+		
+		if let OpenMod::Dialog(dialog) = &mut self.opening_mod {
+			if dialog.show(ui.ctx()).selected() {
+				if let Some(path) = dialog.path() {
+					let path = path.to_owned();
+					
+					if let Some(parent) = path.parent() {
+						crate::config().config.file_dialog_path = parent.to_owned();
+						_ = crate::config().save_forced();
+					}
+					
+					if path.join("meta.json").exists() {
+						(self.openmodfn)(&path, &mut self.mod_trees);
+					} else {
+						self.opening_mod = OpenMod::CreateReq(path);
+					}
+				}
+			}
+		} else if let OpenMod::CreateReq(path) = &self.opening_mod {
+			let path = path.to_owned();
+			egui::Window::new("Create mod").show(ui.ctx(), |ui| {
+				ui.label("This folder is not a mod, do you want to create one?");
+				ui.label(format!("Path: {}", path.display()));
+				ui.horizontal(|ui| {
+					if ui.button("Create mod").clicked() {
+						self.create_mod(&path);
+						self.opening_mod = OpenMod::None;
+					}
+					
+					if ui.button("Cancel").clicked() {
+						self.opening_mod = OpenMod::None;
+					}
+				})
+			});
+		}
+		
+		ui.add_space(20.0);
+		
+		ui.collapsing("Game Paths", |ui| {
+			for branch in &mut self.game_paths.branches {
+				LazyTree::render_branch(&self.game_paths.data, ui, branch, branch.name.to_string(), &self.game_paths.entryfn);
+			}
+		});
+		
 		Ok(())
+	}
+}
+
+// ----------
+
+// TODO: seperate website as to not overload perchbird and know when to download a new version
+// also perhabs add a logger to the plugin to contribute
+// and probably put the path file creation on the server so it only has to be done once
+const PATHSURL: &'static str = "https://rl2.perchbird.dev/download/export/CurrentPathList.gz";
+
+#[derive(Debug, Default)]
+struct Branch<'a>(HashMap<&'a str, Branch<'a>>);
+impl<'a> Deref for Branch<'a> {
+	type Target = HashMap<&'a str, Branch<'a>>;
+	
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
+}
+
+impl<'a> DerefMut for Branch<'a> {
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		&mut self.0
 	}
 }
 

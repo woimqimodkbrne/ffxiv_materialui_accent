@@ -54,16 +54,18 @@ impl ConfigManager {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct Config {
-	pub local_path: Option<String>,
 	pub repos: Vec<String>,
+	
+	pub mod_paths: Vec<PathBuf>,
 	pub file_dialog_path: PathBuf,
 }
 
 impl Default for Config {
 	fn default() -> Self {
 		Self {
-			local_path: None,
 			repos: Vec::new(),
+			
+			mod_paths: Vec::new(),
 			file_dialog_path: dirs::document_dir().unwrap(),
 		}
 	}

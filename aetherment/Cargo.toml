@@ -10,6 +10,7 @@ plugin = []
 egui = "0.22.0"
 egui_dock = "0.6.3" # keep an eye on egui_tiles as a future alternative with more features
 egui_file = "0.10.0"
+egui_dnd = "0.5.0"
 
 serde = {version = "1.0.171", features = ["derive"]}
 serde_json = "1.0.103"

@@ -3,8 +3,11 @@ pub trait RendererExtender {
 	fn num_edit<Num: egui::emath::Numeric>(&mut self, value: &mut Num, label: impl Into<egui::WidgetText>) -> egui::Response;
 	fn num_edit_range<Num: egui::emath::Numeric>(&mut self, value: &mut Num, label: impl Into<egui::WidgetText>, range: std::ops::RangeInclusive<Num>) -> egui::Response;
 	fn num_multi_edit<Num: egui::emath::Numeric>(&mut self, values: &mut [Num], label: impl Into<egui::WidgetText>) -> egui::Response;
+	fn num_multi_edit_range<Num: egui::emath::Numeric>(&mut self, values: &mut [Num], label: impl Into<egui::WidgetText>, range: &[std::ops::RangeInclusive<Num>]) -> egui::Response;
 	fn enum_combo<Enum: EnumTools + PartialEq>(&mut self, value: &mut Enum, label: impl Into<egui::WidgetText>);
 	fn helptext(&mut self, text: impl Into<egui::WidgetText>);
+	fn delete_button(&mut self, label: impl Into<egui::WidgetText>) -> egui::Response;
+	fn dnd_header(&mut self, handle: egui_dnd::Handle, content: impl FnOnce(&mut egui::Ui));
 }
 
 impl RendererExtender for egui::Ui {
@@ -45,6 +48,17 @@ impl RendererExtender for egui::Ui {
 		}).inner
 	}
 	
+	fn num_multi_edit_range<Num: egui::emath::Numeric>(&mut self, values: &mut [Num], label: impl Into<egui::WidgetText>, range: &[std::ops::RangeInclusive<Num>]) -> egui::Response {
+		self.horizontal(|ui| {
+			let mut resp = ui.add(egui::DragValue::new(&mut values[0]).clamp_range(range[0].clone()));
+			for (i, value) in values.iter_mut().skip(1).enumerate() {
+				resp |= ui.add(egui::DragValue::new(value).clamp_range(range[i].clone()));
+			}
+			ui.label(label.into());
+			resp
+		}).inner
+	}
+	
 	fn enum_combo<Enum: EnumTools + PartialEq>(&mut self, value: &mut Enum, label: impl Into<egui::WidgetText>) {
 		egui::ComboBox::from_label(label)
 			.selected_text(value.to_str())
@@ -58,6 +72,26 @@ impl RendererExtender for egui::Ui {
 	
 	fn helptext(&mut self, text: impl Into<egui::WidgetText>) {
 		self.label("❓").on_hover_text(text);
+	}
+	
+	fn delete_button(&mut self, label: impl Into<egui::WidgetText>) -> egui::Response {
+		self.horizontal(|ui| {
+			let resp = ui.button("🗑");
+			ui.label(label);
+			resp
+		}).inner
+	}
+	
+	fn dnd_header(&mut self, handle: egui_dnd::Handle, content: impl FnOnce(&mut egui::Ui)) {
+		let pos = self.next_widget_position();
+		// let text = label.into().into_galley(self, Some(false), 99999.0, egui::TextStyle::Button);
+		// let height = text.size().y + self.spacing().button_padding.y * 2.0;
+		let height = <&str as Into<egui::WidgetText>>::into("Hi o/").into_galley(self, Some(false), 99999.0, egui::TextStyle::Button).size().y + self.spacing().button_padding.y * 2.0;
+		if self.rect_contains_pointer(egui::Rect{min: pos, max: egui::pos2(pos.x + self.available_width(), pos.y + height)}) {
+			handle.ui(self, content);
+		} else {
+			self.scope(content);
+		}
 	}
 }
 
