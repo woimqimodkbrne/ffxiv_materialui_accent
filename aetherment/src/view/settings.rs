@@ -23,6 +23,25 @@ impl super::View for Settings {
 		let config = &mut config_manager.config;
 		
 		ui.horizontal(|ui| {
+			let mut game_install = config.game_install.is_some();
+			ui.add(egui::Checkbox::without_text(&mut game_install));
+			if game_install != config.game_install.is_some() {
+				if game_install {
+					config.game_install = Some("".to_owned());
+				} else {
+					config.game_install = None;
+				}
+			}
+			
+			if let Some(game_install) = &mut config.game_install {
+				ui.text_edit_singleline(game_install);
+			}
+			
+			ui.label("Game install location");
+			ui.helptext("Path to the game, use this if you use a custom location where autodetection fails (requires a restart (for now))\nExample: Z:/SteamLibrary/steamapps/common/FINAL FANTASY XIV - A Realm Reborn")
+		});
+		
+		ui.horizontal(|ui| {
 			ui.label("Repositories");
 			ui.helptext("List of third party repositories to fetch mods from and show in the browser");
 		});

@@ -29,7 +29,7 @@ pub fn noumenon() -> Option<&'static noumenon::Noumenon> {
 }
 #[cfg(not(feature = "plugin"))]
 pub fn noumenon() -> Option<&'static noumenon::Noumenon> {
-	unsafe{NOUMENON.get_or_insert_with(|| noumenon::get_noumenon(None::<&str>)).as_ref()}
+	unsafe{NOUMENON.get_or_insert_with(|| noumenon::get_noumenon(config().config.game_install.as_ref())).as_ref()}
 }
 
 pub struct Core {

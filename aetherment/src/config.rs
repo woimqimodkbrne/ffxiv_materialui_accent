@@ -54,6 +54,7 @@ impl ConfigManager {
 
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct Config {
+	pub game_install: Option<String>,
 	pub repos: Vec<String>,
 	
 	pub mod_paths: Vec<PathBuf>,
@@ -63,6 +64,7 @@ pub struct Config {
 impl Default for Config {
 	fn default() -> Self {
 		Self {
+			game_install: None,
 			repos: Vec::new(),
 			
 			mod_paths: Vec::new(),
