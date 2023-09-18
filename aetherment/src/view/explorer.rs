@@ -23,7 +23,7 @@ pub enum DialogStatus {
 
 pub struct Explorer {
 	dock: egui_dock::Tree<ViewT>,
-	to_add: Rc<RefCell<Vec<ViewT>>>,
+	to_add: Rc<RefCell<Vec<(ViewT, bool)>>>,
 	#[allow(dead_code)] tree_data: Rc<RefCell<tree::TreeData>>,
 	#[allow(dead_code)] mods: ModsMap,
 	viewer: Viewer,
@@ -39,7 +39,7 @@ impl Explorer {
 		let to_add = Rc::new(RefCell::new(Vec::new()));
 		
 		// open_viewer(ctx.clone(), to_add.clone(), &"ui/uld/jobhudwar0.uld", None);
-		open_viewer(ctx.clone(), to_add.clone(), &"ui/uld/ConfigSystem.uld", None);
+		// open_viewer(ctx.clone(), to_add.clone(), &"ui/uld/ConfigSystem.uld", None);
 		
 		let tree_data = Rc::new(RefCell::new(tree::TreeData {
 			mod_trees: Vec::new(),
@@ -47,8 +47,11 @@ impl Explorer {
 				let to_add = to_add.clone();
 				let ctx = ctx.clone();
 				tree::LazyTree::new(Box::new(move |path, button| {
-					if button.clicked() {
-						open_viewer(ctx.clone(), to_add.clone(), &path, None)
+					let mut in_new_tab = false;
+					if button.context_menu(|ui| {
+						in_new_tab |= ui.button("Open new tab").clicked();
+					}).clicked() || in_new_tab {
+						open_viewer(ctx.clone(), to_add.clone(), &path, None, !in_new_tab);
 					}
 				}))
 			},
@@ -113,10 +116,10 @@ impl super::View for Explorer {
 			// .show_close_buttons(false)
 			.show_inside(ui, &mut self.viewer);
 		
-		for view in self.to_add.borrow_mut().drain(..) {
-			if self.dock.len() == 1 {
+		for (view, replace) in self.to_add.borrow_mut().drain(..) {
+			if self.dock.num_tabs() == 1 {
 				self.dock.split_right(egui_dock::NodeIndex::root(), 0.2, vec![view]);
-			} else {
+			}  else {
 				let mut last_leaf = None;
 				for node in self.dock.iter_mut() {
 					if node.is_leaf() {
@@ -125,7 +128,13 @@ impl super::View for Explorer {
 				}
 				
 				if let Some(node) = last_leaf {
-					node.append_tab(view);
+					if replace {
+						if let egui_dock::Node::Leaf {tabs, active, ..} = node {
+							tabs[active.0] = view;
+						}
+					} else {
+						node.append_tab(view);
+					}
 				}
 			}
 		}
@@ -275,7 +284,7 @@ impl super::View for Explorer {
 	}
 }
 
-fn open_mod(ctx: egui::Context, to_add: Rc<RefCell<Vec<ViewT>>>, mod_path: &std::path::Path, tree_data: Rc<RefCell<tree::TreeData>>, mods: ModsMap) {
+fn open_mod(ctx: egui::Context, to_add: Rc<RefCell<Vec<(ViewT, bool)>>>, mod_path: &std::path::Path, tree_data: Rc<RefCell<tree::TreeData>>, mods: ModsMap) {
 	use crate::modman::meta::*;
 	
 	let config = crate::config();
@@ -302,20 +311,23 @@ fn open_mod(ctx: egui::Context, to_add: Rc<RefCell<Vec<ViewT>>>, mod_path: &std:
 		let tree_data = tree_data.clone();
 		let mods = mods.clone();
 		tree::StaticTree::new(Box::new(move |path, real_path, _options, button| {
-			if button.clicked() {
+			let mut in_new_tab = false;
+			if button.context_menu(|ui| {
+				in_new_tab |= ui.button("Open new tab").clicked();
+			}).clicked() || in_new_tab {
 				let mod_trees = &tree_data.borrow().mod_trees;
 				if let Some((mod_name, mod_path, _mod_tree)) = mod_trees.iter().find(|(_, path, _)| path == &mod_path) {
 					if let Some((_, meta)) = mods.borrow().get(mod_name) {
 						if path == "\0meta" {
 							if let Err(err) = || -> Result<(), BacktraceError> {
-								to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(modmeta::ModMeta::new(mod_name.clone(), mod_path.join("meta.json"), meta.clone())?))));
+								to_add.borrow_mut().push((Rc::new(RefCell::new(Box::new(modmeta::ModMeta::new(mod_name.clone(), mod_path.join("meta.json"), meta.clone())?))), !in_new_tab));
 								Ok(())
 							}() {
-								to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(error::Error::new("_modmeta", Some(&path), err)))))
+								to_add.borrow_mut().push((Rc::new(RefCell::new(Box::new(error::Error::new("_modmeta", Some(&path), err)))), !in_new_tab))
 							}
 						} else {
 							if let Some(real_path) = real_path {
-								open_viewer(ctx.clone(), to_add.clone(), &path, Some(&mod_path.join("files").join(real_path).to_string_lossy().to_string()));
+								open_viewer(ctx.clone(), to_add.clone(), &path, Some(&mod_path.join("files").join(real_path).to_string_lossy().to_string()), !in_new_tab);
 							} else {
 								log!(err, "No real path {path} (???)");
 							}
@@ -348,17 +360,18 @@ fn open_mod(ctx: egui::Context, to_add: Rc<RefCell<Vec<ViewT>>>, mod_path: &std:
 	));
 }
 
-fn open_viewer(ctx: egui::Context, to_add: Rc<RefCell<Vec<ViewT>>>, path: &str, real_path: Option<&str>) {
+fn open_viewer(ctx: egui::Context, to_add: Rc<RefCell<Vec<(ViewT, bool)>>>, path: &str, real_path: Option<&str>, replace: bool) {
 	if let Err(err) = || -> Result<(), BacktraceError> {
-		match path.split(".").last().unwrap() {
-			"tex" | "atex" => to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(tex::Tex::new(ctx, path, real_path)?)))),
-			"uld" => to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(uld::Uld::new(path, real_path)?)))),
-			_ => to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(generic::Generic::new(path, real_path)?)))),
-		}
+		let viewer: ViewT = match path.split(".").last().unwrap() {
+			"tex" | "atex" => Rc::new(RefCell::new(Box::new(tex::Tex::new(ctx, path, real_path)?))),
+			"uld" => Rc::new(RefCell::new(Box::new(uld::Uld::new(path, real_path)?))),
+			_ => Rc::new(RefCell::new(Box::new(generic::Generic::new(path, real_path)?))),
+		};
+		to_add.borrow_mut().push((viewer, replace));
 		
 		Ok(())
 	}() {
-		to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(error::Error::new(path, real_path, err)))))
+		to_add.borrow_mut().push((Rc::new(RefCell::new(Box::new(error::Error::new(path, real_path, err)))), replace))
 	}
 }
 
