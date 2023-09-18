@@ -1,4 +1,4 @@
-use std::{rc::Rc, cell::RefCell, fs::File, io::Read, collections::HashMap};
+use std::{rc::Rc, cell::RefCell, fs::File, io::{Read, BufReader, BufWriter, Cursor, Write}, collections::HashMap, path::PathBuf};
 use crate::resource_loader::{BacktraceError, ExplorerError};
 
 pub mod error;
@@ -12,7 +12,14 @@ pub mod uld;
 // ----------
 
 type ViewT = Rc<RefCell<Box<dyn View>>>;
-type ModsMap = Rc<RefCell<HashMap<String, Rc<RefCell<crate::modman::meta::Meta>>>>>; // wtf am i doing
+type ModsMap = Rc<RefCell<HashMap<String, (PathBuf, Rc<RefCell<crate::modman::meta::Meta>>)>>>; // wtf am i doing
+
+#[derive(Debug)]
+pub enum DialogStatus {
+	None,
+	Dialog(egui_file::FileDialog),
+	CreateReq(PathBuf),
+}
 
 pub struct Explorer {
 	dock: egui_dock::Tree<ViewT>,
@@ -20,6 +27,11 @@ pub struct Explorer {
 	#[allow(dead_code)] tree_data: Rc<RefCell<tree::TreeData>>,
 	#[allow(dead_code)] mods: ModsMap,
 	viewer: Viewer,
+	
+	import: DialogStatus,
+	import_mod: Option<String>,
+	import_option: Option<(u32, u32)>,
+	import_path: String,
 }
 
 impl Explorer {
@@ -79,7 +91,12 @@ impl Explorer {
 			to_add,
 			tree_data,
 			mods,
-			viewer: Viewer{dialog: None}
+			viewer: Viewer{dialog: None},
+			
+			import: DialogStatus::None,
+			import_mod: None,
+			import_option: None,
+			import_path: String::new(),
 		}
 	}
 }
@@ -130,7 +147,8 @@ impl super::View for Explorer {
 							}
 							
 							egui_file::DialogType::OpenFile => {
-								log!(err, "TODO: import");
+								self.import_path = tab.borrow().path().to_owned();
+								self.import = DialogStatus::CreateReq(path.to_owned());
 							}
 							
 							_ => {}
@@ -145,6 +163,114 @@ impl super::View for Explorer {
 				
 				self.viewer.dialog = None;
 			}
+		}
+		
+		match &mut self.import {
+			DialogStatus::CreateReq(path) => {
+				let path = path.to_owned();
+				egui::Window::new("Import file").show(ui.ctx(), |ui| {
+					use crate::modman::meta::*;
+					
+					egui::ComboBox::from_label("Mod")
+						.selected_text(self.import_mod.as_ref().map_or("Invalid Mod", |s| &s))
+						.show_ui(ui, |ui| {
+							for m in self.mods.borrow().keys() {
+								ui.selectable_value(&mut self.import_mod, Some(m.to_owned()), m);
+							}
+						});
+					
+					if let Some(selected_mod) = &self.import_mod {
+						if let Some(m) = self.mods.borrow().get(selected_mod) {
+							let selected_text = if let Some((option, _)) = &self.import_option {
+								m.1.borrow().options[*option as usize].name.to_string()
+							} else {
+								"None".to_string()
+							};
+							
+							egui::ComboBox::from_label("Option")
+								.selected_text(selected_text)
+								.show_ui(ui, |ui| {
+									let mut option = self.import_option.map(|v| v.0.clone());
+									if ui.selectable_value(&mut option, None, "None").changed() {
+										self.import_option = None;
+									}
+									
+									for (i, o) in m.1.borrow().options.iter().enumerate() {
+										if let OptionSettings::SingleFiles(_) | OptionSettings::MultiFiles(_) = &o.settings {
+											if ui.selectable_value(&mut option, Some(i as u32), &o.name).changed() {
+												self.import_option = Some((option.unwrap(), 0));
+											}
+										}
+									}
+								});
+							
+							if let Some((option, sub_option)) = &mut self.import_option {
+								let option = &m.1.borrow().options[*option as usize];
+								let selected_text = if let OptionSettings::SingleFiles(f) | OptionSettings::MultiFiles(f) = &option.settings {
+									f.options[*sub_option as usize].name.to_string()
+								} else {
+									"Invalid".to_string()
+								};
+								
+								egui::ComboBox::from_label("Sub option")
+									.selected_text(selected_text)
+									.show_ui(ui, |ui| {
+										if let OptionSettings::SingleFiles(f) | OptionSettings::MultiFiles(f) = &option.settings {
+											for (i, so) in f.options.iter().enumerate() {
+												ui.selectable_value(sub_option, i as u32, &so.name);
+											}
+										}
+									});
+							}
+						}
+					}
+					
+					ui.text_edit_singleline(&mut self.import_path);
+					
+					ui.horizontal(|ui| {
+						if ui.button("Import").clicked() {
+							if let Some(mod_id) = &self.import_mod {
+								if let Err(err) = (|| -> Result<(), noumenon::Error> {
+									let converter = noumenon::Convert::from_ext(path.extension().ok_or("No Extension")?.to_str().unwrap(), &mut BufReader::new(File::open(&path)?))?;
+									let mut data = Cursor::new(Vec::new());
+									converter.convert(self.import_path.split(".").last().unwrap(), &mut data)?;
+									let data = data.into_inner();
+									let hash = base64::encode_config(blake3::hash(&data).as_bytes(), base64::URL_SAFE_NO_PAD);
+									let m = self.mods.borrow_mut();
+									let m = m.get(mod_id).ok_or("Invalid import mod target")?;
+									let mut f = BufWriter::new(File::create(m.0.join("files").join(&hash))?);
+									f.write_all(&data)?;
+									
+									if let Some((option, sub_option)) = &self.import_option {
+										let option = &mut m.1.borrow_mut().options[*option as usize];
+										if let OptionSettings::SingleFiles(f) | OptionSettings::MultiFiles(f) = &mut option.settings {
+											self.tree_data.borrow_mut().mod_trees.iter_mut().find(|(_, path, _)| path == &m.0).unwrap().2.add_path(self.import_path.as_str(), &hash, Some((option.name.clone(), f.options[*sub_option as usize].name.clone())));
+											f.options[*sub_option as usize].files.insert(self.import_path.to_owned(), hash);
+										}
+									} else {
+										self.tree_data.borrow_mut().mod_trees.iter_mut().find(|(_, path, _)| path == &m.0).unwrap().2.add_path(self.import_path.as_str(), &hash, None);
+										m.1.borrow_mut().files.insert(self.import_path.to_owned(), hash);
+									}
+									
+									m.1.borrow().save(&m.0.join("meta.json"))?;
+									
+									Ok(())
+								})() {
+									log!(err, "Failed to import file {err:?}");
+								}
+							}
+							
+							self.import = DialogStatus::None;
+						}
+						
+						if ui.button("Cancel").clicked() {
+							self.import = DialogStatus::None;
+						}
+					})
+				});
+			}
+			
+			_ => {}
 		}
 	}
 }
@@ -163,7 +289,7 @@ fn open_mod(ctx: egui::Context, to_add: Rc<RefCell<Vec<ViewT>>>, mod_path: &std:
 	
 	if let Err(err) = (|| -> Result<_, BacktraceError> {
 		let meta = serde_json::from_reader(std::io::BufReader::new(File::open(mod_path.join("meta.json"))?))?;
-		mods.borrow_mut().insert(mod_name.clone(), Rc::new(RefCell::new(meta)));
+		mods.borrow_mut().insert(mod_name.clone(), (mod_path.clone(), Rc::new(RefCell::new(meta))));
 		
 		Ok(())
 	})() {
@@ -179,7 +305,7 @@ fn open_mod(ctx: egui::Context, to_add: Rc<RefCell<Vec<ViewT>>>, mod_path: &std:
 			if button.clicked() {
 				let mod_trees = &tree_data.borrow().mod_trees;
 				if let Some((mod_name, mod_path, _mod_tree)) = mod_trees.iter().find(|(_, path, _)| path == &mod_path) {
-					if let Some(meta) = mods.borrow().get(mod_name) {
+					if let Some((_, meta)) = mods.borrow().get(mod_name) {
 						if path == "\0meta" {
 							if let Err(err) = || -> Result<(), BacktraceError> {
 								to_add.borrow_mut().push(Rc::new(RefCell::new(Box::new(modmeta::ModMeta::new(mod_name.clone(), mod_path.join("meta.json"), meta.clone())?))));
@@ -201,7 +327,7 @@ fn open_mod(ctx: egui::Context, to_add: Rc<RefCell<Vec<ViewT>>>, mod_path: &std:
 	};
 	
 	let m = mods.borrow_mut();
-	let meta = m.get(&mod_name).unwrap().borrow_mut();
+	let meta = m.get(&mod_name).unwrap().1.borrow_mut();
 	for (game, real) in &meta.files {
 		tree.add_path(game, real, None);
 	}
@@ -280,7 +406,7 @@ impl egui_dock::TabViewer for Viewer {
 			if ui.button("Import").clicked() && self.dialog.is_none() {
 				let mut dialog = egui_file::FileDialog::open_file(Some(crate::config().config.file_dialog_path.clone()))
 					.default_filename(tab.name())
-					.title(tab.name());
+					.title(&format!("Import {}", tab.name()));
 				dialog.open();
 				self.dialog = Some((dialog, tab_raw.clone()));
 			}
@@ -288,7 +414,7 @@ impl egui_dock::TabViewer for Viewer {
 			if ui.button("Export").clicked() && self.dialog.is_none() {
 				let mut dialog = egui_file::FileDialog::save_file(Some(crate::config().config.file_dialog_path.clone()))
 					.default_filename(tab.name())
-					.title(tab.name());
+					.title(&format!("Export {}", tab.name()));
 				dialog.open();
 				self.dialog = Some((dialog, tab_raw.clone()));
 			}

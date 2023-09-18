@@ -160,13 +160,6 @@ impl StaticTree {
 // ----------
 
 
-#[derive(Debug)]
-enum OpenMod {
-	None,
-	Dialog(egui_file::FileDialog),
-	CreateReq(PathBuf),
-}
-
 pub struct TreeData {
 	pub mod_trees: Vec<(String, PathBuf, StaticTree)>,
 	pub game_paths: LazyTree,
@@ -175,7 +168,7 @@ pub struct TreeData {
 pub struct Tree {
 	data: Rc<std::cell::RefCell<TreeData>>,
 	openmodfn: Box<dyn Fn(&Path)>,
-	opening_mod: OpenMod,
+	opening_mod: super::DialogStatus,
 }
 
 impl Tree {
@@ -183,14 +176,12 @@ impl Tree {
 		Self {
 			data,
 			openmodfn,
-			opening_mod: OpenMod::None,
+			opening_mod: super::DialogStatus::None,
 		}
 	}
 	
 	fn create_mod(&mut self, path: &std::path::Path) {
-		let meta = crate::modman::meta::Meta::default();
-		let mut meta_file = File::create(path.join("meta.json")).unwrap();
-		serde_json::to_writer_pretty(&mut meta_file, &meta).unwrap();
+		crate::modman::meta::Meta::default().save(&path.join("meta.json")).unwrap();
 		
 		(self.openmodfn)(path);
 	}
@@ -233,14 +224,14 @@ impl super::View for Tree {
 			_ = crate::config().save_forced();
 		}
 		
-		if ui.button("📂 Open mod").clicked() && matches!(self.opening_mod, OpenMod::None) {
+		if ui.button("📂 Open mod").clicked() && matches!(self.opening_mod, super::DialogStatus::None) {
 			let mut dialog = egui_file::FileDialog::select_folder(Some(crate::config().config.file_dialog_path.clone()))
 				.title("Open mod folder");
 			dialog.open();
-			self.opening_mod = OpenMod::Dialog(dialog);
+			self.opening_mod = super::DialogStatus::Dialog(dialog);
 		}
 		
-		if let OpenMod::Dialog(dialog) = &mut self.opening_mod {
+		if let super::DialogStatus::Dialog(dialog) = &mut self.opening_mod {
 			if dialog.show(ui.ctx()).selected() {
 				if let Some(path) = dialog.path() {
 					let path = path.to_owned();
@@ -253,11 +244,11 @@ impl super::View for Tree {
 					if path.join("meta.json").exists() {
 						(self.openmodfn)(&path);
 					} else {
-						self.opening_mod = OpenMod::CreateReq(path);
+						self.opening_mod = super::DialogStatus::CreateReq(path);
 					}
 				}
 			}
-		} else if let OpenMod::CreateReq(path) = &self.opening_mod {
+		} else if let super::DialogStatus::CreateReq(path) = &self.opening_mod {
 			let path = path.to_owned();
 			egui::Window::new("Create mod").show(ui.ctx(), |ui| {
 				ui.label("This folder is not a mod, do you want to create one?");
@@ -265,11 +256,11 @@ impl super::View for Tree {
 				ui.horizontal(|ui| {
 					if ui.button("Create mod").clicked() {
 						self.create_mod(&path);
-						self.opening_mod = OpenMod::None;
+						self.opening_mod = super::DialogStatus::None;
 					}
 					
 					if ui.button("Cancel").clicked() {
-						self.opening_mod = OpenMod::None;
+						self.opening_mod = super::DialogStatus::None;
 					}
 				})
 			});
@@ -278,8 +269,9 @@ impl super::View for Tree {
 		ui.add_space(20.0);
 		
 		ui.collapsing("Game Paths", |ui| {
-			for branch in &mut self.data.borrow_mut().game_paths.branches {
-				LazyTree::render_branch(&self.data.borrow().game_paths.data, ui, branch, branch.name.to_string(), &self.data.borrow().game_paths.entryfn);
+			let game_paths = &mut self.data.borrow_mut().game_paths;
+			for branch in &mut game_paths.branches {
+				LazyTree::render_branch(&game_paths.data, ui, branch, branch.name.to_string(), &game_paths.entryfn);
 			}
 		});
 		

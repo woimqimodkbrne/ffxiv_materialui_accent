@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, path::Path, fs::File};
 use serde::{Deserialize, Serialize};
 use crate::render_helper::EnumTools;
 
@@ -32,6 +32,13 @@ impl Default for Meta {
 			
 			files: HashMap::new(),
 		}
+	}
+}
+
+impl Meta {
+	pub fn save(&self, path: &Path) -> std::io::Result<()> {
+		serde_json::to_writer_pretty(&mut File::create(path)?, self)?;
+		Ok(())
 	}
 }
 

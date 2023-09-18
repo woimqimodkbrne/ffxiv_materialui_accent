@@ -1,4 +1,4 @@
-use std::{fs::File, path::PathBuf, rc::Rc, cell::RefCell};
+use std::{path::PathBuf, rc::Rc, cell::RefCell};
 use crate::{render_helper::RendererExtender, modman::meta::*};
 
 pub struct ModMeta {
@@ -129,7 +129,7 @@ impl super::View for ModMeta {
 		
 		// save on changes
 		if *meta != org {
-			serde_json::to_writer_pretty(&mut File::create(&self.path)?, &*meta)?;
+			meta.save(&self.path)?;
 		}
 		
 		Ok(())
@@ -160,17 +160,6 @@ fn render_value_files(ui: &mut egui::Ui, value: &mut ValueFiles, is_multi: bool)
 	ui.add_space(10.0);
 	
 	let mut delete = None;
-	// for (i, option) in value.options.iter_mut().enumerate() {
-	// 	egui::CollapsingHeader::new(format!("({}) {}", i, option.name)).id_source(i).show(ui, |ui| {
-	// 		ui.text_edit_singleline(&mut option.name);
-	// 		ui.text_edit_multiline(&mut option.description);
-	// 		ui.label("TODO: files, file swaps, manipulations");
-	// 		
-	// 		if ui.delete_button("Delete sub option").clicked() {
-	// 			delete = Some(i);
-	// 		}
-	// 	});
-	// }
 	egui_dnd::dnd(ui, "suboptions").show_vec(&mut value.options, |ui, option, handle, state| {
 		ui.dnd_header(handle, |ui| {
 			egui::CollapsingHeader::new(format!("({}) {}", state.index, option.name)).id_source(state.index).show(ui, |ui| {
