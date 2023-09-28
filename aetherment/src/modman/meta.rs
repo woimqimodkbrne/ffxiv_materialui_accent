@@ -70,11 +70,12 @@ pub enum OptionSettings {
 	Grayscale(ValueSingle),
 	Opacity(ValueSingle),
 	Mask(ValueSingle),
+	Path(ValuePath),
 	// Composite(Composite), // possibly for the future for merging multiple meshes into 1
 }
 
 impl EnumTools for OptionSettings {
-	type Iterator = std::array::IntoIter<Self, 7>;
+	type Iterator = std::array::IntoIter<Self, 8>;
 	
 	fn to_str(&self) -> &'static str {
 		match self {
@@ -85,11 +86,21 @@ impl EnumTools for OptionSettings {
 			Self::Grayscale(_) => "Grayscale",
 			Self::Opacity(_) => "Opacity",
 			Self::Mask(_) => "Mask",
+			Self::Path(_) => "Path",
 		}
 	}
 	
 	fn iter() -> Self::Iterator {
-		[Self::SingleFiles(Default::default()), Self::MultiFiles(Default::default()), Self::Rgb(Default::default()), Self::Rgba(Default::default()), Self::Grayscale(Default::default()), Self::Opacity(Default::default()), Self::Mask(Default::default())].into_iter()
+		[
+			Self::SingleFiles(ValueFiles::default()),
+			Self::MultiFiles(ValueFiles::default()),
+			Self::Rgb(ValueRgb::default()),
+			Self::Rgba(ValueRgba::default()),
+			Self::Grayscale(ValueSingle::default()),
+			Self::Opacity(ValueSingle::default()),
+			Self::Mask(ValueSingle::default()),
+			Self::Path(ValuePath::default()),
+		].into_iter()
 	}
 }
 
@@ -190,6 +201,24 @@ impl Default for ValueSingle {
 			default: 0.0,
 			min: 0.0,
 			max: 1.0,
+		}
+	}
+}
+
+// ----------
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub struct ValuePath {
+	pub default: u32,
+	/// name, path, path does NOT support being Option
+	pub options: Vec<(String, super::Path)>,
+}
+
+impl Default for ValuePath {
+	fn default() -> Self {
+		Self {
+			default: 0,
+			options: Vec::new(),
 		}
 	}
 }

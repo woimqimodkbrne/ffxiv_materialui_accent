@@ -1,5 +1,5 @@
 use std::{path::PathBuf, rc::Rc, cell::RefCell};
-use crate::{render_helper::RendererExtender, modman::meta::*};
+use crate::{render_helper::{RendererExtender, EnumTools}, modman::meta::*};
 
 pub struct ModMeta {
 	name: String,
@@ -106,6 +106,8 @@ impl super::View for ModMeta {
 						OptionSettings::Grayscale(v) => render_value_single(ui, v),
 						OptionSettings::Opacity(v) => render_value_single(ui, v),
 						OptionSettings::Mask(v) => render_value_single(ui, v),
+						OptionSettings::Path(v) => render_value_string(ui, v),
+						
 					}
 					
 					if ui.delete_button("Delete option").clicked() {
@@ -201,4 +203,72 @@ fn render_value_single(ui: &mut egui::Ui, value: &mut ValueSingle) {
 	ui.num_edit(&mut value.min, "Minimum");
 	ui.num_edit(&mut value.max, "Maximum");
 	ui.num_edit_range(&mut value.default, "Default", value.min..=value.max);
+}
+
+fn render_value_string(ui: &mut egui::Ui, value: &mut ValuePath) {
+	// ui.text_edit_singleline(&mut value.default);
+	// todo this
+	egui::ComboBox::from_label("Default")
+		.selected_text(value.options.iter().enumerate().find(|(i, _)| *i == value.default as usize).map_or("Invalid".to_owned(), |(i, (n, p))| format!("({i}) {n} - {p:?}")))
+		.show_ui(ui, |ui| {
+			for (i, (n, p)) in value.options.iter().enumerate() {
+				ui.selectable_value(&mut value.default, i as u32, format!("({i}) {n} - {p:?}"));
+			}
+		});
+	
+	ui.add_space(10.0);
+	
+	let mut delete = None;
+	egui_dnd::dnd(ui, "options").show_vec(&mut value.options, |ui, (option_name, option_path), handle, state| {
+		ui.dnd_header(handle, |ui| {
+			ui.push_id(state.index, |ui| {
+				ui.horizontal(|ui| {
+					ui.horizontal(|ui| {
+						ui.text_edit_singleline(option_name);
+						ui.label("Name");
+					});
+					
+					ui.horizontal(|ui| {
+						use crate::modman::Path;
+						
+						egui::ComboBox::from_id_source("string")
+							.selected_text(option_path.to_str())
+							.show_ui(ui, |ui| {
+								// TODO: this is manually assigned and doesnt use EnumTools, thats dumb
+								// its done like this since we dont want to support Option variant (or do we?)
+								ui.selectable_value(option_path, Path::Mod(String::new()), "Mod");
+								ui.selectable_value(option_path, Path::Game(String::new()), "Game");
+							});
+						
+						// ui.text_edit_singleline(option_path);
+						match option_path {
+							Path::Mod(s) => {
+								ui.text_edit_singleline(s);
+								// TODO: validation
+							}
+							
+							Path::Game(s) => {
+								ui.text_edit_singleline(s);
+							}
+							
+							Path::Option(_) => {} // Unsupported
+						}
+						ui.label("Path");
+					});
+					
+					if ui.button("🗑").clicked() {
+						delete = Some(state.index);
+					}
+				});
+			});
+		});
+	});
+	
+	if let Some(i) = delete {
+		value.options.remove(i);
+	}
+	
+	if ui.button("➕ Add option").clicked() {
+		value.options.push((String::new(), crate::modman::Path::Game(String::new())));
+	}
 }

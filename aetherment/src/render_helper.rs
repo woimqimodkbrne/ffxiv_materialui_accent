@@ -5,6 +5,7 @@ pub trait RendererExtender {
 	fn num_multi_edit<Num: egui::emath::Numeric>(&mut self, values: &mut [Num], label: impl Into<egui::WidgetText>) -> egui::Response;
 	fn num_multi_edit_range<Num: egui::emath::Numeric>(&mut self, values: &mut [Num], label: impl Into<egui::WidgetText>, range: &[std::ops::RangeInclusive<Num>]) -> egui::Response;
 	fn enum_combo<Enum: EnumTools + PartialEq>(&mut self, value: &mut Enum, label: impl Into<egui::WidgetText>);
+	fn enum_combo_id<Enum: EnumTools + PartialEq>(&mut self, value: &mut Enum, id: impl std::hash::Hash);
 	fn helptext(&mut self, text: impl Into<egui::WidgetText>);
 	fn delete_button(&mut self, label: impl Into<egui::WidgetText>) -> egui::Response;
 	fn dnd_header(&mut self, handle: egui_dnd::Handle, content: impl FnOnce(&mut egui::Ui));
@@ -23,7 +24,7 @@ impl RendererExtender for egui::Ui {
 	
 	fn num_edit<Num: egui::emath::Numeric>(&mut self, value: &mut Num, label: impl Into<egui::WidgetText>) -> egui::Response {
 		self.horizontal(|ui| {
-			let resp = ui.add(egui::DragValue::new(value));
+			let resp = ui.add(create_drag(value));
 			ui.label(label.into());
 			resp
 		}).inner
@@ -31,7 +32,7 @@ impl RendererExtender for egui::Ui {
 	
 	fn num_edit_range<Num: egui::emath::Numeric>(&mut self, value: &mut Num, label: impl Into<egui::WidgetText>, range: std::ops::RangeInclusive<Num>) -> egui::Response {
 		self.horizontal(|ui| {
-			let resp = ui.add(egui::DragValue::new(value).clamp_range(range));
+			let resp = ui.add(create_drag(value).clamp_range(range));
 			ui.label(label.into());
 			resp
 		}).inner
@@ -39,9 +40,9 @@ impl RendererExtender for egui::Ui {
 	
 	fn num_multi_edit<Num: egui::emath::Numeric>(&mut self, values: &mut [Num], label: impl Into<egui::WidgetText>) -> egui::Response {
 		self.horizontal(|ui| {
-			let mut resp = ui.add(egui::DragValue::new(&mut values[0]));
+			let mut resp = ui.add(create_drag(&mut values[0]));
 			for value in values.iter_mut().skip(1) {
-				resp |= ui.add(egui::DragValue::new(value));
+				resp |= ui.add(create_drag(value));
 			}
 			ui.label(label.into());
 			resp
@@ -50,9 +51,9 @@ impl RendererExtender for egui::Ui {
 	
 	fn num_multi_edit_range<Num: egui::emath::Numeric>(&mut self, values: &mut [Num], label: impl Into<egui::WidgetText>, range: &[std::ops::RangeInclusive<Num>]) -> egui::Response {
 		self.horizontal(|ui| {
-			let mut resp = ui.add(egui::DragValue::new(&mut values[0]).clamp_range(range[0].clone()));
+			let mut resp = ui.add(create_drag(&mut values[0]).clamp_range(range[0].clone()));
 			for (i, value) in values.iter_mut().skip(1).enumerate() {
-				resp |= ui.add(egui::DragValue::new(value).clamp_range(range[i].clone()));
+				resp |= ui.add(create_drag(value).clamp_range(range[i].clone()));
 			}
 			ui.label(label.into());
 			resp
@@ -61,6 +62,17 @@ impl RendererExtender for egui::Ui {
 	
 	fn enum_combo<Enum: EnumTools + PartialEq>(&mut self, value: &mut Enum, label: impl Into<egui::WidgetText>) {
 		egui::ComboBox::from_label(label)
+			.selected_text(value.to_str())
+			.show_ui(self, |ui| {
+				for item in Enum::iter() {
+					let name = item.to_str();
+					ui.selectable_value(value, item, name);
+				}
+			});
+	}
+	
+	fn enum_combo_id<Enum: EnumTools + PartialEq>(&mut self, value: &mut Enum, id: impl std::hash::Hash) {
+		egui::ComboBox::from_id_source(id)
 			.selected_text(value.to_str())
 			.show_ui(self, |ui| {
 				for item in Enum::iter() {
@@ -92,6 +104,16 @@ impl RendererExtender for egui::Ui {
 		} else {
 			self.scope(content);
 		}
+	}
+}
+
+fn create_drag<Num: egui::emath::Numeric>(value: &mut Num) -> egui::DragValue {
+	if Num::INTEGRAL {
+		egui::DragValue::new(value)
+	} else {
+		egui::DragValue::new(value)
+			.max_decimals(3)
+			.speed(0.01)
 	}
 }
 

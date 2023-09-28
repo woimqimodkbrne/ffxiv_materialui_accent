@@ -38,6 +38,7 @@ pub type BacktraceError = Box<dyn std::error::Error>;
 pub enum ExplorerError {
 	Path(String),
 	RealPath(String),
+	RealPath2(std::path::PathBuf),
 	Data,
 }
 
@@ -46,6 +47,7 @@ impl std::fmt::Display for ExplorerError {
 		match self {
 			Self::Path(path) => write!(f, "Invalid game path: {:?}", path),
 			Self::RealPath(path) => write!(f, "Invalid real path: {:?}", path),
+			Self::RealPath2(path) => write!(f, "Invalid real path: {:?}", path),
 			Self::Data => write!(f, "File is invalid"),
 		}
 	}
@@ -61,14 +63,19 @@ impl std::error::Error for ExplorerError {
 
 // ----------
 
+pub fn load_file_disk<T>(real_path: &std::path::Path) -> Result<T, BacktraceError> where
+T: noumenon::File {
+	let mut file = std::fs::File::open(real_path).map_err(|_| ExplorerError::RealPath2(real_path.to_owned()))?;
+	let mut buf = Vec::new();
+	file.read_to_end(&mut buf)?;
+	Ok(noumenon::File::read(&buf)?)
+}
+
 // TODO: ability to load from active mod even if only given a game path (uld resources)
 pub fn load_file<T>(path: &str, real_path: Option<&str>) -> Result<T, BacktraceError> where
 T: noumenon::File {
 	if let Some(real_path) = real_path {
-		let mut file = std::fs::File::open(real_path).map_err(|_| ExplorerError::RealPath(real_path.to_string()))?;
-		let mut buf = Vec::new();
-		file.read_to_end(&mut buf)?;
-		Ok(noumenon::File::read(&buf)?)
+		load_file_disk::<T>(std::path::Path::new(real_path))
 	} else {
 		Ok(crate::noumenon().as_ref().ok_or(ExplorerError::Path(path.to_string()))?.file::<T>(path)?)
 	}

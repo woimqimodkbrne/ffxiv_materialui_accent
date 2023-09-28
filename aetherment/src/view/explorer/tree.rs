@@ -252,6 +252,7 @@ impl super::View for Tree {
 			let path = path.to_owned();
 			egui::Window::new("Create mod").show(ui.ctx(), |ui| {
 				ui.label("This folder is not a mod, do you want to create one?");
+				// TODO: warning here if the target folder is not empty
 				ui.label(format!("Path: {}", path.display()));
 				ui.horizontal(|ui| {
 					if ui.button("Create mod").clicked() {

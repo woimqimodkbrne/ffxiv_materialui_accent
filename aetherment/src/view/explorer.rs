@@ -11,8 +11,15 @@ pub mod uld;
 
 // ----------
 
+#[derive(Debug, Clone)]
+pub struct Mod {
+	pub path: PathBuf,
+	pub meta: Rc<RefCell<crate::modman::meta::Meta>>,
+}
+
 type ViewT = Rc<RefCell<Box<dyn View>>>;
-type ModsMap = Rc<RefCell<HashMap<String, (PathBuf, Rc<RefCell<crate::modman::meta::Meta>>)>>>; // wtf am i doing
+// type ModsMap = Rc<RefCell<HashMap<String, (PathBuf, Rc<RefCell<crate::modman::meta::Meta>>)>>>; // wtf am i doing
+type ModsMap = Rc<RefCell<HashMap<String, Mod>>>; // wtf am i doing
 
 #[derive(Debug)]
 pub enum DialogStatus {
@@ -51,7 +58,7 @@ impl Explorer {
 					if button.context_menu(|ui| {
 						in_new_tab |= ui.button("Open new tab").clicked();
 					}).clicked() || in_new_tab {
-						open_viewer(ctx.clone(), to_add.clone(), &path, None, !in_new_tab);
+						open_viewer(ctx.clone(), to_add.clone(), &path, None, None, !in_new_tab);
 					}
 				}))
 			},
@@ -191,7 +198,7 @@ impl super::View for Explorer {
 					if let Some(selected_mod) = &self.import_mod {
 						if let Some(m) = self.mods.borrow().get(selected_mod) {
 							let selected_text = if let Some((option, _)) = &self.import_option {
-								m.1.borrow().options[*option as usize].name.to_string()
+								m.meta.borrow().options[*option as usize].name.to_string()
 							} else {
 								"None".to_string()
 							};
@@ -204,7 +211,7 @@ impl super::View for Explorer {
 										self.import_option = None;
 									}
 									
-									for (i, o) in m.1.borrow().options.iter().enumerate() {
+									for (i, o) in m.meta.borrow().options.iter().enumerate() {
 										if let OptionSettings::SingleFiles(_) | OptionSettings::MultiFiles(_) = &o.settings {
 											if ui.selectable_value(&mut option, Some(i as u32), &o.name).changed() {
 												self.import_option = Some((option.unwrap(), 0));
@@ -214,7 +221,7 @@ impl super::View for Explorer {
 								});
 							
 							if let Some((option, sub_option)) = &mut self.import_option {
-								let option = &m.1.borrow().options[*option as usize];
+								let option = &m.meta.borrow().options[*option as usize];
 								let selected_text = if let OptionSettings::SingleFiles(f) | OptionSettings::MultiFiles(f) = &option.settings {
 									f.options[*sub_option as usize].name.to_string()
 								} else {
@@ -247,21 +254,21 @@ impl super::View for Explorer {
 									let hash = base64::encode_config(blake3::hash(&data).as_bytes(), base64::URL_SAFE_NO_PAD);
 									let m = self.mods.borrow_mut();
 									let m = m.get(mod_id).ok_or("Invalid import mod target")?;
-									let mut f = BufWriter::new(File::create(m.0.join("files").join(&hash))?);
+									let mut f = BufWriter::new(File::create(m.path.join("files").join(&hash))?);
 									f.write_all(&data)?;
 									
 									if let Some((option, sub_option)) = &self.import_option {
-										let option = &mut m.1.borrow_mut().options[*option as usize];
+										let option = &mut m.meta.borrow_mut().options[*option as usize];
 										if let OptionSettings::SingleFiles(f) | OptionSettings::MultiFiles(f) = &mut option.settings {
-											self.tree_data.borrow_mut().mod_trees.iter_mut().find(|(_, path, _)| path == &m.0).unwrap().2.add_path(self.import_path.as_str(), &hash, Some((option.name.clone(), f.options[*sub_option as usize].name.clone())));
+											self.tree_data.borrow_mut().mod_trees.iter_mut().find(|(_, path, _)| path == &m.path).unwrap().2.add_path(self.import_path.as_str(), &hash, Some((option.name.clone(), f.options[*sub_option as usize].name.clone())));
 											f.options[*sub_option as usize].files.insert(self.import_path.to_owned(), hash);
 										}
 									} else {
-										self.tree_data.borrow_mut().mod_trees.iter_mut().find(|(_, path, _)| path == &m.0).unwrap().2.add_path(self.import_path.as_str(), &hash, None);
-										m.1.borrow_mut().files.insert(self.import_path.to_owned(), hash);
+										self.tree_data.borrow_mut().mod_trees.iter_mut().find(|(_, path, _)| path == &m.path).unwrap().2.add_path(self.import_path.as_str(), &hash, None);
+										m.meta.borrow_mut().files.insert(self.import_path.to_owned(), hash);
 									}
 									
-									m.1.borrow().save(&m.0.join("meta.json"))?;
+									m.meta.borrow().save(&m.path.join("meta.json"))?;
 									
 									Ok(())
 								})() {
@@ -298,7 +305,7 @@ fn open_mod(ctx: egui::Context, to_add: Rc<RefCell<Vec<(ViewT, bool)>>>, mod_pat
 	
 	if let Err(err) = (|| -> Result<_, BacktraceError> {
 		let meta = serde_json::from_reader(std::io::BufReader::new(File::open(mod_path.join("meta.json"))?))?;
-		mods.borrow_mut().insert(mod_name.clone(), (mod_path.clone(), Rc::new(RefCell::new(meta))));
+		mods.borrow_mut().insert(mod_name.clone(), Mod{path: mod_path.clone(), meta: Rc::new(RefCell::new(meta))});
 		
 		Ok(())
 	})() {
@@ -317,17 +324,17 @@ fn open_mod(ctx: egui::Context, to_add: Rc<RefCell<Vec<(ViewT, bool)>>>, mod_pat
 			}).clicked() || in_new_tab {
 				let mod_trees = &tree_data.borrow().mod_trees;
 				if let Some((mod_name, mod_path, _mod_tree)) = mod_trees.iter().find(|(_, path, _)| path == &mod_path) {
-					if let Some((_, meta)) = mods.borrow().get(mod_name) {
+					if let Some(mod_) = mods.borrow().get(mod_name) {
 						if path == "\0meta" {
 							if let Err(err) = || -> Result<(), BacktraceError> {
-								to_add.borrow_mut().push((Rc::new(RefCell::new(Box::new(modmeta::ModMeta::new(mod_name.clone(), mod_path.join("meta.json"), meta.clone())?))), !in_new_tab));
+								to_add.borrow_mut().push((Rc::new(RefCell::new(Box::new(modmeta::ModMeta::new(mod_name.clone(), mod_path.join("meta.json"), mod_.meta.clone())?))), !in_new_tab));
 								Ok(())
 							}() {
 								to_add.borrow_mut().push((Rc::new(RefCell::new(Box::new(error::Error::new("_modmeta", Some(&path), err)))), !in_new_tab))
 							}
 						} else {
 							if let Some(real_path) = real_path {
-								open_viewer(ctx.clone(), to_add.clone(), &path, Some(&mod_path.join("files").join(real_path).to_string_lossy().to_string()), !in_new_tab);
+								open_viewer(ctx.clone(), to_add.clone(), &path, Some(&mod_path.join("files").join(real_path).to_string_lossy().to_string()), Some(mod_.clone()), !in_new_tab);
 							} else {
 								log!(err, "No real path {path} (???)");
 							}
@@ -339,7 +346,7 @@ fn open_mod(ctx: egui::Context, to_add: Rc<RefCell<Vec<(ViewT, bool)>>>, mod_pat
 	};
 	
 	let m = mods.borrow_mut();
-	let meta = m.get(&mod_name).unwrap().1.borrow_mut();
+	let meta = m.get(&mod_name).unwrap().meta.borrow_mut();
 	for (game, real) in &meta.files {
 		tree.add_path(game, real, None);
 	}
@@ -360,10 +367,10 @@ fn open_mod(ctx: egui::Context, to_add: Rc<RefCell<Vec<(ViewT, bool)>>>, mod_pat
 	));
 }
 
-fn open_viewer(ctx: egui::Context, to_add: Rc<RefCell<Vec<(ViewT, bool)>>>, path: &str, real_path: Option<&str>, replace: bool) {
+fn open_viewer(ctx: egui::Context, to_add: Rc<RefCell<Vec<(ViewT, bool)>>>, path: &str, real_path: Option<&str>, mod_: Option<Mod>, replace: bool) {
 	if let Err(err) = || -> Result<(), BacktraceError> {
-		let viewer: ViewT = match path.split(".").last().unwrap() {
-			"tex" | "atex" => Rc::new(RefCell::new(Box::new(tex::Tex::new(ctx, path, real_path)?))),
+		let viewer: ViewT = match path.trim_end_matches(".comp").split(".").last().unwrap() {
+			"tex" | "atex" => Rc::new(RefCell::new(Box::new(tex::Tex::new(ctx, path, real_path, mod_)?))),
 			"uld" => Rc::new(RefCell::new(Box::new(uld::Uld::new(path, real_path)?))),
 			_ => Rc::new(RefCell::new(Box::new(generic::Generic::new(path, real_path)?))),
 		};
