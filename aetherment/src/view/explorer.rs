@@ -4,6 +4,7 @@ use crate::resource_loader::{BacktraceError, ExplorerError};
 pub mod error;
 pub mod tree;
 pub mod modmeta;
+pub mod modmanage;
 
 pub mod generic;
 pub mod tex;
@@ -251,7 +252,8 @@ impl super::View for Explorer {
 									let mut data = Cursor::new(Vec::new());
 									converter.convert(self.import_path.split(".").last().unwrap(), &mut data)?;
 									let data = data.into_inner();
-									let hash = base64::encode_config(blake3::hash(&data).as_bytes(), base64::URL_SAFE_NO_PAD);
+									// let hash = base64::encode_config(blake3::hash(&data).as_bytes(), base64::URL_SAFE_NO_PAD);
+									let hash = crate::hash_str(blake3::hash(&data));
 									let m = self.mods.borrow_mut();
 									let m = m.get(mod_id).ok_or("Invalid import mod target")?;
 									let mut f = BufWriter::new(File::create(m.path.join("files").join(&hash))?);
@@ -325,18 +327,31 @@ fn open_mod(ctx: egui::Context, to_add: Rc<RefCell<Vec<(ViewT, bool)>>>, mod_pat
 				let mod_trees = &tree_data.borrow().mod_trees;
 				if let Some((mod_name, mod_path, _mod_tree)) = mod_trees.iter().find(|(_, path, _)| path == &mod_path) {
 					if let Some(mod_) = mods.borrow().get(mod_name) {
-						if path == "\0meta" {
-							if let Err(err) = || -> Result<(), BacktraceError> {
-								to_add.borrow_mut().push((Rc::new(RefCell::new(Box::new(modmeta::ModMeta::new(mod_name.clone(), mod_path.join("meta.json"), mod_.meta.clone())?))), !in_new_tab));
-								Ok(())
-							}() {
-								to_add.borrow_mut().push((Rc::new(RefCell::new(Box::new(error::Error::new("_modmeta", Some(&path), err)))), !in_new_tab))
+						match path.as_str() {
+							"\0meta" => {
+								if let Err(err) = || -> Result<(), BacktraceError> {
+									to_add.borrow_mut().push((Rc::new(RefCell::new(Box::new(modmeta::ModMeta::new(mod_name.clone(), mod_path.join("meta.json"), mod_.meta.clone())?))), !in_new_tab));
+									Ok(())
+								}() {
+									to_add.borrow_mut().push((Rc::new(RefCell::new(Box::new(error::Error::new("_modmeta", Some(&path), err)))), !in_new_tab))
+								}
 							}
-						} else {
-							if let Some(real_path) = real_path {
-								open_viewer(ctx.clone(), to_add.clone(), &path, Some(&mod_path.join("files").join(real_path).to_string_lossy().to_string()), Some(mod_.clone()), !in_new_tab);
-							} else {
-								log!(err, "No real path {path} (???)");
+							
+							"\0manage" => {
+								if let Err(err) = || -> Result<(), BacktraceError> {
+									to_add.borrow_mut().push((Rc::new(RefCell::new(Box::new(modmanage::ModManage::new(mod_name.clone(), mod_path)?))), !in_new_tab));
+									Ok(())
+								}() {
+									to_add.borrow_mut().push((Rc::new(RefCell::new(Box::new(error::Error::new("_modmanage", Some(&path), err)))), !in_new_tab))
+								}
+							}
+							
+							_ => {
+								if let Some(real_path) = real_path {
+									open_viewer(ctx.clone(), to_add.clone(), &path, Some(&mod_path.join("files").join(real_path).to_string_lossy().to_string()), Some(mod_.clone()), !in_new_tab);
+								} else {
+									log!(err, "No real path {path} (???)");
+								}
 							}
 						}
 					}

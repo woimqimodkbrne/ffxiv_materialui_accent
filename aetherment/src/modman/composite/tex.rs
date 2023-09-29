@@ -79,6 +79,30 @@ impl Tex {
 	}
 }
 
+impl super::Composite for Tex {
+	fn get_files(&self) -> Vec<&str> {
+		let mut files = Vec::new();
+		for layer in &self.layers {
+			if let Path::Mod(path) = &layer.path {
+				files.push(path.as_str());
+			}
+			
+			for modifier in &layer.modifiers {
+				match modifier {
+					Modifier::AlphaMask{path, ..} => {
+						if let Path::Mod(path) = path {
+							files.push(path.as_str());
+						}
+					}
+					_ => {}
+				}
+			}
+		}
+		
+		files
+	}
+}
+
 fn get_resized(tex: &noumenon::format::game::Tex, width: u32, height: u32, target_width: u32, target_height: u32) -> Cow<Vec<u8>> {
 	if width != target_width || height != target_height {
 		Cow::Owned(image::imageops::resize(tex, width, height, image::imageops::FilterType::Nearest).into_vec())

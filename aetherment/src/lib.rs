@@ -32,6 +32,10 @@ pub fn noumenon() -> Option<&'static noumenon::Noumenon> {
 	unsafe{NOUMENON.get_or_insert_with(|| noumenon::get_noumenon(config().config.game_install.as_ref())).as_ref()}
 }
 
+pub fn hash_str(hash: blake3::Hash) -> String {
+	base64::encode_config(hash.as_bytes(), base64::URL_SAFE_NO_PAD)
+}
+
 pub struct Core {
 	views: egui_dock::Tree<Box<dyn view::View>>,
 }

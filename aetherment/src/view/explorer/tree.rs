@@ -204,6 +204,7 @@ impl super::View for Tree {
 		let mut delete = None;
 		for (mod_name, mod_path, mod_tree) in &self.data.borrow().mod_trees {
 			ui.collapsing(mod_name, |ui| {
+				(mod_tree.entryfn)("\0manage".to_string(), None, None, ui.button("Manage"));
 				(mod_tree.entryfn)("\0meta".to_string(), None, None, ui.button("Meta"));
 				
 				ui.collapsing("Files", |ui| {
