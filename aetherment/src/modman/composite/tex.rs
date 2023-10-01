@@ -8,20 +8,24 @@ pub struct Tex {
 }
 
 impl Tex {
-	pub fn composite(&self, _meta: &crate::modman::meta::Meta, settings: &crate::modman::settings::Settings, textures: &std::collections::HashMap<&Path, &noumenon::format::game::Tex>) -> Option<Vec<u8>> {
+	pub fn composite_hashmap(&self, settings: &crate::modman::settings::Settings, textures: std::collections::HashMap<&Path, &noumenon::format::game::Tex>) -> Option<Vec<u8>> {
+		self.composite(settings, move |path| textures.get(path).map(|v| Cow::Borrowed(*v))).map(|v| v.2)
+	}
+	
+	pub fn composite<'a>(&'a self, settings: &crate::modman::settings::Settings, textures_handler: impl Fn(&Path) -> Option<Cow<'a, noumenon::format::game::Tex>>) -> Option<(u32, u32, Vec<u8>)> {
 		let mut layers = self.layers.iter().rev();
 		
 		let layer = layers.next()?;
-		let tex = textures.get(&layer.path)?;
+		let tex = &textures_handler(&layer.path)?;
 		let (width, height) = (tex.header.width as u32, tex.header.height as u32);
 		let mut data = tex.data.clone();
 		
-		let apply_modifiers = |data: &mut [u8]| -> Option<()> {
+		let apply_modifiers = |layer: &Layer, data: &mut [u8]| -> Option<()> {
 			for modifier in layer.modifiers.iter().rev() {
 				match modifier {
 					Modifier::AlphaMask{path, cull_point} => {
 						let cull_point = cull_point.get_value(settings)?;
-						let tex = textures.get(path)?;
+						let tex = &textures_handler(path)?;
 						let (w, h) = (tex.header.width as u32, tex.header.height as u32);
 						let mask_data = get_resized(tex, w, h, width, height);
 						
@@ -50,32 +54,34 @@ impl Tex {
 			Some(())
 		};
 		
-		apply_modifiers(&mut data)?;
+		apply_modifiers(layer, &mut data)?;
 		
 		for layer in layers {
-			let tex = textures.get(&layer.path)?;
+			let tex = &textures_handler(&layer.path)?;
 			let (w, h) = (tex.header.width as u32, tex.header.height as u32);
-			let layer_data = get_resized(tex, w, h, width, height);
+			let mut layer_data = get_resized(tex, w, h, width, height);
 			
-			apply_modifiers(&mut data)?;
+			apply_modifiers(layer, &mut layer_data)?;
 			
 			match layer.blend {
 				Blend::Normal => {
-					for (i, pixel) in data.chunks_exact_mut(4).enumerate() {
-						let ar = pixel[3] as f32 / 255.0;
-						let ao = layer_data[i * 4 + 3] as f32 / 255.0;
-						let a = ao + ar * (1.0 - ao);
-						
-						pixel[0] = ((layer_data[i * 4 + 0] as f32 * ao + pixel[0] as f32 * ar * (1.0 - ao)) / a) as u8;
-						pixel[1] = ((layer_data[i * 4 + 1] as f32 * ao + pixel[1] as f32 * ar * (1.0 - ao)) / a) as u8;
-						pixel[2] = ((layer_data[i * 4 + 2] as f32 * ao + pixel[2] as f32 * ar * (1.0 - ao)) / a) as u8;
-						pixel[3] = (a * 255.0) as u8;
+					for (pixel, layer_pixel) in data.chunks_exact_mut(4).zip(layer_data.chunks_exact(4)) {
+						if layer_pixel[3] > 0 {
+							let ar = pixel[3] as f32 / 255.0;
+							let ao = layer_pixel[3] as f32 / 255.0;
+							let a = ao + ar * (1.0 - ao);
+							
+							pixel[0] = ((layer_pixel[0] as f32 * ao + pixel[0] as f32 * ar * (1.0 - ao)) / a) as u8;
+							pixel[1] = ((layer_pixel[1] as f32 * ao + pixel[1] as f32 * ar * (1.0 - ao)) / a) as u8;
+							pixel[2] = ((layer_pixel[2] as f32 * ao + pixel[2] as f32 * ar * (1.0 - ao)) / a) as u8;
+							pixel[3] = (a * 255.0) as u8;
+						}
 					}
 				}
 			}
 		}
 		
-		Some(data)
+		Some((width, height, data))
 	}
 }
 
@@ -103,11 +109,11 @@ impl super::Composite for Tex {
 	}
 }
 
-fn get_resized(tex: &noumenon::format::game::Tex, width: u32, height: u32, target_width: u32, target_height: u32) -> Cow<Vec<u8>> {
+fn get_resized(tex: &noumenon::format::game::Tex, width: u32, height: u32, target_width: u32, target_height: u32) -> Vec<u8> {
 	if width != target_width || height != target_height {
-		Cow::Owned(image::imageops::resize(tex, width, height, image::imageops::FilterType::Nearest).into_vec())
+		image::imageops::resize(tex, target_width, target_height, image::imageops::FilterType::Nearest).into_vec()
 	} else {
-		Cow::Borrowed(&tex.data)
+		tex.data.clone()
 	}
 }
 
@@ -241,7 +247,7 @@ pub trait OptionSetting {
 // ----------
 
 #[derive(Debug, Clone, Default, PartialEq, Hash, Deserialize, Serialize)]
-pub struct ColorOption(String);
+pub struct ColorOption(pub String);
 impl OptionSetting for ColorOption {
 	type Value = [f32; 4];
 	
@@ -277,7 +283,7 @@ impl OptionSetting for ColorOption {
 // ----------
 
 #[derive(Debug, Clone, Default, PartialEq, Hash, Deserialize, Serialize)]
-pub struct MaskOption(String);
+pub struct MaskOption(pub String);
 impl OptionSetting for MaskOption {
 	type Value = f32;
 	

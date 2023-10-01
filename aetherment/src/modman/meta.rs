@@ -1,4 +1,4 @@
-use std::{collections::HashMap, path::Path, fs::File};
+use std::{collections::HashMap, path::Path, fs::File, io::Write};
 use serde::{Deserialize, Serialize};
 use crate::render_helper::EnumTools;
 
@@ -14,8 +14,8 @@ pub struct Meta {
 	pub options: Vec<Option>,
 	
 	pub files: HashMap<String, String>,
-	// pub file_swaps: _,
-	// pub manipulations: _,
+	pub file_swaps: HashMap<String, String>,
+	pub manipulations: Vec<Manipulation>,
 }
 
 impl Default for Meta {
@@ -31,13 +31,16 @@ impl Default for Meta {
 			options: Vec::new(),
 			
 			files: HashMap::new(),
+			file_swaps: HashMap::new(),
+			manipulations: Vec::new(),
 		}
 	}
 }
 
 impl Meta {
 	pub fn save(&self, path: &Path) -> std::io::Result<()> {
-		serde_json::to_writer_pretty(&mut File::create(path)?, self)?;
+		// serde_json::to_writer_pretty(&mut File::create(path)?, self)?;
+		File::create(path)?.write_all(crate::json_pretty(self)?.as_bytes())?;
 		Ok(())
 	}
 }
@@ -126,9 +129,8 @@ pub struct ValueFilesOption {
 	pub name: String,
 	pub description: String,
 	pub files: HashMap<String, String>,
-	// TODO: these 2!! check at the penumbra source to see tf these are
-	// pub file_swaps: _,
-	// pub manipulations: _,
+	pub file_swaps: HashMap<String, String>,
+	pub manipulations: Vec<Manipulation>,
 }
 
 impl Default for ValueFilesOption {
@@ -137,6 +139,8 @@ impl Default for ValueFilesOption {
 			name: "New sub option".to_owned(),
 			description: String::new(),
 			files: HashMap::new(),
+			file_swaps: HashMap::new(),
+			manipulations: Vec::new(),
 		}
 	}
 }
@@ -207,6 +211,9 @@ impl Default for ValueSingle {
 
 // ----------
 
+// TODO: this only allows for single path selection, which is an issue for example status icons
+// being able to select the shape only affects 1 path (buff, debuff, neutral) instead of all 3
+// possibly add a ValuePaths in the future of type Vec<(String, HashMap<id, Path>)> or smth
 #[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
 pub struct ValuePath {
 	pub default: u32,
@@ -221,4 +228,68 @@ impl Default for ValuePath {
 			options: Vec::new(),
 		}
 	}
+}
+
+// ----------
+
+#[derive(Debug, Clone, PartialEq, Deserialize, Serialize)]
+pub enum Manipulation {
+	Imc {
+		attribute_and_sound: i32,
+		material_id: i32,
+		decal_id: i32,
+		vfx_id: i32,
+		material_animation_id: i32,
+		attribute_mask: i32,
+		sound_id: i32,
+		
+		primary_id: i32,
+		secondary_id: i32,
+		variant: i32,
+		object_type: String,
+		equip_slot: String,
+		body_slot: String,
+	},
+	
+	Eqdp {
+		entry: u64,
+		set_id: i32,
+		slot: String,
+		race: String,
+		gender: String,
+	},
+	
+	Eqp {
+		entry: u64,
+		set_id: i32,
+		slot: String,
+	},
+	
+	Est {
+		entry: u64,
+		set_id: i32,
+		slot: String,
+		race: String,
+		gender: String,
+	},
+	
+	Gmp {
+		enabled: bool,
+		animated: bool,
+		rotation_a: i32,
+		rotation_b: i32,
+		rotation_c: i32,
+		unknown_a: i32,
+		unknown_b: i32,
+		unknown_total: i32,
+		value: u64,
+		
+		set_id: i32,
+	},
+	
+	Rsp {
+		entry: f32,
+		sub_race: String,
+		attribute: String,
+	},
 }

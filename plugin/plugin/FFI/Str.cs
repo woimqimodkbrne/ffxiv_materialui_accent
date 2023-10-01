@@ -54,11 +54,11 @@ public struct Str {
 	
 	public override string ToString() => (string)this;
 	
-	public static unsafe string StrToString(byte* ptr, ulong len) {
-		var str = Encoding.UTF8.GetString(ptr, (int)len);
-		destroy_string(ptr);
-		return str;
-	}
+	// public static unsafe string StrToString(byte* ptr, ulong len) {
+	// 	var str = Encoding.UTF8.GetString(ptr, (int)len);
+	// 	destroy_string(ptr);
+	// 	return str;
+	// }
 	
-	[DllImport("aetherment_core.dll")] private static extern unsafe void destroy_string(byte* ptr);
+	// [DllImport("aetherment_core.dll")] private static extern unsafe void destroy_string(byte* ptr);
 }

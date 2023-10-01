@@ -4,6 +4,7 @@ use crate::render_helper::EnumTools;
 
 use self::composite::Composite;
 
+pub mod backend;
 pub mod meta;
 pub mod settings;
 pub mod composite;
@@ -55,8 +56,17 @@ pub fn get_mod_files(meta: &meta::Meta, files_path: &std::path::Path) -> HashMap
 		if path.ends_with(".comp") {
 			match path.trim_end_matches(".comp").split(".").last().unwrap() {
 				"tex" | "atex" => {
-					let Ok(f) = std::fs::File::open(files_path.join(real_path)) else {return};
-					let Ok(comp) = serde_json::from_reader::<_, composite::tex::Tex>(std::io::BufReader::new(f)) else {return};
+					let Ok(mut f) = std::fs::File::open(files_path.join(real_path)) else {return};
+					let mut buf = Vec::new();
+					f.read_to_end(&mut buf).unwrap();
+					let comp: composite::tex::Tex = match serde_json::from_slice(&buf) {
+						Ok(v) => v,
+						Err(e) => {
+							log!(err, "Failed to parse tex comp file: {e}\ndata: {}", String::from_utf8_lossy(&buf));
+							return;
+						}
+					};
+					
 					for file in comp.get_files() {
 						// files.insert(file.to_owned());
 						insert(None, file);
@@ -90,8 +100,8 @@ pub fn game_files_hashes(files: HashSet<&str>) -> HashMap<String, [u8; blake3::O
 	let Some(noum) = crate::noumenon() else {return hashes};
 	
 	for file in files {
-		log!("hashing {}", file);
 		if let Ok(f) = noum.file::<Vec<u8>>(file) {
+			log!("hashing game file of {file}");
 			hashes.insert(file.to_string(), blake3::hash(&f).as_bytes().to_owned());
 		}
 	}
@@ -99,14 +109,14 @@ pub fn game_files_hashes(files: HashSet<&str>) -> HashMap<String, [u8; blake3::O
 	hashes
 }
 
-pub fn cleanup(mod_path: &std::path::Path) -> Result<(), crate::resource_loader::BacktraceError> {
-	let meta: meta::Meta = serde_json::from_reader(std::io::BufReader::new(std::fs::File::open(mod_path.join("meta.json"))?))?;
-	let files = get_mod_files(&meta, &mod_path.join("files"));
-	
-	// TODO: cleanup here
-	
-	Ok(())
-}
+// pub fn cleanup(mod_path: &std::path::Path) -> Result<(), crate::resource_loader::BacktraceError> {
+// 	let meta: meta::Meta = serde_json::from_reader(std::io::BufReader::new(std::fs::File::open(mod_path.join("meta.json"))?))?;
+// 	let files = get_mod_files(&meta, &mod_path.join("files"));
+// 	
+// 	// TODO: cleanup here
+// 	
+// 	Ok(())
+// }
 
 pub struct ModCreationSettings {
 	/// Used to be able to check changes the game has made to files this mod overrides, useful for ui
@@ -122,10 +132,12 @@ pub fn create_mod(mod_path: &std::path::Path, settings: ModCreationSettings) -> 
 	};
 	let meta: meta::Meta = serde_json::from_slice(&meta_buf)?;
 	let packs_path = mod_path.join("packs");
-	std::fs::create_dir(&packs_path)?;
+	_ = std::fs::create_dir(&packs_path);
 	
 	let files_path = mod_path.join("files");
 	let files = get_mod_files(&meta, &files_path);
+	
+	log!("all files: {files:?}");
 	
 	// TODO: add name of the mod to the name, cba atm cuz of potential invalid names and characters
 	let pack_path = packs_path.join(format!("{}.aeth", meta.version));
@@ -137,7 +149,7 @@ pub fn create_mod(mod_path: &std::path::Path, settings: ModCreationSettings) -> 
 		.large_file(true); // oh no, the horror of losing 20b
 	
 	if settings.current_game_files_hash {
-		let hashes = game_files_hashes(files.keys().map(|v| v.as_str()).collect());
+		let hashes = game_files_hashes(files.values().flat_map(|v| v.iter().map(|v| v.as_str())).collect());
 		writer.start_file("hashes", options)?;
 		writer.write_all(&serde_json::to_vec(&hashes)?)?;
 	}
@@ -150,6 +162,7 @@ pub fn create_mod(mod_path: &std::path::Path, settings: ModCreationSettings) -> 
 	let mut files_done = HashSet::new();
 	let mut files_remap = HashMap::new();
 	for (real_path, _) in &files {
+		log!("packing file {real_path}");
 		let mut f = std::fs::File::open(files_path.join(&real_path))?;
 		f.read_to_end(&mut buf)?;
 		let hash = blake3::hash(&buf);

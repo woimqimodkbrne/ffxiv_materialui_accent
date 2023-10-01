@@ -14,11 +14,29 @@ mod imgui;
 mod wndproc;
 mod texture;
 
-static mut LOG: fn(u8, *mut i8, usize) = |_, _, _| {};
+// using str itself doesnt seem to work, no clue why but oh well
+#[repr(packed)]
+#[allow(dead_code)]
+struct FfiStr(*const u8, usize);
+impl FfiStr {
+	fn new(s: &str) -> Self {
+		Self(s.as_ptr(), s.len())
+	}
+	
+	fn to_string(&self) -> String {
+		unsafe{std::str::from_utf8_unchecked(std::slice::from_raw_parts(self.0, self.1)).to_string()}
+	}
+	
+	fn to_string_vec(&self) -> Vec<String> {
+		self.to_string().split('\0').map(|v| v.to_string()).collect()
+	}
+}
+
+static mut LOG: fn(u8, FfiStr) = |_, _| {};
 fn log(typ: aetherment::LogType, msg: String) {
-	use std::ffi::CString;
-	let len = msg.len();
-	unsafe{crate::LOG(typ as _, CString::into_raw(CString::new(msg).unwrap()), len)};
+	let s = msg.as_str();
+	unsafe{crate::LOG(typ as _, FfiStr(s.as_ptr(), s.len()))};
+	drop(msg);
 }
 
 extern "C" {fn GetKeyboardState(key_states: *mut [u8; 256]);}
@@ -56,22 +74,42 @@ pub struct State {
 
 #[repr(packed)]
 pub struct Initializers {
-	// log: fn(u8, *mut u8, usize, usize),
-	log: fn(u8, *mut i8, usize),
+	// log: fn(u8, *mut i8, usize),
+	log: fn(u8, FfiStr),
 	
 	create_texture: fn(texture::TextureOptions) -> usize,
 	drop_texture: fn(usize),
 	pin_texture: fn(usize) -> *mut u8,
 	unpin_texture: fn(usize),
+	
+	penumbra_functions: PenumbraFunctions,
+}
+
+#[derive(Clone, Copy)]
+#[repr(packed)]
+pub struct PenumbraFunctions {
+	redraw: fn(),
+	redraw_self: fn(),
+	root_path: fn() -> FfiStr,
+	mod_list: fn() -> FfiStr,
+	add_mod_entry: fn(FfiStr) -> u8,
+	reload_mod: fn(FfiStr) -> u8,
+	set_mod_enabled: fn(FfiStr, FfiStr, bool) -> u8,
+	set_mod_priority: fn(FfiStr, FfiStr, i32) -> u8,
+	set_mod_inherit: fn(FfiStr, FfiStr, bool) -> u8,
+	set_mod_settings: fn(FfiStr, FfiStr, FfiStr, FfiStr) -> u8,
+	default_collection: fn() -> FfiStr,
 }
 
 #[no_mangle]
 pub extern fn initialize(init: Initializers) -> *mut State {
+	use aetherment::modman::backend;
+	
 	std::panic::set_hook(Box::new(|info| {
 		log(aetherment::LogType::Error, format!("{}", info));
 	}));
 	
-	match std::panic::catch_unwind(|| {
+	match std::panic::catch_unwind(move || {
 		unsafe {
 			LOG = init.log;
 			
@@ -107,7 +145,19 @@ pub extern fn initialize(init: Initializers) -> *mut State {
 			},
 			
 			visible: true,
-			core: aetherment::Core::new(log, ctx/*, aetherment::Backends::DX12*/),
+			core: aetherment::Core::new(log, ctx, backend::BackendInitializers::PenumbraIpc(backend::penumbra_ipc::PenumbraFunctions {
+				redraw: Box::new(init.penumbra_functions.redraw),
+				redraw_self: Box::new(init.penumbra_functions.redraw_self),
+				root_path: Box::new(move || std::path::PathBuf::from((init.penumbra_functions.root_path)().to_string())),
+				mod_list: Box::new(move || (init.penumbra_functions.mod_list)().to_string_vec()),
+				add_mod_entry: Box::new(move |id| (init.penumbra_functions.add_mod_entry)(FfiStr::new(id))),
+				reload_mod: Box::new(move |id| (init.penumbra_functions.reload_mod)(FfiStr::new(id))),
+				set_mod_enabled: Box::new(move |collection, id, enabled| (init.penumbra_functions.set_mod_enabled)(FfiStr::new(collection), FfiStr::new(id), enabled)),
+				set_mod_priority: Box::new(move |collection, id, priority| (init.penumbra_functions.set_mod_priority)(FfiStr::new(collection), FfiStr::new(id), priority)),
+				set_mod_inherit: Box::new(move |collection, id, inherit| (init.penumbra_functions.set_mod_inherit)(FfiStr::new(collection), FfiStr::new(id), inherit)),
+				set_mod_settings: Box::new(move |collection, id, option, suboptions| (init.penumbra_functions.set_mod_settings)(FfiStr::new(collection), FfiStr::new(id), FfiStr::new(option), FfiStr::new(&suboptions.join("\0")))),
+				default_collection: Box::new(move || (init.penumbra_functions.default_collection)().to_string()),
+			})),
 		}))
 	}) {
 		Ok(v) => v,
@@ -115,21 +165,11 @@ pub extern fn initialize(init: Initializers) -> *mut State {
 	}
 }
 
-// #[no_mangle]
-// pub extern fn destroy_string(ptr: *mut u8, len: usize, cap: usize) {
-// 	unsafe{String::from_raw_parts(ptr, len, cap)};
-// }
-
 #[no_mangle]
 pub extern fn destroy(state: *mut State) {
 	wndproc::revert();
 	
 	_ = unsafe{Box::from_raw(state)};
-}
-
-#[no_mangle]
-pub extern fn destroy_string(ptr: *mut i8) {
-	_ = unsafe{std::ffi::CString::from_raw(ptr)};
 }
 
 #[no_mangle]
@@ -147,6 +187,7 @@ pub extern fn draw(state: *mut State) {
 	
 	std::panic::catch_unwind(|| {
 		let state = unsafe{&mut *(state as *mut State)};
+		if !state.visible {return}
 		
 		let key_states = get_keyboard_state();
 		let mut procevents = wndproc::EVENTS.lock().unwrap();
@@ -323,12 +364,13 @@ pub extern fn draw(state: *mut State) {
 		}
 		
 		// draw egui as imgui primitives
-		for prim in state.ctx.tessellate(out.shapes) {
+		for prim in state.ctx.tessellate(out.shapes) {unsafe {
+			let drawlist = imgui::igGetWindowDrawList();
+			imgui::igPushClipRect(transmute(prim.clip_rect.min), transmute(prim.clip_rect.max), true);
+			
 			match prim.primitive {
 				egui::epaint::Primitive::Callback(_) => log(aetherment::LogType::Error, String::from("Callback is unsupported")),
-				egui::epaint::Primitive::Mesh(mesh) => unsafe {
-					let drawlist = imgui::igGetWindowDrawList();
-					
+				egui::epaint::Primitive::Mesh(mesh) => {
 					// doing this mostly fixes a bug caused by the fact we cant set (or atleast im too dumb to) sampler state
 					// so that we can have filter modes other than linear, thing like separator dont show
 					// TODO: find a proper solution as this is real nasty fix
@@ -360,7 +402,9 @@ pub extern fn draw(state: *mut State) {
 					imgui::ImDrawList_PopTextureID(drawlist);
 				},
 			}
-		}
+			
+			imgui::igPopClipRect();
+		}}
 		
 		unsafe{imgui::igEnd()};
 		

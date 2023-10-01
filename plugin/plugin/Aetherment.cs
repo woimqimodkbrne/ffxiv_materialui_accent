@@ -27,11 +27,12 @@ public class Aetherment : IDalamudPlugin {
 	public static SharpDX.Direct3D11.Device Device => Interface.UiBuilder.Device;
 	private const string maincommand = "/aetherment";
 	
-	private IntPtr state;
+	public static IntPtr state;
 	private TextureManager textureManager;
+	private Penumbra penumbra;
 	
 	private bool isUnloading = false;
-	private FileSystemWatcher? watcher;
+	// private FileSystemWatcher? watcher;
 	
 	[StructLayout(LayoutKind.Sequential)]
 	private unsafe struct Initializers {
@@ -41,11 +42,29 @@ public class Aetherment : IDalamudPlugin {
 		public IntPtr t_d;
 		public IntPtr t_p;
 		public IntPtr t_u;
+		
+		public PenumbraFunctions penumbra;
+	}
+	
+	[StructLayout(LayoutKind.Sequential)]
+	private unsafe struct PenumbraFunctions {
+		public IntPtr redraw;
+		public IntPtr redraw_self;
+		public IntPtr root_path;
+		public IntPtr mod_list;
+		public IntPtr add_mod_entry;
+		public IntPtr reload_mod;
+		public IntPtr set_mod_enabled;
+		public IntPtr set_mod_priority;
+		public IntPtr set_mod_inherit;
+		public IntPtr set_mod_settings;
+		public IntPtr default_collection;
 	}
 	
 	public unsafe Aetherment() {
 		log = Log;
 		textureManager = new();
+		penumbra = new();
 		
 		var init = new Initializers {
 			log = Marshal.GetFunctionPointerForDelegate(log),
@@ -54,6 +73,20 @@ public class Aetherment : IDalamudPlugin {
 			t_d = Marshal.GetFunctionPointerForDelegate(textureManager.destroyResource),
 			t_p = Marshal.GetFunctionPointerForDelegate(textureManager.pinData),
 			t_u = Marshal.GetFunctionPointerForDelegate(textureManager.unpinData),
+			
+			penumbra = new PenumbraFunctions {
+				redraw = Marshal.GetFunctionPointerForDelegate(penumbra.redraw),
+				redraw_self = Marshal.GetFunctionPointerForDelegate(penumbra.redrawSelf),
+				root_path = Marshal.GetFunctionPointerForDelegate(penumbra.rootPath),
+				mod_list = Marshal.GetFunctionPointerForDelegate(penumbra.modList),
+				add_mod_entry = Marshal.GetFunctionPointerForDelegate(penumbra.addModEntry),
+				reload_mod = Marshal.GetFunctionPointerForDelegate(penumbra.reloadMod),
+				set_mod_enabled = Marshal.GetFunctionPointerForDelegate(penumbra.setModEnabled),
+				set_mod_priority = Marshal.GetFunctionPointerForDelegate(penumbra.setModPriority),
+				set_mod_inherit = Marshal.GetFunctionPointerForDelegate(penumbra.setModInherit),
+				set_mod_settings = Marshal.GetFunctionPointerForDelegate(penumbra.setModSettings),
+				default_collection = Marshal.GetFunctionPointerForDelegate(penumbra.defaultCollection),
+			},
 		};
 		
 		state = initialize(init);
@@ -82,8 +115,8 @@ public class Aetherment : IDalamudPlugin {
 		Interface.UiBuilder.Draw -= Draw;
 		Commands.RemoveHandler(maincommand);
 		FFI.Str.Drop();
-		if(watcher != null)
-			watcher.Dispose();
+		// if(watcher != null)
+		// 	watcher.Dispose();
 		destroy(state);
 		state = IntPtr.Zero;
 	}
@@ -159,7 +192,7 @@ public class Aetherment : IDalamudPlugin {
 		UnloadPlugin();
 	}
 	
-	private LogDelegate log;
+	// private LogDelegate log;
 	// private unsafe delegate void LogDelegate(byte mod, byte* ptr, ulong len, ulong cap);
 	// private unsafe void Log(byte mode, byte* ptr, ulong len, ulong cap) {
 	// 	if(mode == 255)
@@ -171,30 +204,31 @@ public class Aetherment : IDalamudPlugin {
 	// 	
 	// 	destroy_string(ptr, len, cap);
 	// }
-	private unsafe delegate void LogDelegate(byte mod, byte* ptr, ulong len);
-	private unsafe void Log(byte mode, byte* ptr, ulong len) {
-		if(mode == 255)
-			Kill(FFI.Str.StrToString(ptr, len), 2);
-		else if(mode == 1)
-			PluginLog.Error(FFI.Str.StrToString(ptr, len));
-		else
-			PluginLog.Log(FFI.Str.StrToString(ptr, len));
-	}
 	
 	// private LogDelegate log;
-	// private unsafe delegate void LogDelegate(byte mode, FFI.Str str);
-	// private unsafe void Log(byte mode, FFI.Str str) {
+	// private unsafe delegate void LogDelegate(byte mod, byte* ptr, ulong len);
+	// private unsafe void Log(byte mode, byte* ptr, ulong len) {
 	// 	if(mode == 255)
-	// 		Kill(str, 2);
+	// 		Kill(FFI.Str.StrToString(ptr, len), 2);
 	// 	else if(mode == 1)
-	// 		PluginLog.Error(str);
+	// 		PluginLog.Error(FFI.Str.StrToString(ptr, len));
 	// 	else
-	// 		PluginLog.Log(str);
+	// 		PluginLog.Log(FFI.Str.StrToString(ptr, len));
 	// }
+	
+	private LogDelegate log;
+	private unsafe delegate void LogDelegate(byte mode, FFI.Str str);
+	private unsafe void Log(byte mode, FFI.Str str) {
+		if(mode == 255)
+			Kill(str, 2);
+		else if(mode == 1)
+			PluginLog.Error(str);
+		else
+			PluginLog.Log(str);
+	}
 	
 	[DllImport("aetherment_core.dll")] private static extern unsafe IntPtr initialize(Initializers data);
 	[DllImport("aetherment_core.dll")] private static extern unsafe void destroy(IntPtr state);
-	// [DllImport("aetherment_core.dll")] private static extern unsafe void destroy_string(byte* ptr, ulong len, ulong cap);
 	[DllImport("aetherment_core.dll")] private static extern unsafe void command(IntPtr state, FFI.Str args);
 	[DllImport("aetherment_core.dll")] private static extern unsafe void draw(IntPtr state);
 }

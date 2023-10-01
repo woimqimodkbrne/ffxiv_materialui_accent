@@ -187,7 +187,7 @@ impl Tex {
 					textures.insert(path, tex);
 				}
 				
-				let Some(data) = comp.comp.composite(&mod_.meta.borrow(), &settings, &textures) else {return};
+				let Some(data) = comp.comp.composite_hashmap(&settings, textures) else {return};
 				self.texture.set_partial([0; 2], egui::ColorImage::from_rgba_unmultiplied([tex.header.width as usize, tex.header.height as usize], &data), Default::default());
 			}
 			

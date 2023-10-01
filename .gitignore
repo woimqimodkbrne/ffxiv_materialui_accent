@@ -2,6 +2,8 @@
 plugin/plugin/bin
 plugin/plugin/obj
 Cargo.lock
-structural_ideas.txt
+
 renderer
+structural_ideas.txt
 aetherment/src/migrate.rs
+Untitled-1.md
