@@ -25,7 +25,7 @@ public struct Str {
 	public Str(string str) {
 		var length = Encoding.UTF8.GetByteCount(str);
 		if(length > bufLen) {
-			PluginLog.Error("String was longer than buffer, sending empty ffi string");
+			Aetherment.Logger.Error("String was longer than buffer, sending empty ffi string");
 			this.ptr = buf;
 			this.length = 0;
 			return;

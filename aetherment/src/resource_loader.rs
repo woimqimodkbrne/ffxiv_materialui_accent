@@ -1,4 +1,4 @@
-use std::io::Read;
+use std::{io::Read, fs::File};
 
 pub type BacktraceError = Box<dyn std::error::Error>;
 
@@ -65,7 +65,7 @@ impl std::error::Error for ExplorerError {
 
 pub fn load_file_disk<T>(real_path: &std::path::Path) -> Result<T, BacktraceError> where
 T: noumenon::File {
-	let mut file = std::fs::File::open(real_path).map_err(|_| ExplorerError::RealPath2(real_path.to_owned()))?;
+	let mut file = File::open(real_path).map_err(|_| ExplorerError::RealPath2(real_path.to_owned()))?;
 	let mut buf = Vec::new();
 	file.read_to_end(&mut buf)?;
 	Ok(noumenon::File::read(&buf)?)
@@ -79,4 +79,16 @@ T: noumenon::File {
 	} else {
 		Ok(crate::noumenon().as_ref().ok_or(ExplorerError::Path(path.to_string()))?.file::<T>(path)?)
 	}
+}
+
+// Load json file that can include the UTF-8 BOM
+pub fn read_json<T: serde::de::DeserializeOwned>(path: &std::path::Path) -> Result<T, crate::resource_loader::BacktraceError> {
+	let mut file = File::open(path)?;
+	let mut buf = Vec::new();
+	file.read_to_end(&mut buf)?;
+	if buf.starts_with(&[0xEF, 0xBB, 0xBF]) {
+		buf.drain(0..3);
+	}
+	
+	Ok(serde_json::from_slice::<T>(&buf)?)
 }

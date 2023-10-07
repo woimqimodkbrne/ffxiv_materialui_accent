@@ -85,6 +85,15 @@ pub struct Initializers {
 	penumbra_functions: PenumbraFunctions,
 }
 
+#[repr(packed)]
+struct PenumbraGetModSettings {
+	exists: bool,
+	enabled: bool,
+	inherit: bool,
+	priority: i32,
+	options: FfiStr,
+}
+
 #[derive(Clone, Copy)]
 #[repr(packed)]
 pub struct PenumbraFunctions {
@@ -98,7 +107,9 @@ pub struct PenumbraFunctions {
 	set_mod_priority: fn(FfiStr, FfiStr, i32) -> u8,
 	set_mod_inherit: fn(FfiStr, FfiStr, bool) -> u8,
 	set_mod_settings: fn(FfiStr, FfiStr, FfiStr, FfiStr) -> u8,
+	get_mod_settings: fn(FfiStr, FfiStr, bool) -> PenumbraGetModSettings,
 	default_collection: fn() -> FfiStr,
+	get_collections: fn() -> FfiStr,
 }
 
 #[no_mangle]
@@ -156,7 +167,25 @@ pub extern fn initialize(init: Initializers) -> *mut State {
 				set_mod_priority: Box::new(move |collection, id, priority| (init.penumbra_functions.set_mod_priority)(FfiStr::new(collection), FfiStr::new(id), priority)),
 				set_mod_inherit: Box::new(move |collection, id, inherit| (init.penumbra_functions.set_mod_inherit)(FfiStr::new(collection), FfiStr::new(id), inherit)),
 				set_mod_settings: Box::new(move |collection, id, option, suboptions| (init.penumbra_functions.set_mod_settings)(FfiStr::new(collection), FfiStr::new(id), FfiStr::new(option), FfiStr::new(&suboptions.join("\0")))),
+				get_mod_settings: Box::new(move |collection, id, inherit| {
+					let settings = (init.penumbra_functions.get_mod_settings)(FfiStr::new(collection), FfiStr::new(id), inherit);
+					backend::penumbra_ipc::GetModSettings {
+						exists: settings.exists,
+						enabled: settings.enabled,
+						inherit: settings.inherit,
+						priority: settings.priority,
+						options: {
+							let options = settings.options.to_string().split("\0\0").map(|v| v.to_string()).collect::<Vec<String>>();
+							// let sub_options = options.split("\0").map(|v| v.to_string()).collect();
+							options.into_iter().map(|v| {
+								let mut sub_options = v.split("\0").map(|v| v.to_string());
+								(sub_options.next().unwrap(), sub_options.collect())
+							}).collect()
+						},
+					}
+				}),
 				default_collection: Box::new(move || (init.penumbra_functions.default_collection)().to_string()),
+				get_collections: Box::new(move || (init.penumbra_functions.get_collections)().to_string_vec()),
 			})),
 		}))
 	}) {

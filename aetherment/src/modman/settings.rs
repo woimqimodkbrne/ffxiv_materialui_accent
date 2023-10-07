@@ -13,6 +13,20 @@ impl Settings {
 		
 		settings
 	}
+	
+	pub fn open(meta: &super::meta::Meta, collection: &str) -> Self {
+		let dir = dirs::config_dir().ok_or("No Config Dir (???)").unwrap().join("Aetherment").join("mods").join(collection);
+		_ = std::fs::create_dir_all(&dir);
+		
+		let mut settings = Self::from_meta(meta);
+		if let Ok(s) = crate::resource_loader::read_json::<Settings>(&dir.join(&meta.name)) {
+			for (k, v) in s.0 {
+				settings.insert(k, v);
+			}
+		}
+		
+		settings
+	}
 }
 
 impl Deref for Settings {

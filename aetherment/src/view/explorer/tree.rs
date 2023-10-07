@@ -334,7 +334,7 @@ pub fn update_paths() {
 			
 			log!("writing tree");
 			let cache_dir = dirs::cache_dir().ok_or("No Cache Dir (???)").unwrap().join("Aetherment");
-			std::fs::create_dir_all(&cache_dir)?;
+			_ = std::fs::create_dir_all(&cache_dir);
 			let mut paths_file = File::create(cache_dir.join("paths"))?;
 			fn write_branch(branch: &Branch, mut file: &mut File) -> Result<(), super::BacktraceError> {
 				let mut offsets = HashMap::new();

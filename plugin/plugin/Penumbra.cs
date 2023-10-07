@@ -21,7 +21,9 @@ public unsafe class Penumbra : IDisposable {
 		setModPriority = SetModPriority;
 		setModInherit = SetModInherit;
 		setModSettings = SetModSettings;
+		getModSettings = GetModSettings;
 		defaultCollection = DefaultCollection;
+		getCollections = GetCollections;
 		
 		// postSettingsDraw = Aetherment.Interface.GetIpcSubscriber<string, object>("Penumbra.PostSettingsDraw");
 		// postSettingsDraw.Subscribe(DrawSettings);
@@ -125,9 +127,67 @@ public unsafe class Penumbra : IDisposable {
 			return Aetherment.Interface.GetIpcSubscriber<string, string, string, string, IReadOnlyList<string>, byte>("Penumbra.TrySetModSettings").InvokeFunc(collection, mod, "", option, sub_options);
 	}
 	
+	[StructLayout(LayoutKind.Sequential, Pack = 1)]
+	public struct ModSettings {
+		public byte exists;
+		public byte enabled;
+		public byte inherit;
+		public int priority;
+		public FFI.Str options;
+	}
+	public GetModSettingsDelegate getModSettings;
+	public delegate ModSettings GetModSettingsDelegate(FFI.Str collection, FFI.Str mod, byte allow_inherit);
+	public ModSettings GetModSettings(FFI.Str collection, FFI.Str mod, byte allow_inherit) {
+		var (_, settings) = Aetherment.Interface.GetIpcSubscriber<string, string, string, bool, (byte, (bool, int, IDictionary<string, IList<string>>, bool)?)>("Penumbra.GetCurrentModSettings").InvokeFunc(collection, mod, "", allow_inherit != 0);
+		if(settings.HasValue) {
+			var (enabled, priority, options, inherit) = settings.Value;
+			var options_keys = new List<string>(options.Keys);
+			var options_str = "";
+			for(int i = 0; i < options.Count; i++) {
+				if(i > 0)
+					options_str += "\0\0";
+				options_str += options_keys[i];
+				foreach(var sub_option in options[options_keys[i]]) {
+					options_str += "\0";
+					options_str += sub_option;
+				}
+			}
+			
+			return new() {
+				exists = 1,
+				enabled = enabled ? (byte)1 : (byte)0,
+				inherit = inherit ? (byte)1 : (byte)0,
+				priority = priority,
+				options = options_str,
+			};
+		} else {
+			return new() {
+				exists = 0,
+				enabled = 0,
+				inherit = 0,
+				priority = 0,
+				options = "",
+			};
+		}
+	}
+	
 	public DefaultCollectionDelegate defaultCollection;
 	public delegate FFI.Str DefaultCollectionDelegate();
 	public FFI.Str DefaultCollection() {
 		return Aetherment.Interface.GetIpcSubscriber<string>("Penumbra.GetDefaultCollectionName").InvokeFunc();
+	}
+	
+	public GetCollectionsDelegate getCollections;
+	public delegate FFI.Str GetCollectionsDelegate();
+	public FFI.Str GetCollections() {
+		var collections = Aetherment.Interface.GetIpcSubscriber<IList<string>>("Penumbra.GetCollections").InvokeFunc();
+		var collections_str = "";
+		for(int i = 0; i < collections.Count; i++) {
+			if(i > 0)
+				collections_str += "\0";
+			collections_str += collections[i];
+		}
+		
+		return collections_str;
 	}
 }

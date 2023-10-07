@@ -100,6 +100,7 @@ pub fn game_files_hashes(files: HashSet<&str>) -> HashMap<String, [u8; blake3::O
 	let Some(noum) = crate::noumenon() else {return hashes};
 	
 	for file in files {
+		let file = file.trim_end_matches(".comp");
 		if let Ok(f) = noum.file::<Vec<u8>>(file) {
 			log!("hashing game file of {file}");
 			hashes.insert(file.to_string(), blake3::hash(&f).as_bytes().to_owned());
